@@ -1,14 +1,23 @@
 Package: msdeHeaders
-Type: Package
-Title: What the Package Does in One 'Title Case' Line
-Version: 0.0.0.9001
+Title: Bayesian Inference for Multivariate Stochastic Differential Equations
+Version: 0.0.1.9000
 Date: 2016-11-17
-Author: Martin Lysy
-Maintainer: Martin Lysy <mlysy@uwaterloo.ca>
-Description: One paragraph description of what the package does as one
-    or more full sentences.
-License: GPL (>= 2)
+Authors@R: c(person("Martin", "Lysy", role = c("aut", "cre"),
+                    email = "mlysy@uwaterloo.ca"),
+             person("JunYong", "Tong", role = "aut"),
+	     person("Nigel", "Delaney", role = "ctb"),
+             person("Trevor", "Kitt", role = "ctb"))
+Description: MCMC sampling of the posterior distribution of the parameters of a
+    multivariate SDE model given discretely observed data. The user-defined models
+    in msde are compiled in C++ which results in considerably faster posterior
+    sampling than if the models were written in R.
+Depends:
+    R (>= 3.0.0)
 Imports:
     Rcpp (>= 0.12.7)
-LinkingTo: Rcpp
+Suggests:
+    knitr
+VignetteBuilder: knitr
+License: >= GPL-3
+LazyData: true
 RoxygenNote: 6.0.1

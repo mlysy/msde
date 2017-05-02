@@ -32,7 +32,8 @@ sde.make.model <- function(ModelFile, PriorFile = NULL,
     ModelFile <- file.path(.msdeCppPath, "sdeModel.h")
   }
   file.copy(from = ModelFile,
-           to = file.path(tempdir(), "sdeModel.h"))
+            to = file.path(tempdir(), "sdeModel.h"),
+            overwrite = TRUE, copy.date = TRUE)
   sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
             env = environment(), ...)
   environment(sde.model$sim) <- globalenv()
