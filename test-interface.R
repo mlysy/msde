@@ -1,6 +1,7 @@
 #--- msde interface ------------------------------------------------------------
 
 require(msdeHeaders)
+# TODO: shouldn't need to rebuild = TRUE
 # TODO: prior specification
 max.diff <- function(x1, x2) {
   c(abs = max(abs(x1-x2)), rel = max(abs(x1-x2)/abs(x1)))
