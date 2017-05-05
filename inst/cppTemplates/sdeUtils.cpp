@@ -73,6 +73,41 @@ NumericVector sde_LogLik(NumericVector xIn, NumericVector dTIn,
   return llOut;
 }
 
+//[[Rcpp::export("sde.model$logprior")]]
+NumericVector sde_Prior(NumericVector thetaIn, NumericVector xIn,
+			int nReps, List phiIn) {
+  int nDims = sdeModel::nDims;
+  int nParams = sdeModel::nParams;
+  int ii;
+  double *x = REAL(xIn);
+  double *theta = REAL(thetaIn);
+  int nArgs = phiIn.length();
+  double **phi = new double*[nArgs];
+  int *nEachArg = new int[nArgs];
+  for(ii=0; ii<nArgs; ii++) {
+    if(Rf_isNull(phiIn[ii])) {
+      nEachArg[ii] = 0;
+    } else {
+      nEachArg[ii] = as<NumericVector>(phiIn[ii]).length();
+      phi[ii] = REAL(phiIn[ii]);
+    }
+  }
+  bool *fixedParams;
+  int nMiss0 = 0;
+  Prior prior(phi, nArgs, nEachArg, fixedParams, nMiss0);
+  NumericVector lpOut(nReps);
+  double *lp = REAL(lpOut);
+  // NOTE: this can't be parallelized because private storage is common
+  // to parallelize need array of Prior objects
+  for(ii=0; ii<nReps; ii++) {
+    lp[ii] = prior.logPrior(&theta[ii*nParams], &x[ii*nDims]);
+  }
+  delete [] phi;
+  delete [] nEachArg;
+  return lpOut;
+}
+
+
 //[[Rcpp::export("sde.model$sim")]]
 List sdeEulerSim(int nDataOut,
 		 int N, int reps, int r, double dT,
@@ -144,6 +179,7 @@ List sdeEulerSim(int nDataOut,
   return List::create(_["dataOut"] = dataOut, _["nBadDraws"] = nBadDraws);
 }
 
+/*
 //[[Rcpp::export("sde.model$post")]]
 List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		  NumericVector dT, IntegerVector nDimsPerObs,
@@ -279,3 +315,4 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		      _["logLikOut"] = logLikOut,
 		      _["lastMissOut"] = lastMissOut, _["lastIter"] = lastIter);
 }
+*/

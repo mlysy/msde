@@ -10,7 +10,7 @@
 
 #include "mvnUtils.h"
 #include "sdeLogLik.h"
-#include "Prior.h"
+#include "sdePrior.h"
 
 class sdeMCMC : public sdeLogLik {
   int *missInd;

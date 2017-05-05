@@ -2,7 +2,7 @@
 #define sdeLogLik_h 1
 
 /* -------------------------------------------------------------------------
-/*
+
 this is a class which defines the complete data and whatever it needs
 to evaluate the log-density.
 the log-density of an sde is essentially the sum of conditional normals,

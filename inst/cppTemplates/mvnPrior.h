@@ -1,5 +1,5 @@
-#ifndef Prior_h
-#define Prior_h 1
+#ifndef sdePrior_h
+#define sdePrior_h 1
 
 #include "sdeModel.h"
 
@@ -20,7 +20,7 @@ class Prior {
   static const int nTotalRV = nDims + nParams;
   int nActiveRV, nSkippedRV;
   double *mean, *cholSd;
-  double *tmpX, *tmpV;
+  double *tmpX, *tmpZ;
  public:
   double logPrior(double *theta, double *x);
   Prior(double **phi, int nArgs, int *nEachArg, bool *fixedParams, int nMiss0);
@@ -30,26 +30,32 @@ class Prior {
 inline Prior::Prior(double **phi, int nArgs, int *nEachArg,
 		    bool *fixedParams, int nMiss0) {
   nActiveRV = nEachArg[0];
-  mean = new double[nActiveRV];
-  tmpX = new double[nTotalRV];
-  tmpZ = new double[nTotalRV];
-  cholSd = new double[nActiveRV*nActiveRV];
-  for(ii=0; ii<nActiveRV; ii++) {
-    mean[ii] = phi[0][ii];
-  }
-  for(ii=0; ii<nActiveRV*nActiveRV; ii++) {
-    cholSd[ii] = phi[1][ii];
+  nSkippedRV = nTotalRV-nActiveRV;
+  if(nActiveRV > 0) {
+    mean = new double[nActiveRV];
+    cholSd = new double[nActiveRV*nActiveRV];
+    tmpX = new double[nTotalRV];
+    tmpZ = new double[nTotalRV];
+    for(int ii=0; ii<nActiveRV; ii++) {
+      mean[ii] = phi[0][ii];
+    }
+    for(int ii=0; ii<nActiveRV*nActiveRV; ii++) {
+      cholSd[ii] = phi[1][ii];
+    }
   }
 }
 
 inline Prior::~Prior() {
-  delete [] mean;
-  delete [] cholSd;
-  delete [] tmpX;
-  delete [] tmpZ;
+  if(nActiveRV > 0) {
+    delete [] mean;
+    delete [] cholSd;
+    delete [] tmpX;
+    delete [] tmpZ;
+  }
 }
 
 inline double Prior::logPrior(double *theta, double *x) {
+  if(nActiveRV == 0) return(0.0);
   double lp;
   int ii;
   for(ii=0; ii<nDims; ii++) {

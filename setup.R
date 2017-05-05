@@ -4,7 +4,6 @@ require(Rcpp)
 #require(devtools)
 
 devtools::document()
-
 devtools::install()
 
 devtools::build()
@@ -22,7 +21,6 @@ hmod <- sde.make.model(param.names = param.names,
 
 ndims <- hmod$ndims
 nparams <- hmod$nparams
-
 
 #--- header-only version of msde -----------------------
 
