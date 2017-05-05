@@ -3,8 +3,8 @@
 #' @export
 sde.post <- function(model, init,
                      init.data, init.params, par.index, dt, nsamples, burn,
-                     data.out.ind, prior, fixed.params,
-                     rw.jump.sd = NULL,
+                     data.out.ind, fixed.params,
+                     prior, rw.jump.sd = NULL,
                      update.data = TRUE, update.params = TRUE,
                      loglik.out = FALSE, last.miss.out = FALSE,
                      verbose = TRUE, debug = FALSE) {
@@ -71,7 +71,12 @@ sde.post <- function(model, init,
   # prior specification
   prior2 <- prior
   if(debug) browser()
-  prior <- format.prior(model = model, prior = prior)
+  # format hyperparameters
+  prior <- model$prior.spec(prior, nparams, ndims, fixed.params, nmiss0)
+  # C++ format check (is phi a list with vector-double elements)
+  if(!is.valid.hyper(prior)) {
+    stop("Unintended behavior.  Please contact package maintainer.")
+  }
   # random walk jump size
   if(is.null(rw.jump.sd)) {
     rw.jump.sd <- abs(init.params)/4
@@ -114,8 +119,9 @@ sde.post <- function(model, init,
                     dataOutCol = as.integer(data.out.col-1),
                     updateParams = as.double(update.params),
                     updateData = as.double(update.data),
-                    priorType = which(prior$type == .PriorTypes),
-                    priorParams = prior$args,
+                    ## priorType = which(prior$type == .PriorTypes),
+                    ## priorParams = prior$args,
+                    priorArgs = prior,
                     rwJumpSd = as.double(rw.jump.sd),
                     updateLogLik = as.integer(loglik.out),
                     nLogLikOut = as.integer(ifelse(loglik.out, nsamples, 1)),

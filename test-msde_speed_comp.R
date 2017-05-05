@@ -44,8 +44,8 @@ hmod <- pkg1("sde.make.model")(list = hestList,
 #nparams <- 5
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
-#hmod2 <- file.path(pkg2(":.msdeCppPath"), "hestModel.cpp")
-hmod2 <- pkg2("sde.make.model")(param.names = param.names,
+hmod2 <- pkg2("sde.make.model")(ModelFile = "hestModel.h",
+                                param.names = param.names,
                                 data.names = data.names,
                                 showOutput = TRUE, rebuild = TRUE)
 ndims <- hmod2$ndims
@@ -199,12 +199,13 @@ prior <- list(Mu = c(.1, .35, 1.0, .5, -.81),
               V = crossprod(matrix(rnorm(25),5)))
 prior$V <- sqrt(diag(c(.1, 8, .15, .002, .002))) %*% cov2cor(prior$V)
 prior$V <- prior$V %*% sqrt(diag(c(.1, 8, .15, .002, .002)))
+prior2 <- list(mu = prior$Mu, Sigma = prior$V)
 
 # mcmc specs
 rw.jump.sd <- c(.1, 1, .1, .01, .01) # random walk metropolis for params
 update.params <- TRUE
 update.data <- TRUE
-nsamples <- 2e4 # ifelse(update.data, 2e4, 4e4)
+nsamples <- 1e3 # ifelse(update.data, 2e4, 4e4)
 burn <- 1e2
 
 if(same.rnd) set.seed(SEED)
@@ -221,7 +222,7 @@ if(same.rnd) set.seed(SEED)
 time.p2 <- system.time({
   hpost.p2 <- pkg2("sde.post")(model = hmod2, init = init,
                                nsamples = nsamples, burn = burn,
-                               prior = prior,
+                               prior = prior2,
                                rw.jump.sd = rw.jump.sd,
                                update.params = update.params,
                                update.data = update.data)

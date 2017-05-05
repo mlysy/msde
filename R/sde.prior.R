@@ -29,15 +29,11 @@ sde.prior <- function(model, theta, x, phi, fixed.params, nmiss0,
   if(!ncol(x) == ncol(theta)) {
     stop("x and theta must have the same number of samples.")
   }
-  # check hyperparameters
+  # format hyperparameters
   phi <- model$prior.spec(phi, nparams, ndims, fixed.params, nmiss0)
-  # C++ format check
-  if(!is.list(phi)) stop("phi must be a list.")
-  is.valid.phi <- sapply(phi, function(x) {
-    is.null(x) || (is.double(x) & is.vector(x))
-  })
-  if(!all(is.valid.phi)) {
-    stop("Each element of phi must be NULL or a double vector.")
+  # C++ format check (is phi a list with vector-double elements)
+  if(!is.valid.hyper(phi)) {
+    stop("Unintended behavior.  Please contact package maintainer.")
   }
   # compute
   ans <- model$logprior(thetaIn = as.double(theta), xIn = as.double(x),

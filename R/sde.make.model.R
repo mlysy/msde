@@ -54,7 +54,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
             env = environment(), ...)
   environment(sde.model$sim) <- globalenv()
-  #environment(sde.model$post) <- globalenv()
+  environment(sde.model$post) <- globalenv()
   environment(sde.model$drift) <- globalenv()
   environment(sde.model$diff) <- globalenv()
   environment(sde.model$loglik) <- globalenv()

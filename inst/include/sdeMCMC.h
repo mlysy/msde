@@ -34,14 +34,15 @@ class sdeMCMC : public sdeLogLik {
   void missGibbsUpdate(double *jumpSd, int *gibbsAccept, int *paramAccept);
   void paramVanillaUpdate(double *jumpSd, int *paramAccept);
   sdeMCMC(int n, double *dt, double *xInit, double *thetaInit,
-	  int *xIndex, bool *thetaIndex, Prior *priorIn);
+	  int *xIndex, bool *thetaIndex,
+	  double **phi, int nArgs, int *nEachArg);
   ~sdeMCMC();
 };
 
 inline sdeMCMC::sdeMCMC(int n, double *dt,
 			double *xInit, double *thetaInit,
-			int *xIndex, bool *thetaIndex,
-			Prior *priorIn) : sdeLogLik(n, dt) {
+			int *xIndex, bool *thetaIndex, double **phi,
+			int nArgs, int *nEachArg) : sdeLogLik(n, dt) {
   int ii, jj;
   // problem dimensions
   //nComp = N;
@@ -102,13 +103,11 @@ inline sdeMCMC::sdeMCMC(int n, double *dt,
     propTheta[ii] = currTheta[ii];
   }
   // prior
-  prior = priorIn;
-  // sde
-  //sde = new sdeModel[nComp];
+  // any advantage to passing pointer?
+  prior = new Prior(phi, nArgs, nEachArg, fixedTheta, nMiss0);
 }
 
 inline sdeMCMC::~sdeMCMC() {
-  //delete [] sqrtDT;
   delete [] B;
   delete [] sqrtB;
   delete [] currFull;
@@ -117,11 +116,7 @@ inline sdeMCMC::~sdeMCMC() {
   delete [] missInd;
   delete [] nObsComp;
   delete [] fixedTheta;
-  //for(int ii=nComp-1; ii>=0; ii--) {
-  //  delete mvX[ii];
-  //}
-  //delete [] mvX;
-  //delete [] sde;
+  delete prior;
 }
 
 #include "MissGibbsUpdate.h"

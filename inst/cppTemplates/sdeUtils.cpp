@@ -179,7 +179,6 @@ List sdeEulerSim(int nDataOut,
   return List::create(_["dataOut"] = dataOut, _["nBadDraws"] = nBadDraws);
 }
 
-/*
 //[[Rcpp::export("sde.model$post")]]
 List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		  NumericVector dT, IntegerVector nDimsPerObs,
@@ -188,7 +187,7 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		  int nParamsOut, int nDataOut,
 		  IntegerVector dataOutRow, IntegerVector dataOutCol,
 		  double updateParams, double updateData,
-		  int priorType, List priorParams, NumericVector rwJumpSd,
+		  List priorArgs, NumericVector rwJumpSd,
 		  int updateLogLik, int nLogLikOut,
 		  int updateLastMiss, int nLastMissOut) {
   RNGScope scope;
@@ -214,34 +213,32 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
   int *paramAccept = INTEGER(paramAcceptOut);
   int *gibbsAccept = INTEGER(gibbsAcceptOut);
 
-  // initialize prior
+  // prior specification
   double *jumpSd = REAL(rwJumpSd); // random walk jump sizes
-  Prior *prior = NULL;
-  if((Prior::Type)priorType == Prior::Flat) {
-    prior = new FlatPrior();
-  }
-  else if((Prior::Type)priorType == Prior::Normal) {
-    prior = new NormalPrior(priorParams, nParams + nMiss0);
-  }
-  else if((Prior::Type)priorType == Prior::GCop) {
-    prior = new GCopPrior(priorParams, nParams + nMiss0);
-  }
-  //else if((Prior::Type)priorType == Prior::Custom) {
-  //  prior = new CustomPrior(priorParams, nParams + nMiss0);
-  //}
-  else {
-    throw Rcpp::exception("ERROR: Unrecognized prior type\n");
+  // hyper parameters: actual prior gets constructed inside MCMC object
+  int nArgs = priorArgs.length();
+  double **phi = new double*[nArgs];
+  int *nEachArg = new int[nArgs];
+  for(ii=0; ii<nArgs; ii++) {
+    if(Rf_isNull(priorArgs[ii])) {
+      nEachArg[ii] = 0;
+    } else {
+      nEachArg[ii] = as<NumericVector>(priorArgs[ii]).length();
+      phi[ii] = REAL(priorArgs[ii]);
+    }
   }
 
   // initialize MCMC
+  // prior gets constructed inside of object -- is this really beneficial?
   sdeMCMC mcmc(nComp, REAL(dT), REAL(initData), REAL(initParams),
-	       INTEGER(nDimsPerObs), (bool*)LOGICAL(fixedParams), prior);
+	       INTEGER(nDimsPerObs), (bool*)LOGICAL(fixedParams),
+	       phi, nArgs, nEachArg);
 
   // main MCMC loop
   jj = 0;
   for(int smp = -burn; smp < nSamples; smp++) {
     // user interrupt
-    if(smp % (int) 1e4) {
+    if(smp % (int) 1e3) {
       Rcpp::checkUserInterrupt();
     }
     // missing data update
@@ -293,21 +290,8 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 
   //stop:
   // delete dynamic variables
-  delete prior;
-  //delete [] sqrtDT;
-  //delete [] B;
-  //delete [] sqrtB;
-  //delete [] currData;
-  //delete [] propData;
-  //delete [] propAccept;
-  //delete [] currParams;
-  //delete [] propParams;
-  //delete [] missInd;
-  //delete [] pastDT;
-  //delete [] pastSqrtDT;
-  //delete [] logMultiAcc;
-  //delete prior;
-  //delete pastPrior;
+  delete [] phi;
+  delete [] nEachArg;
 
   return List::create(_["paramsOut"] = paramsOut, _["dataOut"] = dataOut,
 		      _["paramAccept"] = paramAcceptOut,
@@ -315,4 +299,3 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		      _["logLikOut"] = logLikOut,
 		      _["lastMissOut"] = lastMissOut, _["lastIter"] = lastIter);
 }
-*/

@@ -35,25 +35,9 @@ class sdeLogLik {
   int nDims, nParams; // internal representations taken from sdeModel
   int nComp; // number of observations INCLUDING first one
   double *dT, *sqrtDT; // times
-  /* // observation-specific drift and diffusions */
-  /* void drift(double *dr, double *x, double *theta, int iObs); */
-  /* void diff(double *df, double *x, double *theta, int iObs); */
-  /* // observation-specific mean and variance */
-  /* // in case time needs to be specified */
-  /* void mvEuler(double *x, double t, double dT, double sqrtDT, */
-  /* 	       double *theta, int iObs); */
-  /* void mvEuler(double *x, double *theta, int iObs); */
-  /* // returns pointer */
-  /* double* getMean(int iObs) { */
-  /*   return &propMean[iObs*nDims]; */
-  /* } */
-  /* double* getSd(int iObs) { */
-  /*   return &propSd[iObs*nDims2]; */
-  /* } */
   // log-density
   double loglik(double *theta, double *x);
   // constructor and destructor
-  //sdeLogLik(int n);
   sdeLogLik(int n, double *dt);
   ~sdeLogLik();
 };
@@ -80,35 +64,6 @@ inline sdeLogLik::sdeLogLik(int n, double *dt) {
   }
 }
 
-/* // initialize to avoid c++11 */
-/* inline void sdeLogLik::init(int n) { */
-/*   nComp = n; */
-/*   nDims = sdeModel::nDims; */
-/*   nDims2 = nDims*nDims; */
-/*   nParams = sdeModel::nParams; */
-/*   // create storage space */
-/*   sde = new sdeModel[nComp]; */
-/*   propMean = new double[nComp*nDims]; */
-/*   propSd = new double[nComp*nDims*nDims]; */
-/*   propZ = new double[nComp*nDims]; */
-/*   tSeq = new double[nComp]; */
-/*   dT = new double[nComp]; */
-/*   sqrtDT = new double[nComp]; */
-/* } */
-/* inline sdeLogLik::sdeLogLik(int n) { */
-/*   init(n); */
-/* } */
-/* inline sdeLogLik::sdeLogLik(int n, double *t) { */
-/*   init(n); */
-/*   // timing */
-/*   tSeq[0] = t[0]; */
-/*   for(int ii=0; ii<nComp-1; ii++) { */
-/*     tSeq[ii+1] = t[ii+1]; */
-/*     dT[ii] = tSeq[ii+1]-tSeq[ii]; */
-/*     sqrtDT[ii] = sqrt(dT[ii]); */
-/*   } */
-/* } */
-
 // destructor
 inline sdeLogLik::~sdeLogLik() {
   delete [] sde;
@@ -118,45 +73,6 @@ inline sdeLogLik::~sdeLogLik() {
   delete [] dT;
   delete [] sqrtDT;
 }
-
-/* // drift and diffusion functions */
-/* inline void sdeLogLik::drift(double *dr, double *x, double *theta, */
-/* 			     int iObs) { */
-/*   sde[iObs].sdeDr(dr, x, tSeq[iObs], theta); */
-/*   return; */
-/* } */
-
-/* inline void sdeLogLik::diff(double *df, double *x, double *theta, */
-/* 			    int iObs) { */
-/*   sde[iObs].sdeDf(df, x, tSeq[iObs], theta); */
-/*   return; */
-/* } */
-
-/* // mean and variance of Euler step */
-
-/* // general case */
-/* inline void sdeLogLik::mvEuler(double *x, */
-/* 			       double t, double dT, double sqrtDT, */
-/* 			       double *theta, int iObs) { */
-/*   // mean = x + drift(x,t,theta)*dT */
-/*   int II = iObs*nDims; */
-/*   sde[iObs].sdeDr(&propMean[II], x, t, theta); */
-/*   v_mult(&propMean[II], dT, nDims); */
-/*   for(int jj = 0; jj < nDims; jj++) { */
-/*     propMean[II + jj] += x[jj]; */
-/*   } */
-/*   // sd = diff(x,t,theta)*sqrt(dT) */
-/*   II *= nDims; */
-/*   sde[iObs].sdeDf(&propSd[II], x, t, theta); */
-/*   U_mult(&propSd[II], sqrtDT, nDims); */
-/*   return; */
-/* } */
-
-/* // time-assigned case */
-/* inline void sdeLogLik::mvEuler(double *x, double *theta, int iObs) { */
-/*   mvEuler(x, tSeq[iObs], dT[iObs], sqrtDT[iObs], theta, iObs); */
-/*   return; */
-/* } */
 
 // full log-likelihood evaluation
 inline double sdeLogLik::loglik(double *theta, double *x) {
