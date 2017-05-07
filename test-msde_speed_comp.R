@@ -190,9 +190,13 @@ hsim <- pkg1("sde.sim")(model = hmod, init.data = x0, params = theta,
                         dt = dT, dt.sim = dT/100, N = nObs, nreps = 1)
 
 # initialize MCMC rv's
-init <- pkg1("sde.init")(data = hsim$data, dt = dT, m = 2,
-                         par.index = c(2, rep(nObs-1, 1)),
+m <- 2 # degree of Euler approximation: dt_euler = dt/m
+par.index <- c(2, rep(nObs-1, 1)) # all but first vol unobserved
+init1 <- pkg1("sde.init")(data = hsim$data, dt = dT, m = m,
+                         par.index = par.index,
                          params = theta)
+init2 <- pkg2("sde.init")(data = hsim$data, dt = dT, m = m,
+                         par.index = par.index)
 
 # prior
 prior <- list(Mu = c(.1, .35, 1.0, .5, -.81),
@@ -210,7 +214,7 @@ burn <- 1e2
 
 if(same.rnd) set.seed(SEED)
 time.p1 <- system.time({
-  hpost.p1 <- pkg1("sde.post")(model = hmod, init = init,
+  hpost.p1 <- pkg1("sde.post")(model = hmod, init = init1,
                                nsamples = nsamples, burn = burn,
                                prior = prior,
                                rw.jump.sd = rw.jump.sd,
@@ -220,9 +224,9 @@ time.p1 <- system.time({
 
 if(same.rnd) set.seed(SEED)
 time.p2 <- system.time({
-  hpost.p2 <- pkg2("sde.post")(model = hmod2, init = init,
+  hpost.p2 <- pkg2("sde.post")(model = hmod2, init = init2,
                                nsamples = nsamples, burn = burn,
-                               prior = prior2,
+                               prior = prior2, debug = TRUE,
                                rw.jump.sd = rw.jump.sd,
                                update.params = update.params,
                                update.data = update.data)
