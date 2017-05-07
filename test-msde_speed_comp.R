@@ -205,7 +205,7 @@ prior2 <- list(mu = prior$Mu, Sigma = prior$V)
 rw.jump.sd <- c(.1, 1, .1, .01, .01) # random walk metropolis for params
 update.params <- TRUE
 update.data <- TRUE
-nsamples <- 1e3 # ifelse(update.data, 2e4, 4e4)
+nsamples <- 1e4 # ifelse(update.data, 2e4, 4e4)
 burn <- 1e2
 
 if(same.rnd) set.seed(SEED)
