@@ -81,3 +81,5 @@ Sigma <- crossprod(matrix(rnorm(nrv^2),nrv,nrv))
 phi <- list(mu = NULL, Sigma = NULL)
 lp2 <- sde.prior(model = hmod, x = X0, theta = Theta,
                  phi = phi)
+
+
