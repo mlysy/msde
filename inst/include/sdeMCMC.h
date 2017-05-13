@@ -104,7 +104,7 @@ inline sdeMCMC::sdeMCMC(int n, double *dt,
   }
   // prior
   // any advantage to passing pointer?
-  prior = new Prior(phi, nArgs, nEachArg, fixedTheta, nMiss0);
+  prior = new Prior(phi, nArgs, nEachArg);
 }
 
 inline sdeMCMC::~sdeMCMC() {

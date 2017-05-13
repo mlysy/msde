@@ -92,9 +92,7 @@ NumericVector sde_Prior(NumericVector thetaIn, NumericVector xIn,
       phi[ii] = REAL(phiIn[ii]);
     }
   }
-  bool *fixedParams;
-  int nMiss0 = 0;
-  Prior prior(phi, nArgs, nEachArg, fixedParams, nMiss0);
+  Prior prior(phi, nArgs, nEachArg);
   NumericVector lpOut(nReps);
   double *lp = REAL(lpOut);
   // NOTE: this can't be parallelized because private storage is common

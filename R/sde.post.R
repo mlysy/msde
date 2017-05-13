@@ -69,9 +69,11 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   # prior specification
   prior <- hyper.params
   # format hyperparameters
-  prior <- model$prior.spec(prior, nparams, ndims, fixed.params, nmiss0)
+  prior <- model$prior.spec(prior, param.names, data.names)
   # C++ format check (is phi a list with vector-double elements)
-  .check.hyper(prior)
+  if(!is.valid.hyper(prior)) {
+    stop("model$prior.spec must convert hyper.params to a list with NULL or vector-double elements.")
+  }
   # random walk jump size
   if(is.null(mwg.sd)) mwg.sd <- .25 * abs(c(init.params, init.data[1,]))
   tune.par <- .set.jump(mwg.sd, fixed.params, nmiss0, adapt,
@@ -178,7 +180,7 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
 }
 
 # jump sizes
-.set.jump <- function(sigma0, fixed.params, nmiss0, adapt,
+.set.jump <- function(mwg.sd, fixed.params, nmiss0, adapt,
                       param.names, data.names) {
   nparams <- length(param.names)
   ndims <- length(data.names)
@@ -197,9 +199,11 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
     y[names(x)] <- x
     y
   }
-  sigma0 <- .format.arg(sigma0)
-  .check.vars(names(sigma0), param.names, data.names)
-  sigma0 <- .set.arg(sigma0)
+  mwg.sd <- .format.arg(mwg.sd)
+  if(!is.valid.vars(names(mwg.sd), c(param.names, data.names))) {
+    stop("names(mwg.sd) must be a unique subset of param.names and data.names.")
+  }
+  mwg.sd <- .set.arg(mwg.sd)
   # adaptive MCMC
   if(is.logical(adapt)) {
     if(adapt) {
@@ -219,12 +223,16 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   }
   # check args
   amax <- .format.arg(amax)
-  .check.vars(names(amax), param.names, data.names)
+  if(!is.valid.vars(names(amax), c(param.names, data.names))) {
+    stop("names(adapt$max) must be a unique subset of param.names and data.names.")
+  }
   amax <- .set.arg(amax)
   arate <- .format.arg(arate)
-  .check.vars(names(arate), param.names, data.names)
+  if(!is.valid.vars(names(arate), c(param.names, data.names))) {
+    stop("names(adapt.rate) must be a unique subset of param.names and data.names.")
+  }
   arate <- .set.arg(arate)
-  list(sd = sigma0, max = amax, rate = arate)
+  list(sd = mwg.sd, max = amax, rate = arate)
 }
 
 # name and dim check for data and params, length check for dt
@@ -255,40 +263,6 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   TRUE
 }
 
-.check.vars <- function(vars, param.names, data.names) {
-  nparams <- length(param.names)
-  ndims <- length(data.names)
-  var.names <- c(param.names, data.names)
-  if(is.null(vars) || !is.character(vars)) {
-    stop("vars must be a non-null character vector.")
-  }
-  if(anyDuplicated(vars)) {
-    stop("vars must be unique.")
-  }
-  if(!all(vars %in% var.names)) {
-    stop("vars not in param.names or data.names.")
-  }
-  ## vars2 <- c(param.names[!fixed.params], data.names[ndims:1 <= nmiss])
-  ## var.id <- var.names %in% vars
-  ## if(!all(var.id) && !all(var.id == (var.names %in% vars2))) {
-  ##   stop("vars and (fixed.params,nmiss) specify different active sets.")
-  ## }
-  TRUE
-}
-
-# check that phi is a list of double vectors
-.check.hyper <- function(phi) {
-  if(!is.list(phi)) stop("phi must be a list.")
-  is.valid.phi <- sapply(phi, function(x) {
-    is.null(x) || (is.double(x) & is.vector(x))
-  })
-  is.valid.phi <- all(is.valid.phi)
-  if(!is.valid.phi) {
-    stop("Each element of phi must be NULL or a double vector.")
-  }
-  TRUE
-}
-
 # parse acceptance rates
 .set.accept <- function(bb.accept, vnl.accept, nsamples,
                         par.index, fixed.params,
@@ -300,7 +274,7 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   if(update.data) {
     accept <- c(accept, list(data = bb.accept/nsamples))
     if(verbose) {
-      message("Gibbs accept: ",
+      message("Avg. bridge accept: ",
               signif(mean(accept$data[par.index < ndims])*100,3), "%")
     }
   }

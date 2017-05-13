@@ -203,10 +203,14 @@ prior <- list(Mu = c(.1, .35, 1.0, .5, -.81),
               V = crossprod(matrix(rnorm(25),5)))
 prior$V <- sqrt(diag(c(.1, 8, .15, .002, .002))) %*% cov2cor(prior$V)
 prior$V <- prior$V %*% sqrt(diag(c(.1, 8, .15, .002, .002)))
+names(prior$Mu) <- param.names
+colnames(prior$V) <- param.names
+rownames(prior$V) <- param.names
 prior2 <- list(mu = prior$Mu, Sigma = prior$V)
 
 # mcmc specs
 rw.jump.sd <- c(.1, 1, .1, .01, .01) # random walk metropolis for params
+names(rw.jump.sd) <- param.names
 update.params <- TRUE
 update.data <- TRUE
 nsamples <- 1e4 # ifelse(update.data, 2e4, 4e4)
@@ -224,10 +228,11 @@ time.p1 <- system.time({
 
 if(same.rnd) set.seed(SEED)
 time.p2 <- system.time({
-  hpost.p2 <- pkg2("sde.post")(model = hmod2, init = init2,
+  hpost.p2 <- pkg2("sde.post")(model = hmod2, init.data = init2,
+                               init.params = theta,
                                nsamples = nsamples, burn = burn,
-                               prior = prior2, debug = TRUE,
-                               rw.jump.sd = rw.jump.sd,
+                               hyper.param = prior2,
+                               mwg.sd = rw.jump.sd,
                                update.params = update.params,
                                update.data = update.data)
 })

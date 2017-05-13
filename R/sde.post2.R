@@ -73,9 +73,11 @@ sde.post2 <- function(model, init,
   if(debug) browser()
   # format hyperparameters
   if(missing(fixed.params)) fixed.params <- rep(FALSE, nparams)
-  prior <- model$prior.spec(prior, fixed.params, nmiss0, param.names, data.names)
+  prior <- model$prior.spec(prior, param.names, data.names)
   # C++ format check (is phi a list with vector-double elements)
-  .check.hyper(prior)
+  if(!is.valid.hyper(prior)) {
+    stop("model$prior.spec must convert prior to a list with NULL or vector-double elements.")
+  }
   # random walk jump size
   if(is.null(rw.jump.sd)) {
     rw.jump.sd <- abs(init.params)/4

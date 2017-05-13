@@ -2,8 +2,7 @@
 #'
 #' @note TODO: pass \code{fixed.params} and \code{nmiss0} to \code{C++} code.
 #' @export
-sde.prior <- function(model, theta, x, phi, fixed.params, nmiss0,
-                      debug = FALSE) {
+sde.prior <- function(model, theta, x, phi, debug = FALSE) {
   if(class(model) != "sde.model")
     stop("Expecting object of class sde.model.  Use sde.make.model to create.")
   # model constants
@@ -30,10 +29,11 @@ sde.prior <- function(model, theta, x, phi, fixed.params, nmiss0,
     stop("x and theta must have the same number of samples.")
   }
   # format hyperparameters
-  phi <- model$prior.spec(phi, nparams, ndims, fixed.params, nmiss0)
+  phi <- model$prior.spec(prior.args = phi,
+                          param.names = param.names, data.names = data.names)
   # C++ format check (is phi a list with vector-double elements)
-  if(!is.valid.hyper(phi)) {
-    stop("Unintended behavior.  Please contact package maintainer.")
+  if(!is.valid.hyper(prior)) {
+    stop("model$prior.spec must convert phi to a list with NULL or vector-double elements.")
   }
   # compute
   ans <- model$logprior(thetaIn = as.double(theta), xIn = as.double(x),
