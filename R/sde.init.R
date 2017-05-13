@@ -56,5 +56,6 @@ sde.init <- function(data, dt, k, m, par.index, params, debug = FALSE) {
   par.ind[seq(1, ncomp, len = nobs)] <- par.index
   ans <- list(data = init.data, dt = dtnew, par.index = par.ind)
   if(!missing(params)) ans$params <- params
+  class(ans) <- "sde.data"
   ans
 }

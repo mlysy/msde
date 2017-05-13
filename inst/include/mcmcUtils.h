@@ -32,6 +32,7 @@ inline bool updateComponent(double x, int iter) {
 // output:
 // delta(n)
 
+/*
 double mwg_adapt(double max_val, double dec_rate,
 		 int n, double acc, );
 
@@ -61,6 +62,7 @@ class Tune_aMWG {
     return(exp(ls_new));
   }
 }
+*/
 
 // starts with log(rwJumpSd) = 0
 // at each step moves up or down by delta(n) according to whether

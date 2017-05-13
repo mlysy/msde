@@ -1,7 +1,7 @@
 #' Basic MCMC sampler for Multivariate SDEs
 #'
 #' @export
-sde.post <- function(model, init,
+sde.post2 <- function(model, init,
                      init.data, init.params, par.index, dt, nsamples, burn,
                      data.out.ind, fixed.params,
                      prior, rw.jump.sd = NULL,
@@ -72,11 +72,10 @@ sde.post <- function(model, init,
   prior2 <- prior
   if(debug) browser()
   # format hyperparameters
-  prior <- model$prior.spec(prior, nparams, ndims, fixed.params, nmiss0)
+  if(missing(fixed.params)) fixed.params <- rep(FALSE, nparams)
+  prior <- model$prior.spec(prior, fixed.params, nmiss0, param.names, data.names)
   # C++ format check (is phi a list with vector-double elements)
-  if(!is.valid.hyper(prior)) {
-    stop("Unintended behavior.  Please contact package maintainer.")
-  }
+  .check.hyper(prior)
   # random walk jump size
   if(is.null(rw.jump.sd)) {
     rw.jump.sd <- abs(init.params)/4
@@ -84,7 +83,6 @@ sde.post <- function(model, init,
   }
   if(length(rw.jump.sd) < nparams + nmiss0)
     stop("Incorrectly specified random walk jump sd's (need at least nparams + nmiss0).")
-  if(missing(fixed.params)) fixed.params <- rep(FALSE, nparams)
   # last missing output
   nmissN <- ndims - par.index[ncomp]
   if(nmissN == 0) last.miss.out <- FALSE
@@ -126,7 +124,8 @@ sde.post <- function(model, init,
                     updateLogLik = as.integer(loglik.out),
                     nLogLikOut = as.integer(ifelse(loglik.out, nsamples, 1)),
                     updateLastMiss = as.integer(last.miss.out),
-                    nLastMissOut = as.integer(ifelse(last.miss.out, nsamples*nmissN, 1)))
+                    nLastMissOut = as.integer(ifelse(last.miss.out,
+                                                     nsamples*nmissN, 1)))
   tm <- chrono(tm, display = verbose)
   names(ans) <- c("paramsOut", "dataOut", "paramAccept", "gibbsAccept",
                   "logLikOut", "lastMissOut", "lastIter")

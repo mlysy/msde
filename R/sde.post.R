@@ -19,24 +19,17 @@
 #'
 #' \code{adapt = TRUE} implements an adaptive MCMC by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
 #' \deqn{
-#' \log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, n^{-1/2}).
+#' \log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, 1/n^{1/2}).
 #' }
 #' When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
 #'
-#' For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list
+#' For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{row} and \code{col} determines which samples to return with the former, and which of the \code{ncomp} time-points to return with the latter.
 #' @export
 sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
                      nsamples, burn, mwg.sd = NULL, adapt = TRUE,
                      loglik.out = FALSE, last.miss.out = FALSE,
                      update.data = TRUE, data.out,
                      update.params = TRUE, verbose = TRUE, debug = FALSE) {
-## sde.post <- function(model, init,
-##                      init.data, init.params, par.index, dt, nsamples, burn,
-##                      data.out.ind, fixed.params,
-##                      prior, rw.jump.sd = NULL, adapt = TRUE,
-##                      update.data = TRUE, update.params = TRUE,
-##                      loglik.out = FALSE, last.miss.out = FALSE,
-##                      verbose = TRUE, debug = FALSE) {
   # model constants
   if(class(model) != "sde.model") {
     stop("model must be of class sde.model.  Use sde.make.model to create.")
@@ -53,25 +46,17 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   par.index <- init.data$par.index
   init.data <- init.data$data
   # initialize parameters
-  init.params <- init.data$params
-  if(missing(fixed.params)) fixed.params <- rep(nparams, FALSE)
-  ## if(!missing(init)) {
-  ##   if(!is.null(init$data)) init.data <- init$data
-  ##   if(!is.null(init$dt)) dt <- init$dt
-  ##   if(!is.null(init$par.index)) par.index <- init$par.index
-  ##   if(!is.null(init$params)) init.params <- init$params
-  ## }
+  if(missing(fixed.params)) fixed.params <- rep(FALSE, nparams)
   # parse inputs
   ncomp <- nrow(init.data)
   nmiss0 <- ndims - par.index[1]
   nparams2 <- nparams+nmiss0
   if(length(dt) == 1) dt <- rep(dt, ncomp-1) # time
-  .check.init(model, init.data, dt, init.params)
+  .check.init(init.data, dt, init.params, param.names, data.names)
   if(missing(burn)) burn <- max(.1, 1e3)
   if(burn < 1) burn <- nsamples*burn
   burn <- floor(burn)
-  # storage
-  # data can be subset both by time and by iteration
+  # output sizes
   if(all(par.index == ndims)) update.data <- FALSE
   data.out <- .set.data.out(data.out, nsamples, ncomp, update.data)
   nsamples.out <- length(data.out$row)
@@ -81,31 +66,16 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   nmissN <- ndims - par.index[ncomp] # last missing output
   if(nmissN == 0) last.miss.out <- FALSE
   nlast.miss.out <- ifelse(last.miss.out, nsamples*nmissN, 1)
-  ## if(update.data) {
-  ##   ndata.out <- nsamples.out*ndims*ncomp.out
-  ## } else {
-  ##   ndata.out <- 1
-  ##   data.out$row <- 1:nsamples
-  ## }
   # prior specification
   prior <- hyper.params
-  if(debug) browser()
   # format hyperparameters
   prior <- model$prior.spec(prior, nparams, ndims, fixed.params, nmiss0)
   # C++ format check (is phi a list with vector-double elements)
   .check.hyper(prior)
-  ## if(!is.valid.hyper(prior)) {
-  ##   stop("Unintended behavior.  Please contact package maintainer.")
-  ## }
   # random walk jump size
   if(is.null(mwg.sd)) mwg.sd <- .25 * abs(c(init.params, init.data[1,]))
-  tune.par <- .set.jump(model, mwg.sd, fixed.params, nmiss0, adapt)
-  ## if(is.null(rw.jump.sd)) {
-  ##   rw.jump.sd <- abs(init.params)/4
-  ##   if(nmiss0 > 0) rw.jump.sd <- c(rw.jump.sd, abs(init.data[par.index[1]+(1:nmiss0)])/4)
-  ## }
-  ## if(length(rw.jump.sd) < nparams + nmiss0)
-  ##   stop("Incorrectly specified random walk jump sd's (need at least nparams + nmiss0).")
+  tune.par <- .set.jump(mwg.sd, fixed.params, nmiss0, adapt,
+                        param.names, data.names)
   if(verbose) {
     message("Output size:")
     if(update.params) message("params = ", round(nparams.out, 2))
@@ -128,8 +98,6 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
                     dataOutCol = as.integer(data.out$col-1),
                     updateParams = as.double(update.params),
                     updateData = as.double(update.data),
-                    ## priorType = which(prior$type == .PriorTypes),
-                    ## priorParams = prior$args,
                     priorArgs = prior,
                     rwJumpSd = as.double(tune.par$sd),
                     updateLogLik = as.integer(loglik.out),
@@ -142,31 +110,9 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   # acceptance rates
   if(debug) browser()
   accept <- .set.accept(ans$gibbsAccept, ans$paramAccept,
-                        nsamples, burn, par.index, nparams, ndims,
-                        param.names, data.names, fixed.params,
+                        nsamples+burn, par.index, fixed.params,
+                        param.names, data.names,
                         update.data, update.params, verbose)
-  ## accept <- NULL
-  ## if(update.data) {
-  ##   accept <- c(accept, list(data = ans$gibbsAccept/(nsamples+burn)))
-  ##   if(verbose) {
-  ##     message("Gibbs accept: ", signif(mean(accept$data[par.index < ndims])*100,3), "%")
-  ##   }
-  ## }
-  ## if(update.params) {
-  ##   accept <- c(accept, list(params = ans$paramAccept[1:nparams]/(nsamples+burn)))
-  ##   if(verbose) {
-  ##     for(ii in 1:nparams)
-  ##       message(param.names[ii], " accept: ", signif(accept$params[ii]*100,3), "%")
-  ##   }
-  ## }
-  ## if(update.data && (nmiss0 > 0)) {
-  ##   accept <- c(accept,
-  ##               list(miss0 = ans$paramAccept[nparams+(1:nmiss0)]/(nsamples+burn)))
-  ##   for(ii in 1:nmiss0) {
-  ##     message(data.names[par.index[1] + ii], "0 accept: ",
-  ##             signif(accept$miss0[ii]*100,3), "%")
-  ##   }
-  ## }
   out <- list()
   if(update.params) {
     theta.out <- matrix(ans$paramsOut,
@@ -200,6 +146,8 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   out
 }
 
+#--- helper functions ----------------------------------------------------------
+
 # which MCMC iterations and which time points are returned
 .set.data.out <- function(data.out, nsamples, ncomp, update.data) {
   if(missing(data.out)) data.out <- 2e3
@@ -219,8 +167,8 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
     # evenly space returned samples
     data.out.row <- unique(floor(seq(1, nsamples, len = data.out.row)))
   }
-  # return the data once
   if(!update.data) {
+    # return the data once
     data.out.row <- 1:nsamples
     data.out.col <- 1:ncomp
   }
@@ -230,27 +178,28 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
 }
 
 # jump sizes
-.set.jump <- function(model, sigma0, fixed.params, nmiss0, adapt) {
-  nparams <- model$nparams
-  ndims <- model$ndims
+.set.jump <- function(sigma0, fixed.params, nmiss0, adapt,
+                      param.names, data.names) {
+  nparams <- length(param.names)
+  ndims <- length(data.names)
   .format.arg <- function(x) {
     if(length(x) == 1) {
       x <- rep(x, nparams+ndims)
+      names(x) <- c(param.names, data.names)
     } else if(length(x) == nparams+ndims && is.null(names(x))) {
-      names(x) <- c(model$param.names, model$data.names)
+      names(x) <- c(param.names, data.names)
     }
     x
   }
+  .set.arg <- function(x, id) {
+    y <- rep(0, nparams+ndims)
+    names(y) <- c(param.names, data.names)
+    y[names(x)] <- x
+    y
+  }
   sigma0 <- .format.arg(sigma0)
-  ## if(length(sigma0) == 1) {
-  ##   sigma0 <- rep(sigma0, nparams+ndims)
-  ## } else if(length(sigma0) == nparams+ndims && is.null(names(sigma0))) {
-  ##   names(sigma0) <- c(model$param.names, model$dim.names)
-  ## }
-  # check input
-  var.id <- sde.active.vars(model = model, vars = names(sigma0),
-                            fixed.params = fixed.params, nmiss = nmiss)
-  sigma0[!var.id] <- 0
+  .check.vars(names(sigma0), param.names, data.names)
+  sigma0 <- .set.arg(sigma0)
   # adaptive MCMC
   if(is.logical(adapt)) {
     if(adapt) {
@@ -270,33 +219,60 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   }
   # check args
   amax <- .format.arg(amax)
-  var.id <- sde.active.vars(model = model, vars = names(amax),
-                            fixed.params = fixed.params, nmiss = nmiss)
-  amax[!var.ind] <- 0
+  .check.vars(names(amax), param.names, data.names)
+  amax <- .set.arg(amax)
   arate <- .format.arg(arate)
-  var.id <- sde.active.vars(model = model, vars = names(arate),
-                            fixed.params = fixed.params, nmiss = nmiss)
-  arate[!var.ind] <- 0
+  .check.vars(names(arate), param.names, data.names)
+  arate <- .set.arg(arate)
   list(sd = sigma0, max = amax, rate = arate)
 }
 
 # name and dim check for data and params, length check for dt
-.check.init <- function(model, init.data, dt, init.params) {
-  if(model$ndims != ncol(init.data))
-    stop("init.data does not have the right number of components.")
-  if(!is.null(colnames(init.data))) {
-    if(any(colnames(init.data) != model$data.names))
-      stop("Incorrect data.names.")
+.check.init <- function(init.data, dt, init.params, param.names, data.names) {
+  nparams <- length(param.names)
+  ndims <- length(data.names)
+  ## if(ndims != ncol(init.data))
+  ##   stop("init.data does not have the right number of components.")
+  ## if(!is.null(colnames(init.data))) {
+  ##   if(any(colnames(init.data) != data.names))
+  ##     stop("Incorrect data.names.")
+  ## }
+  ## if(nparams != length(init.params))
+  ##   stop("init.params does not have the right length.")
+  ## if(!is.null(colnames(init.params))) {
+  ##   if(any(colnames(init.params) != param.names))
+  ##     stop("Incorrect param.names.")
+  ## }
+  if(!identical(colnames(init.data), data.names)) {
+    stop("colnames(init.data) does not match data.names.")
   }
-  if(model$nparams != length(init.params))
-    stop("init.params does not have the right length.")
-  if(!is.null(colnames(init.params))) {
-    if(any(colnames(init.params) != model$param.names))
-      stop("Incorrect param.names.")
+  if(!identical(names(init.params), param.names)) {
+    stop("names(init.params) does not match param.names.")
   }
   if(length(dt) != nrow(init.data)-1) {
     stop("init.data and dt have incompatible sizes.")
   }
+  TRUE
+}
+
+.check.vars <- function(vars, param.names, data.names) {
+  nparams <- length(param.names)
+  ndims <- length(data.names)
+  var.names <- c(param.names, data.names)
+  if(is.null(vars) || !is.character(vars)) {
+    stop("vars must be a non-null character vector.")
+  }
+  if(anyDuplicated(vars)) {
+    stop("vars must be unique.")
+  }
+  if(!all(vars %in% var.names)) {
+    stop("vars not in param.names or data.names.")
+  }
+  ## vars2 <- c(param.names[!fixed.params], data.names[ndims:1 <= nmiss])
+  ## var.id <- var.names %in% vars
+  ## if(!all(var.id) && !all(var.id == (var.names %in% vars2))) {
+  ##   stop("vars and (fixed.params,nmiss) specify different active sets.")
+  ## }
   TRUE
 }
 
@@ -310,14 +286,16 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   if(!is.valid.phi) {
     stop("Each element of phi must be NULL or a double vector.")
   }
-  is.valid.phi
+  TRUE
 }
 
 # parse acceptance rates
 .set.accept <- function(bb.accept, vnl.accept, nsamples,
-                        par.index, nparams, ndims,
-                        param.names, data.names, fixed.params,
+                        par.index, fixed.params,
+                        param.names, data.names,
                         update.data, update.params, verbose) {
+  ndims <- length(data.names)
+  nparams <- length(param.names)
   accept <- NULL
   if(update.data) {
     accept <- c(accept, list(data = bb.accept/nsamples))
@@ -329,9 +307,10 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   if(update.params) {
     accept <- c(accept, list(params = vnl.accept[1:nparams]/nsamples))
     if(verbose) {
-      for(ii in 1:nparams)
+      for(ii in which(!fixed.params)) {
         message(param.names[ii], " accept: ",
                 signif(accept$params[ii]*100,3), "%")
+      }
     }
   }
   nmiss0 <- ndims-par.index[1]

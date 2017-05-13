@@ -1,6 +1,6 @@
 #' Extract the active variables from an SDE model
 #'
-#' @param vars Named vector.
+#' @param vars Character vector.
 #' @param fixed.params Logical vector, which parameters are fixed.
 #' @param nmiss Number of unobserved SDE components at given time point.
 #' @return Logical vector of length \code{nparams+ndims} indicating which of the parameters are active in the order \code{(theta, x)}.  If both \code{vars} and \code{fixed.params}/\code{nmiss} are given, an error is thrown if their active sets differ.
