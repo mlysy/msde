@@ -232,7 +232,7 @@ time.p2 <- system.time({
                                init.params = theta,
                                nsamples = nsamples, burn = burn,
                                hyper.param = prior2,
-                               mwg.sd = rw.jump.sd,
+                               mwg.sd = rw.jump.sd, adapt = FALSE,
                                update.params = update.params,
                                update.data = update.data)
 })
