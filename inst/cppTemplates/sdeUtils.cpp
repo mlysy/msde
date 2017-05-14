@@ -185,7 +185,7 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		  int nParamsOut, int nDataOut,
 		  IntegerVector dataOutRow, IntegerVector dataOutCol,
 		  double updateParams, double updateData,
-		  List priorArgs, NumericVector rwJumpSd,
+		  List priorArgs, List tunePar,
 		  int updateLogLik, int nLogLikOut,
 		  int updateLastMiss, int nLastMissOut) {
   RNGScope scope;
@@ -207,12 +207,31 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
   NumericVector logLikOut(nLogLikOut);
   NumericVector lastMissOut(nLastMissOut);
   NumericVector lastIter(nParams + nComp*nDims);
+  NumericVector mwgSdOut(nParams + nDims);
   // pointers to acceptance rate counters for internal use
   int *paramAccept = INTEGER(paramAcceptOut);
   int *gibbsAccept = INTEGER(gibbsAcceptOut);
+  double *mwgSd = REAL(mwgSdOut);
+
+  // MCMC tuning parameters
+  for(ii=0; ii<nParams+nDims; ii++) {
+    mwgSd[ii] = REAL(tunePar["sd"])[ii];
+  }
+  mwgAdapt tuneMCMC(REAL(tunePar["max"]), REAL(tunePar["rate"]),
+		    LOGICAL(tunePar["adapt"]), nParams+nDims);
+  // double *jumpSd = REAL(rwJumpSd); // random walk jump sizes
+  // double *mwgSd = new double[nParams + nDims];
+  // double *adaptMax = new double[nParams + nDims];
+  // double *adaptRate = new double[nParams + nDims];
+  // bool *doAdapt = new bool[nParams + nDims];
+  // for(ii=0; ii<nParams+nDims; ii++) {
+  //   mwgSd[ii] = REAL(tunePar["sd"])[ii];
+  //   adaptMax[ii] = REAL(tunePar["max"])[ii];
+  //   adaptRate[ii] = REAL(tunePar["rate"])[ii];
+  //   doAdapt[ii] = (LOGICAL(tunePar["adapt"])[ii] != 0); // explicit logical cast
+  // }
 
   // prior specification
-  double *jumpSd = REAL(rwJumpSd); // random walk jump sizes
   // hyper parameters: actual prior gets constructed inside MCMC object
   int nArgs = priorArgs.length();
   double **phi = new double*[nArgs];
@@ -229,7 +248,7 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
   // initialize MCMC
   // prior gets constructed inside of object -- is this really beneficial?
   sdeMCMC mcmc(nComp, REAL(dT), REAL(initData), REAL(initParams),
-	       INTEGER(nDimsPerObs), (bool*)LOGICAL(fixedParams),
+	       INTEGER(nDimsPerObs), LOGICAL(fixedParams),
 	       phi, nArgs, nEachArg);
 
   // main MCMC loop
@@ -241,12 +260,14 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
     }
     // missing data update
     if(updateComponent(updateData, smp)) {
-      mcmc.missGibbsUpdate(jumpSd, gibbsAccept, paramAccept);
+      mcmc.missGibbsUpdate(mwgSd, gibbsAccept, paramAccept);
     }
     // parameter update
     if(updateComponent(updateParams, smp)) {
-      mcmc.paramVanillaUpdate(jumpSd, paramAccept);
+      mcmc.paramVanillaUpdate(mwgSd, paramAccept);
     }
+    // adaptive MCMC
+    tuneMCMC.adapt(mwgSd, paramAccept, burn+smp+1);
     // log-likelihood
     // TODO: keep track of this interally after every MCMC step
     if(smp >= 0) {
@@ -291,9 +312,12 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
   delete [] phi;
   delete [] nEachArg;
 
-  return List::create(_["paramsOut"] = paramsOut, _["dataOut"] = dataOut,
+  return List::create(_["paramsOut"] = paramsOut,
+		      _["dataOut"] = dataOut,
 		      _["paramAccept"] = paramAcceptOut,
 		      _["gibbsAccept"] = gibbsAcceptOut,
 		      _["logLikOut"] = logLikOut,
-		      _["lastMissOut"] = lastMissOut, _["lastIter"] = lastIter);
+		      _["lastMissOut"] = lastMissOut,
+		      _["lastIter"] = lastIter,
+		      _["mwgSd"] = mwgSdOut);
 }

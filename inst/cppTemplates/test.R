@@ -49,6 +49,35 @@ sourceCpp(code = code, verbose = TRUE, rebuild = TRUE)
 
 TestPointer(5, 3)
 
+#--- test mwgAdapt -------------------------------------------------------------
+
+Rcpp::sourceCpp(file = "test.cpp")
+
+x <- sample(c(TRUE, FALSE), 10, replace= TRUE)
+x <- c(x, NA)
+LogicalTest(x)
+
+x <- as.double(runif(5)*10)
+x <- c(x, NA)
+RealTest(x)
+
+nrv <- sample(5:10, 1)
+mwg.sd <- runif(nrv)
+adapt.max <- rep(.1, nrv)
+adapt.rate <- jitter(rep(.5, nrv))
+do.adapt <- sample(c(TRUE, FALSE), nrv, replace = TRUE)
+nAccept <- sample(30:60, nrv, replace = TRUE)
+nIter <- sample(90:110, 1)
+mwg.sd2 <- mwgAdaptTest(mwgSd = mwg.sd,
+                        adaptMax = adapt.max,
+                        adaptRate = adapt.rate,
+                        doAdapt = do.adapt,
+                        nAccept = nAccept,
+                        nIter = nIter)
+delta <- pmin(adapt.max, 1/nIter^adapt.rate)
+delta <- delta * (2 * (nAccept/nIter >= .44) - 1)
+mwg.sd3 <- ifelse(do.adapt, exp(log(mwg.sd) + delta), mwg.sd)
+all(mwg.sd2 == mwg.sd3)
 
 #--- scratch ---------------------------------------------------------------
 

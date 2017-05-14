@@ -41,9 +41,9 @@ names(prior$mu) <- param.names
 colnames(prior$Sigma) <- param.names
 rownames(prior$Sigma) <- param.names
 # mcmc specs
-rw.jump.sd <- c(.1, 1, .1, .01, .01) # random walk metropolis for params
-names(rw.jump.sd) <- param.names
-#rw.jump.sd <- NULL
+#mwg.sd <- c(.1, 1, .1, .01, .01) # random walk metropolis for params
+#names(mwg.sd) <- param.names
+mwg.sd <- NULL
 update.params <- TRUE
 update.data <- TRUE
 nsamples <- 1e3 # ifelse(update.data, 2e4, 4e4)
@@ -54,7 +54,7 @@ hpost1 <- sde.post(model = hmod,
                    init.data = init, init.params = theta,
                    nsamples = nsamples, burn = burn,
                    hyper.params = prior, debug = FALSE,
-                   mwg.sd = rw.jump.sd,
+                   mwg.sd = mwg.sd, adapt = TRUE,
                    update.params = update.params,
                    update.data = update.data)
 
@@ -63,7 +63,7 @@ hpost2 <- sde.post2(model = hmod,
                     init = init, init.params = theta,
                     nsamples = nsamples, burn = burn,
                     prior = prior, debug = FALSE,
-                    rw.jump.sd = rw.jump.sd,
+                    rw.jump.sd = mwg.sd,
                     update.data = update.data, update.params = update.params)
 
 sapply(names(hpost1), function(ii) identical(hpost1[[ii]], hpost2[[ii]]))

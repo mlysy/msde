@@ -34,14 +34,14 @@ class sdeMCMC : public sdeLogLik {
   void missGibbsUpdate(double *jumpSd, int *gibbsAccept, int *paramAccept);
   void paramVanillaUpdate(double *jumpSd, int *paramAccept);
   sdeMCMC(int n, double *dt, double *xInit, double *thetaInit,
-	  int *xIndex, bool *thetaIndex,
+	  int *xIndex, int *thetaIndex,
 	  double **phi, int nArgs, int *nEachArg);
   ~sdeMCMC();
 };
 
 inline sdeMCMC::sdeMCMC(int n, double *dt,
 			double *xInit, double *thetaInit,
-			int *xIndex, bool *thetaIndex, double **phi,
+			int *xIndex, int *thetaIndex, double **phi,
 			int nArgs, int *nEachArg) : sdeLogLik(n, dt) {
   int ii, jj;
   // problem dimensions
@@ -98,7 +98,7 @@ inline sdeMCMC::sdeMCMC(int n, double *dt,
   currTheta = currFull;
   propTheta = propFull;
   for(ii=0; ii<nParams; ii++) {
-    fixedTheta[ii] = thetaIndex[ii];
+    fixedTheta[ii] = (thetaIndex[ii] != 0);
     currTheta[ii] = thetaInit[ii];
     propTheta[ii] = currTheta[ii];
   }

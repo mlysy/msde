@@ -76,8 +76,7 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   }
   # random walk jump size
   if(is.null(mwg.sd)) mwg.sd <- .25 * abs(c(init.params, init.data[1,]))
-  tune.par <- .set.jump(mwg.sd, fixed.params, nmiss0, adapt,
-                        param.names, data.names)
+  tune.par <- .set.jump(mwg.sd, adapt, param.names, data.names)
   if(verbose) {
     message("Output size:")
     if(update.params) message("params = ", round(nparams.out, 2))
@@ -101,14 +100,15 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
                     updateParams = as.double(update.params),
                     updateData = as.double(update.data),
                     priorArgs = prior,
-                    rwJumpSd = as.double(tune.par$sd),
+                    tunePar = tune.par,
+                    #rwJumpSd = as.double(tune.par$sd),
                     updateLogLik = as.integer(loglik.out),
                     nLogLikOut = as.integer(ifelse(loglik.out, nsamples, 1)),
                     updateLastMiss = as.integer(last.miss.out),
                     nLastMissOut = as.integer(nlast.miss.out))
   tm <- chrono(tm, display = verbose)
   names(ans) <- c("paramsOut", "dataOut", "paramAccept", "gibbsAccept",
-                  "logLikOut", "lastMissOut", "lastIter")
+                  "logLikOut", "lastMissOut", "lastIter", "mwgSd")
   # acceptance rates
   if(debug) browser()
   accept <- .set.accept(ans$gibbsAccept, ans$paramAccept,
@@ -132,7 +132,7 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   if(loglik.out) out <- c(out, list(loglik = ans$logLikOut))
   out <- c(out, list(dt = dt, par.index = par.index, data.out = data.out,
                      init.data = init.data, init.params = init.params,
-                     rw.jump.sd = rw.jump.sd, hyper.params = hyper.params))
+                     mwg.sd = ans$mwgSd, hyper.params = hyper.params))
   last.iter <- list(params = ans$lastIter[1:nparams],
                     data = matrix(ans$lastIter[nparams + 1:(ncomp*ndims)],
                                   ncomp, ndims, byrow = TRUE))
@@ -180,8 +180,7 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
 }
 
 # jump sizes
-.set.jump <- function(mwg.sd, fixed.params, nmiss0, adapt,
-                      param.names, data.names) {
+.set.jump <- function(mwg.sd, adapt, param.names, data.names) {
   nparams <- length(param.names)
   ndims <- length(data.names)
   .format.arg <- function(x) {
@@ -229,10 +228,12 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   amax <- .set.arg(amax)
   arate <- .format.arg(arate)
   if(!is.valid.vars(names(arate), c(param.names, data.names))) {
-    stop("names(adapt.rate) must be a unique subset of param.names and data.names.")
+    stop("names(adapt$rate) must be a unique subset of param.names and data.names.")
   }
   arate <- .set.arg(arate)
-  list(sd = mwg.sd, max = amax, rate = arate)
+  if(any(arate < 0)) stop("adapt$rate must be non-negative.")
+  list(sd = as.double(mwg.sd), max = as.double(amax),
+       rate = as.double(arate), adapt = as.logical(amax > 0))
 }
 
 # name and dim check for data and params, length check for dt

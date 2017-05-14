@@ -23,6 +23,51 @@ inline bool updateComponent(double x, int iter) {
 
 // metropolis-within-gibbs adaptive sampler
 
+// increase or decrease each element of mwgSd depending on whether
+// acceptance rate is above or below 0.44.  Amount of change on log-scale is
+// delta(nIter) = min(adaptMax, 1/nIter^adaptRate)
+
+class mwgAdapt {
+ private:
+  double *adaptMax, *adaptRate;
+  bool *doAdapt;
+  int nRV;
+ public:
+  mwgAdapt(double *amax, double *arate, int *adapt, int n) {
+    nRV = n;
+    adaptMax = new double[nRV];
+    adaptRate = new double[nRV];
+    doAdapt = new bool[nRV];
+    for(int ii=0; ii<nRV; ii++) {
+      adaptMax[ii] = amax[ii];
+      adaptRate[ii] = arate[ii];
+      doAdapt[ii] = (adapt[ii] != 0); // R conversion
+    }
+  }
+  ~mwgAdapt() {
+    delete [] adaptMax;
+    delete [] adaptRate;
+    delete [] doAdapt;
+  }
+  void adapt(double *mwgSd, int *nAccept, int nIter) {
+    double acc;
+    double lsig;
+    double delta;
+    const double targAcc = 0.44;
+    for(int ii=0; ii<nRV; ii++) {
+      if(doAdapt[ii]) {
+	acc = (double) nAccept[ii] / (double) nIter;
+	delta = pow((double) nIter, -adaptRate[ii]);
+	if(delta > adaptMax[ii]) delta = adaptMax[ii];
+	lsig = log(mwgSd[ii]);
+	lsig += acc < targAcc ? -delta : delta;
+	mwgSd[ii] = exp(lsig);
+      }
+    }
+    return;
+  }
+};
+
 // inputs:
 // max_val: maximum value
 // dec_rate: adaption decay rate (default is .5)
