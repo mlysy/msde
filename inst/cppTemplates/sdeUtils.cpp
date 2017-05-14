@@ -1,5 +1,10 @@
 #include <Rcpp.h>
 using namespace Rcpp;
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 //[[Rcpp::depends("msdeHeaders")]]
 #include <sdeMCMC.h>
 #include <mcmcUtils.h>
@@ -21,7 +26,7 @@ int sde_getNParams() {
 
 //[[Rcpp::export("sde.model$drift")]]
 NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn,
-			int nReps) {
+			int nReps, int nCores) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
@@ -30,6 +35,9 @@ NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn,
   double *dr = REAL(drOut);
   sdeModel *sde = new sdeModel[nReps];
   // *** parallelizable for-loop ***
+  #ifdef _OPENMP
+#pragma omp parallel for num_threads(nCores) if(nCores > 0)
+  #endif
   for(int ii = 0; ii < nReps; ii++) {
     sde[ii].sdeDr(&dr[ii*nDims], &x[ii*nDims], &theta[ii*nParams]);
   }
