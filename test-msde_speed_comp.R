@@ -94,7 +94,7 @@ time.p1 <- system.time({
   df.p1 <- pkg1("sde.diff")(model = hmod, x = X0, theta = Theta)
 })
 time.p2 <- system.time({
-  dr.p2 <- pkg2("sde.drift")(model = hmod2, x = X0, theta = Theta)
+  dr.p2 <- pkg2("sde.drift")(model = hmod2, x = X0, theta = Theta, ncores = 8)
   df.p2 <- pkg2("sde.diff")(model = hmod2, x = X0, theta = Theta)
 })
 

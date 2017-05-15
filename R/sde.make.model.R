@@ -48,21 +48,10 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
             to = file.path(tempdir(), "sdeModel.h"),
             overwrite = TRUE, copy.date = TRUE)
   # omp support
-  if(omp) {
-    cxxflags <- Sys.getenv(x = "PKG_CXXFLAGS", unset = NA)
-    ompflags <- ifelse(is.na(cxxflags), "-fopenmp",
-                       paste("-fopenmp", cxxflags))
-    Sys.setenv(PKG_CXXFLAGS = ompflags)
-  }
+  if(omp) old.env <- .omp.set()
   sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
             env = environment(), ...)
-  if(omp) {
-    if(is.na(cxxflags)) {
-      Sys.unsetenv(x = "PKG_CXXFLAGS")
-    } else {
-      Sys.setenv(PKG_CXXFLAGS = cxxflags)
-    }
-  }
+  if(omp) .omp.unset(env = old.env)
   environment(sde.model$sim) <- globalenv()
   environment(sde.model$post) <- globalenv()
   environment(sde.model$drift) <- globalenv()
@@ -88,4 +77,32 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   # output
   class(sde.model) <- "sde.model"
   sde.model
+}
+
+#--- omp set and unset ---------------------------------------------------------
+
+# adds -fopenmp flags to PKG_CXXFLAGS and PKG_LIBS
+
+.omp.set <- function() {
+  cxx <- Sys.getenv(x = "PKG_CXXFLAGS", unset = NA)
+  libs <- Sys.getenv(x = "PKG_LIBS", unset = NA)
+  env <- list(cxx = cxx, libs = libs)
+  Sys.setenv(PKG_CXXFLAGS = ifelse(is.na(cxx),
+                                "-fopenmp", paste("-fopenmp", cxx)))
+  Sys.setenv(PKG_LIBS = ifelse(is.na(libs),
+                               "-fopenmp", paste("-fopenmp", libs)))
+  env
+}
+
+.omp.unset <- function(env) {
+  if(is.na(env$cxx)) {
+    Sys.unsetenv(x = "PKG_CXXFLAGS")
+  } else {
+    Sys.setenv(PKG_CXXFLAGS = env$cxx)
+  }
+  if(is.na(env$libs)) {
+    Sys.unsetenv(x = "PKG_LIBS")
+  } else {
+    Sys.setenv(PKG_LIBS = env$libs)
+  }
 }

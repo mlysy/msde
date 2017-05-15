@@ -36,6 +36,7 @@ NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn,
   sdeModel *sde = new sdeModel[nReps];
   // *** parallelizable for-loop ***
   #ifdef _OPENMP
+  Rprintf("nCores = %i\n", nCores);
 #pragma omp parallel for num_threads(nCores) if(nCores > 0)
   #endif
   for(int ii = 0; ii < nReps; ii++) {
