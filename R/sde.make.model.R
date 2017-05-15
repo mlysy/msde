@@ -21,10 +21,9 @@
 #' @note TODO: fix \code{rebuild = TRUE}.  This could be done with \code{utils::changedFiles}.
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
-                           data.names, param.names, prior.spec,
+                           data.names, param.names, prior.spec, omp = FALSE,
                            ..., debug = FALSE) {
   if(debug) browser()
-  #.msdeCppPath <- "C:/Users/Jerome/Documents/R/library/msdeHeaders/cppTemplates"
   sde.model <- list()
   # prior specification
   if(PriorFile == "default") {
@@ -45,14 +44,25 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
             to = file.path(tempdir(), "sdeUtils.cpp"),
             overwrite = TRUE, copy.date = TRUE)
-  ## if(missing(ModelFile)) {
-  ##   ModelFile <- file.path(.msdeCppPath, "sdeModel.h")
-  ## }
   file.copy(from = ModelFile,
             to = file.path(tempdir(), "sdeModel.h"),
             overwrite = TRUE, copy.date = TRUE)
+  # omp support
+  if(omp) {
+    cxxflags <- Sys.getenv(x = "PKG_CXXFLAGS", unset = NA)
+    ompflags <- ifelse(is.na(cxxflags), "-fopenmp",
+                       paste("-fopenmp", cxxflags))
+    Sys.setenv(PKG_CXXFLAGS = ompflags)
+  }
   sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
             env = environment(), ...)
+  if(omp) {
+    if(is.na(cxxflags)) {
+      Sys.unsetenv(x = "PKG_CXXFLAGS")
+    } else {
+      Sys.setenv(PKG_CXXFLAGS = cxxflags)
+    }
+  }
   environment(sde.model$sim) <- globalenv()
   environment(sde.model$post) <- globalenv()
   environment(sde.model$drift) <- globalenv()
@@ -65,8 +75,12 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   # parameter and data names
   if(missing(data.names)) data.names <- paste0("X", 1:ndims)
   if(missing(param.names)) param.names <- paste0("theta", 1:nparams)
-  if(length(data.names) != ndims) stop("Incorrect data.names.")
-  if(length(param.names) != nparams) stop("Incorrect param.names.")
+  if(length(data.names) != ndims) {
+    stop("data.names has wrong length.")
+  }
+  if(length(param.names) != nparams) {
+    stop("param.names has wrong length.")
+  }
   sde.model <- c(sde.model,
                  list(ndims = ndims, nparams = nparams,
                       data.names = data.names, param.names = param.names,

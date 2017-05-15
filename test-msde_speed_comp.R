@@ -46,7 +46,7 @@ param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
 hmod2 <- pkg2("sde.make.model")(ModelFile = "hestModel.h",
                                 param.names = param.names,
-                                data.names = data.names,
+                                data.names = data.names, omp = TRUE,
                                 showOutput = TRUE, rebuild = TRUE)
 ndims <- hmod2$ndims
 nparams <- hmod2$nparams
