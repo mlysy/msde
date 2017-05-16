@@ -5,7 +5,7 @@
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
 #' @return A matrix with \code{ndims} columns containing the drift funtion evaluated at \code{x} and \code{theta}.
 #' @export
-sde.drift <- function(model, x, theta, ncores = NA, debug = FALSE) {
+sde.drift <- function(model, x, theta, debug = FALSE) {
   if(class(model) != "sde.model")
     stop("Expecting object of class sde.model.  Use sde.make.model to create.")
   # model constants
@@ -31,11 +31,9 @@ sde.drift <- function(model, x, theta, ncores = NA, debug = FALSE) {
   if(!all(c(ncol(x), ncol(theta)) == nreps)) {
     stop("x and theta have incompatible dimensions.")
   }
-  if(is.na(ncores)) ncores <- 0
   # compute
   ans <- model$drift(xIn = as.double(x), thetaIn = as.double(theta),
-                     nReps = as.integer(nreps),
-                     nCores = as.integer(ncores))
+                     nReps = as.integer(nreps))
   dr <- matrix(ans, nreps, ndims, byrow = TRUE)
   dr
 }

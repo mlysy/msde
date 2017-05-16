@@ -24,8 +24,11 @@ colnames(Theta) <- param.names
 X0 <- matrix(x0, nReps, ndims, byrow = TRUE)
 colnames(X0) <- data.names
 
-ncores <- 1
-system.time({
-  dr <- sde.drift(model = hmod, x = X0, theta = Theta,
-                  ncores = ncores, debug = FALSE)
-})
+
+# ncores for sde.drift now DISABLED.
+# best to parallelize this from within R
+## ncores <- 8 # set to < 0 or NA to disable omp
+## system.time({
+##   dr <- sde.drift(model = hmod, x = X0, theta = Theta,
+##                   ncores = ncores, debug = FALSE)
+## })

@@ -24,41 +24,35 @@ int sde_getNParams() {
   return sdeModel::nParams;
 }
 
+// Best to parallelize these from within R: easier and prob faster since
+// memory can be allocated in parallel there
 //[[Rcpp::export("sde.model$drift")]]
-NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn,
-			int nReps, int nCores) {
+NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn, int nReps) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
   NumericVector drOut(nReps*nDims);
   double *dr = REAL(drOut);
-  sdeModel *sde = new sdeModel[nReps];
-  // *** parallelizable for-loop ***
-  #ifdef _OPENMP
-  Rprintf("nCores = %i\n", nCores);
-#pragma omp parallel for num_threads(nCores) if(nCores > 0)
-  #endif
+  sdeModel *sde = new sdeModel[1];
   for(int ii = 0; ii < nReps; ii++) {
-    sde[ii].sdeDr(&dr[ii*nDims], &x[ii*nDims], &theta[ii*nParams]);
+    sde[0].sdeDr(&dr[ii*nDims], &x[ii*nDims], &theta[ii*nParams]);
   }
   delete [] sde;
   return drOut;
 }
 
 //[[Rcpp::export("sde.model$diff")]]
-NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn,
-		       int nReps) {
+NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn, int nReps) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
   NumericVector dfOut(nReps*nDims*nDims);
   double *df = REAL(dfOut);
-  sdeModel *sde = new sdeModel[nReps];
-  // *** parallelizable for-loop ***
+  sdeModel *sde = new sdeModel[0];
   for(int ii = 0; ii < nReps; ii++) {
-    sde[ii].sdeDf(&df[ii*nDims*nDims], &x[ii*nDims], &theta[ii*nParams]);
+    sde[0].sdeDf(&df[ii*nDims*nDims], &x[ii*nDims], &theta[ii*nParams]);
   }
   delete [] sde;
   return dfOut;
