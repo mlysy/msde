@@ -25,9 +25,19 @@ public members:
 #include "sdeModel.h"
 #include "sdeUtils.h"
 
+// parallel implementation
+#ifdef _OPENMP
+#include <omp.h>
+#else
+int omp_get_thread_num(void) return 0;
+#endif
+
+
 class sdeLogLik {
  protected:
   int nDims2;
+  // >= 1: no sense in "disabling" omp at runtime (instead of at compile time)
+  int nCores;
   //void init(int n); // initialize temporary storage
  public:
   double *propMean, *propSd, *propZ; // for storing normal calculations
@@ -37,8 +47,10 @@ class sdeLogLik {
   double *dT, *sqrtDT; // times
   // log-density
   double loglik(double *theta, double *x);
+  double loglikPar(double *theta, double *x);
   // constructor and destructor
   sdeLogLik(int n, double *dt);
+  sdeLogLik(int n, double *dt, int ncores);
   ~sdeLogLik();
 };
 
@@ -64,7 +76,27 @@ inline sdeLogLik::sdeLogLik(int n, double *dt) {
   }
 }
 
-// destructor
+inline sdeLogLik::sdeLogLik(int n, double *dt, int ncores) {
+  nComp = n;
+  nCores = ncores;
+  nDims = sdeModel::nDims;
+  nDims2 = nDims*nDims;
+  nParams = sdeModel::nParams;
+  // create storage space
+  sde = new sdeModel[nCores];
+  propMean = new double[nCores*nDims];
+  propSd = new double[nCores*nDims*nDims];
+  propZ = new double[nCores*nDims];
+  dT = new double[nComp];
+  sqrtDT = new double[nComp];
+  // timing
+  for(int ii=0; ii<nComp-1; ii++) {
+    dT[ii] = dt[ii];
+    sqrtDT[ii] = sqrt(dT[ii]);
+  }
+}
+
+// Destructor
 inline sdeLogLik::~sdeLogLik() {
   delete [] sde;
   delete [] propMean;
@@ -83,6 +115,23 @@ inline double sdeLogLik::loglik(double *theta, double *x) {
 	    &x[ii*nDims], dT[ii], sqrtDT[ii], theta, &sde[ii]);
     ll += lmvn(&x[(ii+1)*nDims], &propZ[ii*nDims],
 	       &propMean[ii*nDims], &propSd[ii*nDims2], nDims);
+  }
+  return(ll);
+}
+
+// full log-likelihood evaluation
+inline double sdeLogLik::loglikPar(double *theta, double *x) {
+  double ll = 0;
+  // *** PARALLELIZABLE FOR-LOOP ***
+  #ifdef _OPENMP
+#pragma omp parallel for num_threads(nCores) if(nCores > 1)
+  #endif
+  for(int ii = 0; ii < nComp-1; ii++) {
+    int iCore = omp_get_thread_num();
+    mvEuler(&propMean[iCore*nDims], &propSd[iCore*nDims2],
+	    &x[ii*nDims], dT[ii], sqrtDT[ii], theta, &sde[iCore]);
+    ll += lmvn(&x[(ii+1)*nDims], &propZ[iCore*nDims],
+	       &propMean[iCore*nDims], &propSd[iCore*nDims2], nDims);
   }
   return(ll);
 }

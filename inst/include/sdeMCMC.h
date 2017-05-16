@@ -98,7 +98,7 @@ inline sdeMCMC::sdeMCMC(int n, double *dt,
   currTheta = currFull;
   propTheta = propFull;
   for(ii=0; ii<nParams; ii++) {
-    fixedTheta[ii] = (thetaIndex[ii] != 0);
+    fixedTheta[ii] = (thetaIndex[ii] != 0); // R logicals stored as C++ ints
     currTheta[ii] = thetaInit[ii];
     propTheta[ii] = currTheta[ii];
   }

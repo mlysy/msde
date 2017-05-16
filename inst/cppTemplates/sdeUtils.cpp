@@ -3,6 +3,8 @@ using namespace Rcpp;
 
 #ifdef _OPENMP
 #include <omp.h>
+#else
+int omp_get_thread_num(void) return 0;
 #endif
 
 //[[Rcpp::depends("msdeHeaders")]]
@@ -61,17 +63,17 @@ NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn, int nReps) {
 // SDE log-likelihood evaluation.
 //[[Rcpp::export("sde.model$loglik")]]
 NumericVector sde_LogLik(NumericVector xIn, NumericVector dTIn,
-			NumericVector thetaIn,
-			int nComp, int nReps) {
+			 NumericVector thetaIn,
+			 int nComp, int nReps, int nCores) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
   NumericVector llOut(nReps);
   double *ll = REAL(llOut);
-  sdeLogLik sdeLL(nComp, REAL(dTIn));
+  sdeLogLik sdeLL(nComp, REAL(dTIn), nCores);
   for(int ii=0; ii<nReps; ii++) {
-    ll[ii] = sdeLL.loglik(&theta[ii*nParams], &x[ii*nDims*nComp]);
+    ll[ii] = sdeLL.loglikPar(&theta[ii*nParams], &x[ii*nDims*nComp]);
   }
   return llOut;
 }
