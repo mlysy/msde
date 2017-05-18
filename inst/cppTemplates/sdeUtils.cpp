@@ -1,11 +1,11 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-#ifdef _OPENMP
-#include <omp.h>
-#else
-int omp_get_thread_num(void) return 0;
-#endif
+// #ifdef _OPENMP
+// #include <omp.h>
+// #else
+// int omp_get_thread_num(void) return 0;
+// #endif
 
 //[[Rcpp::depends("msdeHeaders")]]
 #include <sdeMCMC.h>
@@ -192,7 +192,7 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		  double updateParams, double updateData,
 		  List priorArgs, List tunePar,
 		  int updateLogLik, int nLogLikOut,
-		  int updateLastMiss, int nLastMissOut) {
+		  int updateLastMiss, int nLastMissOut, int nCores) {
   RNGScope scope;
   int ii, jj, kk;
 
@@ -254,7 +254,7 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
   // prior gets constructed inside of object -- is this really beneficial?
   sdeMCMC mcmc(nComp, REAL(dT), REAL(initData), REAL(initParams),
 	       INTEGER(nDimsPerObs), LOGICAL(fixedParams),
-	       phi, nArgs, nEachArg);
+	       phi, nArgs, nEachArg, nCores);
 
   // main MCMC loop
   jj = 0;

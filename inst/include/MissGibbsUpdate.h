@@ -22,116 +22,129 @@ inline void sdeMCMC::mvEraker(double *mean, double *sd,
 inline void sdeMCMC::missGibbsUpdate(double *jumpSd, int *gibbsAccept,
 				     int *paramAccept) {
   int ii, II, jj, JJ;
-  int startII, endII;
-  double *mean, *sd, *Z, *tmpZ;
-  //int foundNaN = 0;
+  //int startII, endII;
+  double *mean, *sd, *Z;
   // only elements in missInd are updated.
   // first and last components are handled separately.
-  startII = (missInd[0] == 0) ? 1 : 0;
-  endII = (missInd[nMiss-1] == nComp-1) ? nMiss-1 : nMiss;
+  //startII = (missInd[0] == 0) ? 1 : 0;
+  //endII = (missInd[nMiss-1] == nComp-1) ? nMiss-1 : nMiss;
   // Markov chain elements are conditionally independent,
   // so every other can be updated in parallel
+  // pre-draw missing data (don't know how to parallelize this yet)
+  propU[0] = unif_rand(); // also pre-draw acceptance Uniforms
+  for(II=0; II<nMiss; II++) {
+    ii = missInd[II];
+    propU[ii] = unif_rand();
+    for(jj=nObsComp[ii]; jj<nDims; jj++) {
+      propZ[ii*nDims + jj] = norm_rand();
+    }
+  }
+  ii = nComp-1;
+  for(jj=nObsComp[ii]; jj<nDims; jj++) {
+    propZ[ii*nDims + jj] = norm_rand();
+  }
+  // intermediate data points
   for(JJ = 0; JJ < 2; JJ++) {
     // *** PARALLELIZABLE FOR-LOOP ***
-    for(II = startII+JJ; II < endII; II = II+2) {
+    #ifdef _OPENMP
+#pragma omp parallel for num_threads(nCores) private(ii, jj, II, mean, sd, Z) if(nCores > 1)
+    #endif
+    for(II = JJ; II < nMiss; II = II+2) {
+      int iCore = omp_get_thread_num();
       ii = missInd[II];
-      // these variables will need to be privatized
-      mean = &propMean[ii*nDims];
-      sd = &propSd[ii*nDims2];
+      // these variables need to be privatized
+      mean = &propMean[iCore*nDims];
+      sd = &propSd[iCore*nDims2];
       Z = &propZ[ii*nDims];
       // intermediate data points
-      if((0 < ii) && (ii < nComp-1)) {
-	mvEraker(mean, sd,
-		 &currX[(ii-1)*nDims], &currX[(ii+1)*nDims],
-		 B[ii], sqrtB[ii], currTheta,
-		 &sde[ii]);
-	// partial observations
-	if(nObsComp[ii] == 0) {
-	  for(jj=0; jj<nDims; jj++) Z[jj] = norm_rand();
-	}
-	else {
-	  zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]);
-	  for(jj=nObsComp[ii]; jj<nDims; jj++) {
-	    Z[jj] = norm_rand();
+      mvEraker(mean, sd,
+	       &currX[(ii-1)*nDims], &currX[(ii+1)*nDims],
+	       B[ii], sqrtB[ii], currTheta,
+	       &sde[iCore]);
+      // partial observations
+      if(nObsComp[ii] > 0) {
+	zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]);
+      }
+      /* if(nObsComp[ii] == 0) { */
+      /*   for(jj=0; jj<nDims; jj++) Z[jj] = norm_rand(); */
+      /* } */
+      /* else { */
+      /*   zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]); */
+      /*   for(jj=nObsComp[ii]; jj<nDims; jj++) { */
+      /*     Z[jj] = norm_rand(); */
+      /*   } */
+      /* } */
+      // proposals
+      xmvn(&propX[iCore*nDims], Z, mean, sd, nDims);
+      // only calculate acceptance rate if proposal is valid
+      if(sde[iCore].isValidData(&propX[iCore*nDims], currTheta)) {
+	// acceptance rate
+	// proposal
+	propAccept[iCore] = lmvn(&currX[ii*nDims], Z, mean, sd, nDims);
+	propAccept[iCore] -= lmvn(&propX[iCore*nDims], Z, mean, sd, nDims);
+	// target 1
+	mvEuler(mean, sd, &currX[(ii-1)*nDims],
+		dT[ii-1], sqrtDT[ii-1], currTheta, &sde[iCore]);
+	propAccept[iCore] += lmvn(&propX[iCore*nDims], Z, mean, sd, nDims);
+	propAccept[iCore] -= lmvn(&currX[ii*nDims], Z, mean, sd, nDims);
+	// target 2
+	mvEuler(mean, sd, &propX[iCore*nDims],
+		dT[ii], sqrtDT[ii], currTheta, &sde[iCore]);
+	propAccept[iCore] += lmvn(&currX[(ii+1)*nDims], Z, mean, sd, nDims);
+	mvEuler(mean, sd, &currX[ii*nDims],
+		dT[ii], sqrtDT[ii], currTheta, &sde[iCore]);
+	propAccept[iCore] -= lmvn(&currX[(ii+1)*nDims], Z, mean, sd, nDims);
+	// evaluate mh ratio
+	if(exp(propAccept[iCore]) >= propU[ii]) {
+	  for(jj = 0; jj < nDims; jj++) {
+	    currX[ii*nDims + jj] = propX[iCore*nDims + jj];
 	  }
-	}
-	// proposals
-	xmvn(&propX[ii*nDims], Z, mean, sd, nDims);
-	//if(isNaN(&propX[ii*nDims], nDims)) {
-	//  Rprintf("found NaN in missGibbsUpdate, ii = %i.\n", ii);
-	//  foundNaN = 1;
-	//  goto stop;
-	//}
-	// only calculate acceptance rate if proposal is valid
-	if(sde[ii].isValidData(&propX[ii*nDims], currTheta)) {
-	  // acceptance rate
-	  // proposal
-	  propAccept[ii] = lmvn(&currX[ii*nDims], Z, mean, sd, nDims);
-	  propAccept[ii] -= lmvn(&propX[ii*nDims], Z, mean, sd, nDims);
-	  // target 1
-	  mvEuler(mean, sd, &currX[(ii-1)*nDims],
-		  dT[ii-1], sqrtDT[ii-1], currTheta, &sde[ii]);
-	  propAccept[ii] += lmvn(&propX[ii*nDims], Z, mean, sd, nDims);
-	  propAccept[ii] -= lmvn(&currX[ii*nDims], Z, mean, sd, nDims);
-	  // target 2
-	  mvEuler(mean, sd, &propX[ii*nDims],
-		  dT[ii], sqrtDT[ii], currTheta, &sde[ii]);
-	  propAccept[ii] += lmvn(&currX[(ii+1)*nDims], Z, mean, sd, nDims);
-	  mvEuler(mean, sd, &currX[ii*nDims],
-		  dT[ii], sqrtDT[ii], currTheta, &sde[ii]);
-	  propAccept[ii] -= lmvn(&currX[(ii+1)*nDims], Z, mean, sd, nDims);
-	  // evaluate mh ratio
-	  if(exp(propAccept[ii]) >= unif_rand()) {
-	    for(jj = 0; jj < nDims; jj++) {
-	      currX[ii*nDims + jj] = propX[ii*nDims + jj];
-	    }
-	    gibbsAccept[ii]++;
-	  }
+	  gibbsAccept[ii]++;
 	}
       }
     }
   }
-  // special treatment for last datapoint
-  if(missInd[nMiss-1] == nComp-1) {
+  // last datapoint
+  if(nMissN > 0) {
     ii = nComp-1;
-    mean = &propMean[ii*nDims];
-    sd = &propSd[ii*nDims2];
+    iCore = 0;
+    mean = &propMean[iCore*nDims];
+    sd = &propSd[iCore*nDims2];
     Z = &propZ[ii*nDims];
     mvEuler(mean, sd, &currX[(ii-1)*nDims],
-	    dT[ii-1], sqrtDT[ii-1], currTheta, &sde[ii]);
+	    dT[ii-1], sqrtDT[ii-1], currTheta, &sde[iCore]);
     // partial observations
-    if(nObsComp[ii] == 0) {
-      for(jj = 0; jj < nDims; jj++) {
-	Z[jj] = norm_rand();
-      }
-    }
-    else {
+    if(nObsComp[ii] > 0) {
       zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]);
-      for(jj=nObsComp[ii]; jj<nDims; jj++) {
-	Z[jj] = norm_rand();
-      }
     }
+    /* if(nObsComp[ii] == 0) { */
+    /*   for(jj = 0; jj < nDims; jj++) { */
+    /* 	Z[jj] = norm_rand(); */
+    /*   } */
+    /* } */
+    /* else { */
+    /*   zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]); */
+    /*   for(jj=nObsComp[ii]; jj<nDims; jj++) { */
+    /* 	Z[jj] = norm_rand(); */
+    /*   } */
+    /* } */
     // proposals
-    xmvn(&propX[ii*nDims], Z, mean, sd, nDims);
-    //if(isNaN(&propX[ii*nDims], nDims)) {
-    //  Rprintf("found NaN in missGibbsUpdate, ii = %i.\n", ii);
-    //  foundNaN = 1;
-    //  goto stop;
-    //}
+    xmvn(&propX[iCore*nDims], Z, mean, sd, nDims);
     // acceptance is 100% as long as the proposal is valid
-    if(sde[ii].isValidData(&propX[ii*nDims], currTheta)) {
+    if(sde[iCore].isValidData(&propX[iCore*nDims], currTheta)) {
       for(jj = 0; jj < nDims; jj++) {
-	currX[ii*nDims + jj] = propX[ii*nDims + jj];
+	currX[ii*nDims + jj] = propX[iCore*nDims + jj];
       }
       gibbsAccept[ii]++;
     }
   }
-  // special treatment for first datapoint
-  if(missInd[0] == 0) {
+  // first datapoint
+  if(nMiss0 > 0) {
     ii = 0;
-    mean = &propMean[ii*nDims];
-    sd = &propSd[ii*nDims2];
-    Z = &propZ[ii*nDims];
+    iCore = 0;
+    mean = &propMean[iCore*nDims];
+    sd = &propSd[iCore*nDims2];
+    Z = &propZ[iCore*nDims];
     // initialize
     for(jj = 0; jj < nDims; jj++) {
       propX[jj] = currX[jj];
@@ -140,31 +153,30 @@ inline void sdeMCMC::missGibbsUpdate(double *jumpSd, int *gibbsAccept,
     for(jj = 0; jj < nMiss0; jj++) {
       // proposal
       propX[nObsComp[0]+jj] = currX[nObsComp[0]+jj] + jumpSd[nParams+jj] * norm_rand();
-      if(sde[ii].isValidData(&propX[ii*nDims], currTheta)) {
+      if(sde[iCore].isValidData(&propX[iCore*nDims], currTheta)) {
 	// acceptance rate.
 	// target 1
-	propAccept[ii] = prior->logPrior(currTheta, propX);
-	propAccept[ii] -= prior->logPrior(currTheta, currX);
+	propAccept[iCore] = prior->logPrior(currTheta, propX);
+	propAccept[iCore] -= prior->logPrior(currTheta, currX);
 	// target 2
-	mvEuler(mean, sd, &propX[ii*nDims],
-		dT[ii], sqrtDT[ii], currTheta, &sde[ii]);
-	propAccept[ii] += lmvn(&currX[(ii+1)*nDims], Z, mean, sd, nDims);
+	mvEuler(mean, sd, &propX[iCore*nDims],
+		dT[ii], sqrtDT[ii], currTheta, &sde[iCore]);
+	propAccept[iCore] += lmvn(&currX[(ii+1)*nDims], Z, mean, sd, nDims);
 	mvEuler(mean, sd, &currX[ii*nDims],
-		dT[ii], sqrtDT[ii], currTheta, &sde[ii]);
-	propAccept[ii] -= lmvn(&currX[(ii+1)*nDims], Z, mean, sd, nDims);
+		dT[ii], sqrtDT[ii], currTheta, &sde[iCore]);
+	propAccept[iCore] -= lmvn(&currX[(ii+1)*nDims], Z, mean, sd, nDims);
 	// evaluate mh ratio
-	if(exp(propAccept[ii]) >= unif_rand()) {
-	  currX[ii*nDims + nObsComp[0]+jj] = propX[ii*nDims + nObsComp[0]+jj];
+	if(exp(propAccept[iCore]) >= propU[ii]) {
+	  currX[nObsComp[0]+jj] = propX[nObsComp[0]+jj];
 	  paramAccept[nParams + jj]++;
 	}
 	else {
-	  propX[ii*nDims + nObsComp[0]+jj] = currX[ii*nDims + nObsComp[0]+jj];
+	  propX[nObsComp[0]+jj] = currX[nObsComp[0]+jj];
 	}
       }
     }
   }
-  //stop:
-  //return foundNaN;
+  return;
 }
 
 

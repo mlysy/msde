@@ -32,7 +32,6 @@ public members:
 int omp_get_thread_num(void) return 0;
 #endif
 
-
 class sdeLogLik {
  protected:
   int nDims2;
@@ -86,7 +85,7 @@ inline sdeLogLik::sdeLogLik(int n, double *dt, int ncores) {
   sde = new sdeModel[nCores];
   propMean = new double[nCores*nDims];
   propSd = new double[nCores*nDims*nDims];
-  propZ = new double[nCores*nDims];
+  propZ = new double[nComp*nDims]; // RV draws can't be parallelized
   dT = new double[nComp];
   sqrtDT = new double[nComp];
   // timing
@@ -124,7 +123,7 @@ inline double sdeLogLik::loglikPar(double *theta, double *x) {
   double ll = 0;
   // *** PARALLELIZABLE FOR-LOOP ***
   #ifdef _OPENMP
-#pragma omp parallel for num_threads(nCores) if(nCores > 1)
+  #pragma omp parallel for num_threads(nCores) if(nCores > 1)
   #endif
   for(int ii = 0; ii < nComp-1; ii++) {
     int iCore = omp_get_thread_num();

@@ -62,3 +62,14 @@ system.time({
                theta = Theta, ncores = ncores)
   })
 })
+
+#--- indexing test -------------------------------------------------------------
+
+Rcpp::sourceCpp(file = "seqTest.cpp")
+
+nobs <- 10
+ndims <- 2
+par.index <- sample(ndims, nobs, replace = TRUE)
+names(par.index) <- 1:nobs-1
+par.index[par.index < ndims]
+seqTest(par.index, ndims)

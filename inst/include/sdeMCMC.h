@@ -13,8 +13,9 @@
 #include "sdePrior.h"
 
 class sdeMCMC : public sdeLogLik {
+  // inherited from sdeLogLik: nDims2, nCores
   int *missInd;
-  int nMiss, nMiss0;
+  int nMiss, nMiss0, nMissN;
   Prior *prior;
   void mvEraker(double *mean, double *sd,
 		double *x0, double *x2,
@@ -24,6 +25,7 @@ class sdeMCMC : public sdeLogLik {
   //int nComp, nDims, nParams; coming from sdeLogLik
   double *currFull, *propFull, *propAccept;
   double *currX, *propX, *currTheta, *propTheta;
+  double *propU; // for acceptance rates (predrawn in parallel version)
   //double *dT, *sqrtDT; coming from sdeLogLik
   double *B, *sqrtB;
   int *nObsComp;
@@ -35,14 +37,15 @@ class sdeMCMC : public sdeLogLik {
   void paramVanillaUpdate(double *jumpSd, int *paramAccept);
   sdeMCMC(int n, double *dt, double *xInit, double *thetaInit,
 	  int *xIndex, int *thetaIndex,
-	  double **phi, int nArgs, int *nEachArg);
+	  double **phi, int nArgs, int *nEachArg, int ncores);
   ~sdeMCMC();
 };
 
 inline sdeMCMC::sdeMCMC(int n, double *dt,
 			double *xInit, double *thetaInit,
 			int *xIndex, int *thetaIndex, double **phi,
-			int nArgs, int *nEachArg) : sdeLogLik(n, dt) {
+			int nArgs, int *nEachArg,
+			int ncores) : sdeLogLik(n, dt, ncores) {
   int ii, jj;
   // problem dimensions
   //nComp = N;
@@ -62,33 +65,38 @@ inline sdeMCMC::sdeMCMC(int n, double *dt,
   }
   // data
   currFull = new double[nComp*nDims + nParams];
-  propFull = new double[nComp*nDims + nParams];
-  propAccept = new double[nComp];
+  propFull = new double[nCores*nDims + nParams];
+  propAccept = new double[nCores];
+  propU = new double[nComp];
   currX = currFull + nParams;
   propX = propFull + nParams;
   nObsComp = new int[nComp];
-  //mvX = new propMV*[nComp];
   // initialize
   for(ii=0; ii<nComp; ii++) {
-    propAccept[ii] = 0.0;
     nObsComp[ii] = xIndex[ii];
-    //mvX[ii] = new propMV(nDims);
+    propU[ii] = 0.0;
     for(jj=0; jj<nDims; jj++) {
       currX[ii*nDims + jj] = xInit[ii*nDims + jj];
+    }
+  }
+  for(ii=0; ii<nCores; ii++) {
+    propAccept[ii] = 0.0;
+    for(jj=0; jj<nDims; jj++) {
       propX[ii*nDims + jj] = currX[ii*nDims + jj];
     }
   }
   // missing data
-  int nMiss0 = nDims-nObsComp[0]; // unobserved states in first observation
-  int nMissN = nDims-nObsComp[nComp-1]; // unobserved states in last observation
-  // identify missing data indices, i.e. at least one component to update
+  nMiss0 = nDims-nObsComp[0]; // unobserved states in first observation
+  nMissN = nDims-nObsComp[nComp-1]; // unobserved states in last observation
+  // identify missing _intermediate_ data indices,
+  // i.e. at least one component to update and not first or last observation
   nMiss = 0;
-  for(ii = 0; ii < nComp; ii++) {
+  for(ii = 1; ii < nComp-1; ii++) {
     nMiss += (nObsComp[ii] < nDims);
   }
   missInd = new int[nMiss + (nMiss == 0)];
   jj = 0;
-  for(ii = 0; ii < nComp; ii++) {
+  for(ii = 1; ii < nComp-1; ii++) {
     if(nObsComp[ii] < nDims) {
       missInd[jj++] = ii;
     }
@@ -113,6 +121,7 @@ inline sdeMCMC::~sdeMCMC() {
   delete [] currFull;
   delete [] propFull;
   delete [] propAccept;
+  delete [] propU;
   delete [] missInd;
   delete [] nObsComp;
   delete [] fixedTheta;
