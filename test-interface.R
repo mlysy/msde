@@ -24,30 +24,85 @@ hest.df <- function(x, theta) {
   t(apply(ans, 1, function(x) chol(matrix(x,2,2))))
 }
 
-# test code
-# TODO: delete prior warning
-hmod <- sde.make.model(ModelFile = "hestModel.h",
+# compile model
+# TODO: delete rebuild dependency.
+# for now must always rebuild
+hmod <- sde.make.model(ModelFile = "hestModel.h", rebuild = TRUE,
                        param.names = param.names,
                        data.names = data.names)
 ndims <- hmod$ndims
 nparams <- hmod$nparams
 
+# test drift and diffusion functions
+# assuming there are no errors on our end, this is all the user should
+# have to do
 theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
 x0 <- c(X = log(1000), Z = 0.1)
-
 nReps <- 10
 Theta <- apply(t(replicate(nReps, theta)), 2, jitter)
 X0 <- apply(t(replicate(nReps, x0)), 2, jitter)
 
-# R code
+# R functions
 dr.R <- hest.dr(x = X0, theta = Theta)
 df.R <- hest.df(x = X0, theta = Theta)
-# msde
+# msde functions (C++)
 dr.C <- sde.drift(model = hmod, x = X0, theta = Theta)
 df.C <- sde.diff(model = hmod, x = X0, theta = Theta)
-
+# difference
 max.diff(x1 = dr.R, x2 = dr.C)
 max.diff(x1 = df.R, x2 = df.C)
+
+#--- posterior inference -------------------------------------------------------
+
+# simulate data
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+x0 <- c(X = log(1000), Z = 0.1)
+nObs <- 1e3
+dT <- 1/252
+hsim <- sde.sim(model = hmod, init.data = x0, params = theta,
+                dt = dT, dt.sim = dT/100, N = nObs, nreps = 1)
+
+# initialize data (can no longer provide data directly to sde.post)
+m <- 2 # degree of Euler approximation: dt_euler = dt/m
+#par.index <- c(2, rep(nObs-1, 1)) # all but first vol unobserved
+par.index <- sample(1:2, nObs, replace = TRUE) # randomly observed vol
+init.data <- sde.init(data = hsim$data, dt = dT, m = m,
+                      par.index = par.index)
+
+# define prior
+# default prior is a list with _named_ arguments mu and Sigma
+# the names correspond to which elements of (theta, x0) are multivariate normal
+# the remaining elements are given flat prior
+# NOTE: this is _NOT_ what's described in the document online!
+prior <- list(mu = c(.1, .35, 1.0, .5, -.81),
+              Sigma = crossprod(matrix(rnorm(25),5)))
+prior$Sigma <- sqrt(diag(c(.1, 8, .15, .002, .002))) %*% cov2cor(prior$Sigma)
+prior$Sigma <- prior$Sigma %*% sqrt(diag(c(.1, 8, .15, .002, .002)))
+names(prior$mu) <- param.names
+colnames(prior$Sigma) <- param.names
+rownames(prior$Sigma) <- param.names
+
+# mcmc specification
+# NEW: adaptive MCMC should tune jump-size automatically!
+# acceptance rates should be close to 45%
+#mwg.sd <- c(.1, 1, .1, .01, .01) # random walk metropolis for params
+#names(mwg.sd) <- param.names
+mwg.sd <- NULL
+adapt <- TRUE
+update.params <- TRUE
+update.data <- TRUE
+nsamples <- 1e3
+burn <- 1e2
+
+# run posterior sampler
+hpost <- sde.post(model = hmod,
+                  init.data = init.data, init.params = theta,
+                  nsamples = nsamples, burn = burn,
+                  hyper.params = prior,
+                  mwg.sd = mwg.sd, adapt = adapt,
+                  update.params = update.params,
+                  update.data = update.data)
+
 
 #--- example 2: Prokaryotic Regulatory Gene Network ----------------------------
 
