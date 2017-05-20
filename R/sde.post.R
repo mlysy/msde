@@ -80,6 +80,10 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   tune.par <- .set.jump(mwg.sd, adapt, param.names, data.names)
   # multicore functionality
   if(ncores < 1) stop("ncores must be a positive integer.")
+  if(!model$omp && ncores > 1) {
+    warning("model not compiled with openMP: ncores set to 1.")
+    ncores <- 1
+  }
   if(verbose) {
     message("Output size:")
     if(update.params) message("params = ", round(nparams.out, 2))

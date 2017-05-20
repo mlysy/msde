@@ -22,12 +22,11 @@ inline void sdeMCMC::mvEraker(double *mean, double *sd,
 inline void sdeMCMC::missGibbsUpdate(double *jumpSd, int *gibbsAccept,
 				     int *paramAccept) {
   int ii, II, jj, JJ;
+  int iCore;
   //int startII, endII;
   double *mean, *sd, *Z;
   // only elements in missInd are updated.
   // first and last components are handled separately.
-  //startII = (missInd[0] == 0) ? 1 : 0;
-  //endII = (missInd[nMiss-1] == nComp-1) ? nMiss-1 : nMiss;
   // Markov chain elements are conditionally independent,
   // so every other can be updated in parallel
   // pre-draw missing data (don't know how to parallelize this yet)
@@ -47,12 +46,11 @@ inline void sdeMCMC::missGibbsUpdate(double *jumpSd, int *gibbsAccept,
   for(JJ = 0; JJ < 2; JJ++) {
     // *** PARALLELIZABLE FOR-LOOP ***
     #ifdef _OPENMP
-#pragma omp parallel for num_threads(nCores) private(ii, jj, II, mean, sd, Z) if(nCores > 1)
+#pragma omp parallel for num_threads(nCores) private(ii, jj, II, mean, sd, Z, iCore) if(nCores > 1)
     #endif
     for(II = JJ; II < nMiss; II = II+2) {
-      int iCore = omp_get_thread_num();
+      iCore = omp_get_thread_num();
       ii = missInd[II];
-      // these variables need to be privatized
       mean = &propMean[iCore*nDims];
       sd = &propSd[iCore*nDims2];
       Z = &propZ[ii*nDims];
@@ -65,15 +63,6 @@ inline void sdeMCMC::missGibbsUpdate(double *jumpSd, int *gibbsAccept,
       if(nObsComp[ii] > 0) {
 	zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]);
       }
-      /* if(nObsComp[ii] == 0) { */
-      /*   for(jj=0; jj<nDims; jj++) Z[jj] = norm_rand(); */
-      /* } */
-      /* else { */
-      /*   zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]); */
-      /*   for(jj=nObsComp[ii]; jj<nDims; jj++) { */
-      /*     Z[jj] = norm_rand(); */
-      /*   } */
-      /* } */
       // proposals
       xmvn(&propX[iCore*nDims], Z, mean, sd, nDims);
       // only calculate acceptance rate if proposal is valid
@@ -117,17 +106,6 @@ inline void sdeMCMC::missGibbsUpdate(double *jumpSd, int *gibbsAccept,
     if(nObsComp[ii] > 0) {
       zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]);
     }
-    /* if(nObsComp[ii] == 0) { */
-    /*   for(jj = 0; jj < nDims; jj++) { */
-    /* 	Z[jj] = norm_rand(); */
-    /*   } */
-    /* } */
-    /* else { */
-    /*   zmvn(Z, &currX[ii*nDims], mean, sd, nDims, nObsComp[ii]); */
-    /*   for(jj=nObsComp[ii]; jj<nDims; jj++) { */
-    /* 	Z[jj] = norm_rand(); */
-    /*   } */
-    /* } */
     // proposals
     xmvn(&propX[iCore*nDims], Z, mean, sd, nDims);
     // acceptance is 100% as long as the proposal is valid

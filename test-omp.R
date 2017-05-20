@@ -11,7 +11,7 @@ data.names <- c("X", "Z")
 hmod <- sde.make.model(ModelFile = "hestModel.h",
                        param.names = param.names,
                        data.names = data.names,
-                       omp = TRUE, showOutput = TRUE, rebuild = TRUE)
+                       openMP = TRUE, showOutput = TRUE, rebuild = TRUE)
 ndims <- hmod$ndims
 nparams <- hmod$nparams
 
@@ -42,7 +42,7 @@ colnames(X0) <- data.names
 # is bottleneck
 
 nReps <- 1
-nObs <- 1e7
+nObs <- 100
 dT <- 1/252
 
 # initialize
@@ -55,9 +55,17 @@ X0 <- apply(t(replicate(nReps, x0)), 2, jitter)
 hsim <- sde.sim(model = hmod, init.data = X0, params = Theta,
                 dt = dT, dt.sim = dT, N = nObs, nreps = nReps)
 
-ncores <- 1
+
+ncores <- 5
 system.time({
-  ll <- replicate(n = 5, expr = {
+  ll <- sde.loglik(model = hmod, x = hsim$data, dt = dT,
+                   theta = Theta, ncores = ncores)
+})
+ll
+
+system.time({
+  ll <- replicate(n = 100, expr = {
+    ncores <- sample(1:50, 1)
     sde.loglik(model = hmod, x = hsim$data, dt = dT,
                theta = Theta, ncores = ncores)
   })
@@ -73,3 +81,12 @@ par.index <- sample(ndims, nobs, replace = TRUE)
 names(par.index) <- 1:nobs-1
 par.index[par.index < ndims]
 seqTest(par.index, ndims)
+
+#--- further parallel testing --------------------------------------------------
+
+Sys.setenv(PKG_CXXFLAGS = "-fopenmp")
+Sys.setenv(PKG_LIBS = "-fopenmp")
+
+Rcpp::sourceCpp(file = "ompTest.cpp", showOutput = TRUE, rebuild = TRUE)
+
+ompTest(nCores = 2)

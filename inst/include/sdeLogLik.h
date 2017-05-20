@@ -29,7 +29,7 @@ public members:
 #ifdef _OPENMP
 #include <omp.h>
 #else
-int omp_get_thread_num(void) return 0;
+int omp_get_thread_num(void) {return 0;}
 #endif
 
 class sdeLogLik {
@@ -123,14 +123,14 @@ inline double sdeLogLik::loglikPar(double *theta, double *x) {
   double ll = 0;
   // *** PARALLELIZABLE FOR-LOOP ***
   #ifdef _OPENMP
-  #pragma omp parallel for num_threads(nCores) if(nCores > 1)
+#pragma omp parallel for num_threads(nCores) reduction(+: ll) if(nCores > 1)
   #endif
   for(int ii = 0; ii < nComp-1; ii++) {
     int iCore = omp_get_thread_num();
     mvEuler(&propMean[iCore*nDims], &propSd[iCore*nDims2],
 	    &x[ii*nDims], dT[ii], sqrtDT[ii], theta, &sde[iCore]);
-    ll += lmvn(&x[(ii+1)*nDims], &propZ[iCore*nDims],
-	       &propMean[iCore*nDims], &propSd[iCore*nDims2], nDims);
+    ll += lmvn(&x[(ii+1)*nDims], &propZ[ii*nDims],
+    	       &propMean[iCore*nDims], &propSd[iCore*nDims2], nDims);
   }
   return(ll);
 }

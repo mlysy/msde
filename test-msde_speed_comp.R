@@ -46,7 +46,7 @@ param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
 hmod2 <- pkg2("sde.make.model")(ModelFile = "hestModel.h",
                                 param.names = param.names,
-                                data.names = data.names, omp = TRUE,
+                                data.names = data.names, openMP = TRUE,
                                 showOutput = TRUE, rebuild = TRUE)
 ndims <- hmod2$ndims
 nparams <- hmod2$nparams
@@ -105,8 +105,8 @@ tmp/tmp[1]
 
 #--- loglikelihood evaluations ---------------------------------------------
 
-nReps <- 4e3
-nObs <- 1e3
+nReps <- 10000
+nObs <- 1000
 dT <- 1/252
 
 # initialize
@@ -121,12 +121,13 @@ hsim <- pkg1("sde.sim")(model = hmod, init.data = X0, params = Theta,
 
 # loglikelihood calcs
 time.p1 <- system.time({
-  ll.p1 <- pkg1("sde.loglik")(model = hmod, x = X0, dt = dT,
+  ll.p1 <- pkg1("sde.loglik")(model = hmod, x = hsim$data, dt = dT,
                               theta = Theta)
 })
+ncores <- 8
 time.p2 <- system.time({
-  ll.p2 <- pkg2("sde.loglik")(model = hmod2, x = X0, dt = dT,
-                              theta = Theta)
+  ll.p2 <- pkg2("sde.loglik")(model = hmod2, x = hsim$data, dt = dT,
+                              theta = Theta, ncores = ncores)
 })
 
 max.diff(ll.p1, ll.p2)
@@ -191,7 +192,7 @@ hsim <- pkg1("sde.sim")(model = hmod, init.data = x0, params = theta,
 
 # initialize MCMC rv's
 m <- 2 # degree of Euler approximation: dt_euler = dt/m
-par.index <- c(2, rep(nObs-1, 1)) # all but first vol unobserved
+par.index <- c(2, rep(1, nObs-1)) # all but first vol unobserved
 init1 <- pkg1("sde.init")(data = hsim$data, dt = dT, m = m,
                          par.index = par.index,
                          params = theta)
@@ -213,8 +214,8 @@ rw.jump.sd <- c(.1, 1, .1, .01, .01) # random walk metropolis for params
 names(rw.jump.sd) <- param.names
 update.params <- TRUE
 update.data <- TRUE
-nsamples <- 1e4 # ifelse(update.data, 2e4, 4e4)
-burn <- 1e2
+nsamples <- 1e3 # ifelse(update.data, 2e4, 4e4)
+burn <- 0
 
 if(same.rnd) set.seed(SEED)
 time.p1 <- system.time({
@@ -227,11 +228,12 @@ time.p1 <- system.time({
 })
 
 if(same.rnd) set.seed(SEED)
+ncores <- 1
 time.p2 <- system.time({
   hpost.p2 <- pkg2("sde.post")(model = hmod2, init.data = init2,
                                init.params = theta,
                                nsamples = nsamples, burn = burn,
-                               hyper.param = prior2,
+                               hyper.param = prior2, ncores = ncores,
                                mwg.sd = rw.jump.sd, adapt = FALSE,
                                update.params = update.params,
                                update.data = update.data)

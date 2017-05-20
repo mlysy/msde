@@ -1,10 +1,11 @@
 #' Create an SDE Model Object
 #'
 #' @param ModelFile Path to the header file where the sde model is defined.
-#' @param PriorFile Path to the header file where the prior is defined.
+#' @param PriorFile Path to the header file where the prior is defined.  See \code{\link{sde.prior}} for details.
 #' @param data.names Optional vector of names for the components of the sde.  Defaults to \code{X1,...,Xd}.
 #' @param param.names Optional vector of names for the parameters of the sde.  Defaults to \code{theta1,...,thetap}.
-#' @param ... additional parameters that are passed to \code{sourceCpp} when compiling the c++ code
+#' @param prior.spec A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.prior.spec}} for details.
+#' @param ... additional parameters that are passed to \code{Rcpp::sourceCpp} when compiling the C++ code.
 #'@return An \code{sde.model} object, which is a list containing the following elements:
 #' \itemize{
 #' \item \code{ndims}, \code{nparams}: the number of sde components and parameters.
@@ -21,8 +22,8 @@
 #' @note TODO: fix \code{rebuild = TRUE}.  This could be done with \code{utils::changedFiles}.
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
-                           data.names, param.names, prior.spec, omp = FALSE,
-                           ..., debug = FALSE) {
+                           data.names, param.names, prior.spec,
+                           openMP = FALSE, ..., debug = FALSE) {
   if(debug) browser()
   sde.model <- list()
   # prior specification
@@ -37,21 +38,27 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
       stop("Must provide prior.spec for custom prior.")
     }
   }
-  file.copy(from = PriorFile,
+  # compile C++ code
+  flag <- file.copy(from = PriorFile,
             to = file.path(tempdir(), "sdePrior.h"),
             overwrite = TRUE, copy.date = TRUE)
-  # compile C++ code
+  if(!flag) {
+    stop("PriorFile \"", PriorFile, "\" not found.")
+  }
+  flag <- file.copy(from = ModelFile,
+            to = file.path(tempdir(), "sdeModel.h"),
+            overwrite = TRUE, copy.date = TRUE)
+  if(!flag) {
+    stop("ModelFile \"", ModelFile, "\" not found.")
+  }
   file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
             to = file.path(tempdir(), "sdeUtils.cpp"),
             overwrite = TRUE, copy.date = TRUE)
-  file.copy(from = ModelFile,
-            to = file.path(tempdir(), "sdeModel.h"),
-            overwrite = TRUE, copy.date = TRUE)
-  # omp support
-  if(omp) old.env <- .omp.set()
+  # openMP support
+  if(openMP) old.env <- .omp.set()
   sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
             env = environment(), ...)
-  if(omp) .omp.unset(env = old.env)
+  if(openMP) .omp.unset(env = old.env)
   environment(sde.model$sim) <- globalenv()
   environment(sde.model$post) <- globalenv()
   environment(sde.model$drift) <- globalenv()
@@ -73,7 +80,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   sde.model <- c(sde.model,
                  list(ndims = ndims, nparams = nparams,
                       data.names = data.names, param.names = param.names,
-                      prior.spec = prior.spec))
+                      prior.spec = prior.spec, omp = openMP))
   # output
   class(sde.model) <- "sde.model"
   sde.model
