@@ -1,0 +1,207 @@
+---
+title: "Inference for multivariate Stochastic Differential Equations with **`msde`**"
+author: "Martin Lysy"
+date: "`r Sys.Date()`"
+output:
+  html_vignette:
+    toc: true
+bibliography: references.bib
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{msde-quicktut}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+\newcommand{\tth}{\boldsymbol{\theta}}
+\newcommand{\Y}{\boldsymbol{Y}}
+\newcommand{\a}{\alpha}
+\newcommand{\b}{\beta}
+\newcommand{\g}{\gamma}
+
+## Installation
+
+The **`msde`** package requires on-the-fly **C++** compiling of user-specified models which is handled through the **R** package **`Rcpp`**.
+
+### Enable **C++** compiling for **R**
+
+* For Windows, install [**`Rtools`**](https://cran.r-project.org/bin/windows/Rtools/).  Let the installer modify your system variable `Path`.
+* For OS X, install the [**`Xcode`** command line tools](https://developer.apple.com/library/content/technotes/tn2339/_index.html).  To do this, open Terminal and run `xcode-select --install`.  You can simply press "Install" without obtaining the entire Xcode suite.
+* For Linux, install ``build-essential`` and a recent version of **`g++`** or **`clang++`**.
+
+To make sure the **C++** compiler is set up correctly, install the **``Rcpp``** package and from within **R** run the following:
+```{r, eval = FALSE}
+Rcpp::cppFunction("double AddTest(double x, double y) {return x + y;}")
+AddTest(5.2, 3.4)
+```
+If the code compiles and outputs `r 5.2+3.4` then the **C++** compiler is interfaced with **R** correctly.
+
+### Optimize settings for the **C++** compiler (optional)
+
+It's possible to speed up **`msde`** by a reasonable amount by passing a few flags to the **C++** compiler.  This can be done by creating a `Makevars` file (or `Makevars.win` on Windows).  To do this, find your home folder by running the **R** command `Sys.getenv("HOME")`, and in that folder create a subfolder called `.R` containing the `Makevars` file (if it doesn't exist already).  Now add the following lines to th `.R/Makevars` file:
+```{bash, eval = FALSE}
+CXXFLAGS=-O3 -ffastmath
+CXX=clang++
+```
+The first two options make the **C++** code faster and the third uses the **`clang++`** compiler instead of **`g++`**, which has better error messages (and is the default compiler on OS X).
+
+### Enable **`OpenMP`** support (optional)
+
+On a multicore machine, **`msde`** can parallelize some of its computations with **`OpenMP`** directives.  This can't be done through **R** on Windows and is supported by default on recent versions of **`g++/clang++`** on Linux.  For OS X, the default version of **`clang++`** does not support **`OpenMP`** but it is supported by that of the [LLVM Project](http://llvm.org/).  This can be installed through [Homebrew](https://brew.sh/).  After installing Homebrew using the instructions from the previous link, in Terminal run `brew install llvm`.  Then have **R** use LLVM's **`clang++`** compiler by setting the following in `.R/Makevars`:
+```{bash, eval = FALSE}
+CXXFLAGS=-I/usr/local/opt/llvm/include -O3 -ffast-math
+LDFLAGS=-L/usr/local/opt/llvm/lib
+CXX=/usr/local/opt/llvm/bin/clang++
+```
+Note that these compiler directives alone will not enable **`OpenMP`** support.  This happens at compile time by linking against `-fopenmp`, which is done internally by **`msde`**.
+
+## Stochastic Lotka-Volterra predator-prey model
+
+Let $H_t$ and $L_t$ denote the number of Hare and Lynx at time $t$ coexisting in a given habitat.  An SDE describing the interactions between these two animal populations is given by the following stochastic Lotka-Volterra predator-prey model [@golightly-wilkinson10]:
+$$
+\begin{pmatrix} \mathrm{d} H_t \\ \mathrm{d} L_t \end{pmatrix} = \begin{pmatrix} \alpha H_t - \beta H_tL_t \\ \beta H_tL_t - \gamma L_t \end{pmatrix} \mathrm{d} t + \begin{pmatrix} \alpha H_t + \beta H_tL_t & -\beta H_tL_t \\ -\beta H_tL_t & \beta H_tL_t + \gamma L_t\end{pmatrix}^{1/2} \begin{pmatrix} \mathrm{d} B_{1t} \\ \mathrm{d} B_{2t} \end{pmatrix}.
+$$
+In order to build this model in **C++**, we create a header file `lotvolModel.h` containing the class definition for an `sdeModel` object.  The basic structure of this class is given below:
+```{Rcpp, eval = FALSE}
+// sde model object
+class sdeModel {
+ public:
+  static const int nParams = 3; // number of model parameters
+  static const int nDims = 2; // number of sde dimensions
+  static const bool sdDiff = false; // whether diffusion function is on sd or var scale
+  static const bool diagDiff = false; // whether diffusion function is diagonal
+  void sdeDr(double *dr, double *x, double *theta); // drift function
+  void sdeDf(double *df, double *x, double *theta); // diffusion function
+  bool isValidParams(double *theta); // parameter validator
+  bool isValidData(double *x, double *theta); // data validator
+};
+```
+The meaning of each class member is as follows:
+
+* `nParams`: The number of model parameters.  For the Lotka-Volterra model we have $\tth = (\a, \b, \g)$, such that `nParams = 3`.
+* `nDims`: The number of dimensions in the multivariate SDE.  In this case we have $\Y_t = (H_t, L_t)$, such that `nDims = 2`.
+* `sdeDr`: The SDE drift function.  In **R**, this function would be implemented as
+    ```{r, eval = FALSE}
+sde.drift <- function(x, theta) {
+  dr <- c(theta[1]*x[1] - theta[2]*x[1]*x[2], # alpha * H - beta * H * L
+          theta[2]*x[1]*x[2] - theta[3]*x[2]) # beta * H * L - gamma * L
+  dr
+}
+```
+    In **C++** the same thing is accomplished with
+    ```{Rcpp, eval = FALSE}
+void sdeDr(double *dr, double *x, double *theta) {
+  dr[0] = theta[0]*x[0] - theta[1]*x[0]*x[1]; // alpha * H - beta * H * L
+  dr[1] = theta[1]*x[0]*x[1] - theta[2]*x[1]; // beta * H * L - gamma * L
+  return;
+}
+```
+* `sdeDf`: The SDE diffusion function.  This can be specified on the standard deviation scale, or on the variance scale as above.  In this case, an **R** implementation would be
+    ```{r, eval = FALSE}
+sde.diff <- function(x, theta) {
+  df <- matrix(NA, 2, 2)
+  df[1,1] <- theta[1]*x[1] + theta[2]*x[1]*x[2] # alpha * H + beta * H * L
+  df[1,2] <- -theta[2]*x[1]*x[2] # -beta * H * L
+  df[2,1] <- df[1,2] # -beta * H * L
+  df[2,2] <- theta[2]*x[1]*x[2] + theta[3]*x[2] # beta * H * L + gamma * L
+  df
+}
+```
+    In **C++** the specification is slightly different.  First we set `sdDiff = false` in order to tell **`msde`** to use the variance scale.  Next, the diffusion function is coded as
+    ```{Rcpp, eval = FALSE}
+void sdeDf(double *df, double *x, double *theta) {
+  df[0] = theta[0]*x[0] + theta[1]*x[0]*x[1]; // matrix element (1,1)
+  df[2] = -theta[1]*x[0]*x[1]; // element (1,2)
+  df[3] = theta[1]*x[0]*x[1] + theta[2]*x[1]; // element (2,2)
+  return;
+}
+```
+    Thus there are two major differences with the **R** version.  The first is that the `df` matrix is stored as a vector (or "array" in **C++**).  Its elements are stored in column-major order, i.e., by stacking the columns one after the other into one long vector.  The second difference is that **`msde`** only uses the *upper triangular* portion of the (symmetric) variance matrix.  The elements below the diagonal can be set to any value or not set at all without affecting the computations.
+
+	**`msde`** internally computes the Cholesky decomposition of the diffusion function when it is specified on the variance scale.  For small problems such as this one, it is more efficient to specify the Cholesky decomposition directly, i.e., specify the diffusion on the standard deviation scale.  In this case, the Cholesky decomposition of the diffusion function is
+$$
+\begin{pmatrix} \alpha H_t + \beta H_tL_t & -\beta H_tL_t \\ -\beta H_tL_t & \beta H_tL_t + \gamma L_t\end{pmatrix}^{1/2} = \begin{pmatrix} \sqrt{\a H_t + \b H_tL_t} & -\frac{\b H_tL_t}{\sqrt{\a H_t + \b H_tL_t}} \\ 0 & \sqrt{\b H_tL_t - \g L_t - \frac{(\b H_tL_t)^2}{\a H_t + \b H_tL_t}} \end{pmatrix},
+$$
+which is passed to **`msde`** by setting `sdDiff = true` and
+    ```{Rcpp, eval = FALSE}
+void sdeDf(double *df, double *x, double *theta) {
+  double bHL = theta[1]*x[0]*x[1]; // beta*H*L
+  df[0] = sqrt(theta[0]*x[0] + bHL); // sqrt(alpha*H + bHL)
+  df[2] = -bHL/df[0];
+  df[3] = sqrt(bHL - theta[2]*x[1] - df[2]*df[2]);
+  return;
+}
+```
+**TODO:** `diagDiff` for diagonal diffusion functions.
+* `isValidParams`: A logical used to specify the parameter support.  In this case we have $\a, \b, \g > 0$, such that
+    ````{Rcpp, eval = FALSE}
+bool isValidParams(double *theta) {
+  bool val = theta[0] > 0.0;
+  val = val && theta[1] > 0.0;
+  val = val ** theta[2] > 0.0;
+  return val;
+}
+````
+* `isValidData`: A logical used to specify the SDE support, which can be parameter-dependent.  In this case we simply have $H_t, L_t > 0$, such that
+    ````{Rcpp, eval = FALSE}
+bool isValidData(double *x, double *theta) {
+  return (x[0] > 0.0) && (x[1] > 0.0);
+}
+````
+
+Thus the whole file `lotvolModel.h` is given below:
+````{Rcpp, eval = FALSE}
+#ifndef sdeModel_h
+#define sdeModel_h 1
+
+// Lotka-Volterra Predator-Prey model
+
+// class definition
+class sdeModel {
+ public:
+  static const int nParams = 3; // number of model parameters
+  static const int nDims = 2; // number of sde dimensions
+  static const bool diagDiff = false; // whether diffusion function is diagonal
+  static const bool sdDiff = true; // whether diffusion is on sd or var scale
+  void sdeDr(double *dr, double *x, double *theta); // drift function
+  void sdeDf(double *df, double *x, double *theta); // diffusion function
+  bool isValidParams(double *theta); // parameter validator
+  bool isValidData(double *x, double *theta); // data validator
+};
+
+// drift function
+inline void sdeDr(double *dr, double *x, double *theta) {
+  dr[0] = theta[0]*x[0] - theta[1]*x[0]*x[1]; // alpha*H - beta*H*L
+  dr[1] = theta[1]*x[0]*x[1] - theta[2]*x[1]; // beta*H*L - gamma*L
+  return;
+}
+
+// diffusion function (sd scale)
+inline void sdeDf(double *df, double *x, double *theta) {
+  double bHL = theta[1]*x[0]*x[1]; // beta*H*L
+  df[0] = sqrt(theta[0]*x[0] + bHL); // sqrt(alpha*H + bHL)
+  df[2] = -bHL/df[0];
+  df[3] = sqrt(bHL - theta[2]*x[1] - df[2]*df[2]);
+  return;
+}
+
+// parameter validator
+inline bool isValidParams(double *theta) {
+  bool val = theta[0] > 0.0;
+  val = val && theta[1] > 0.0;
+  val = val ** theta[2] > 0.0;
+  return val;
+}
+
+// data validator
+inline bool isValidData(double *x, double *theta) {
+  return (x[0] > 0.0) && (x[1] > 0.0);
+}
+
+#endif
+````
+The only additions to the previous code sections are (i) the header include guards (`#ifndef`/`#define`/`#endif`) and (ii) the `inline` keyword before the class member definitions, both of which ensure that only one instance of these functions is passed to the **C++** compiler.
+
+## Compiling and checking the **`sdeModel`**
+
+## References
