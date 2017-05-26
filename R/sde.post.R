@@ -29,7 +29,8 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
                      nsamples, burn, mwg.sd = NULL, adapt = TRUE,
                      loglik.out = FALSE, last.miss.out = FALSE,
                      update.data = TRUE, data.out,
-                     update.params = TRUE, verbose = TRUE, debug = FALSE) {
+                     update.params = TRUE, verbose = TRUE,
+                     ncores = 1, debug = FALSE) {
   # model constants
   if(class(model) != "sde.model") {
     stop("model must be of class sde.model.  Use sde.make.model to create.")
@@ -77,6 +78,12 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   # random walk jump size
   if(is.null(mwg.sd)) mwg.sd <- .25 * abs(c(init.params, init.data[1,]))
   tune.par <- .set.jump(mwg.sd, adapt, param.names, data.names)
+  # multicore functionality
+  if(ncores < 1) stop("ncores must be a positive integer.")
+  if(!model$omp && ncores > 1) {
+    warning("model not compiled with openMP: ncores set to 1.")
+    ncores <- 1
+  }
   if(verbose) {
     message("Output size:")
     if(update.params) message("params = ", round(nparams.out, 2))
@@ -105,7 +112,8 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
                     updateLogLik = as.integer(loglik.out),
                     nLogLikOut = as.integer(ifelse(loglik.out, nsamples, 1)),
                     updateLastMiss = as.integer(last.miss.out),
-                    nLastMissOut = as.integer(nlast.miss.out))
+                    nLastMissOut = as.integer(nlast.miss.out),
+                    nCores = as.integer(ncores))
   tm <- chrono(tm, display = verbose)
   names(ans) <- c("paramsOut", "dataOut", "paramAccept", "gibbsAccept",
                   "logLikOut", "lastMissOut", "lastIter", "mwgSd")

@@ -1,7 +1,7 @@
 #' SDE Loglikelihood Function
 #'
 #' @export
-sde.loglik <- function(model, x, dt, theta, debug = FALSE) {
+sde.loglik <- function(model, x, dt, theta, ncores = 1, debug = FALSE) {
   if(class(model) != "sde.model")
     stop("Expecting object of class sde.model.  Use sde.make.model to create.")
   # model constants
@@ -34,10 +34,17 @@ sde.loglik <- function(model, x, dt, theta, debug = FALSE) {
   }
   if(length(dt) == 1) dt <- rep(dt, ncomp-1)
   if(length(dt) != ncomp-1) stop("Incorrectly specified dt.")
+  # multicore functionality
+  if(ncores < 1) stop("ncores must be a positive integer.")
+  if(!model$omp && ncores > 1) {
+    warning("model not compiled with openMP: ncores set to 1.")
+    ncores <- 1
+  }
   # compute
   ans <- model$loglik(xIn = as.double(x), dTIn = as.double(dt),
                       thetaIn = as.double(theta),
                       nComp = as.integer(ncomp),
-                      nReps = as.integer(nreps))
+                      nReps = as.integer(nreps),
+                      nCores = as.integer(ncores))
   ans
 }

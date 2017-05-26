@@ -35,7 +35,7 @@ inline Prior::Prior(double **phi, int nArgs, int *nEachArg) {
     for(ii=0; ii<nRV; ii++) {
       mean[ii] = phi[0][ii];
     }
-    for(int ii=0; ii<nRV*nRV; ii++) {
+    for(ii=0; ii<nRV*nRV; ii++) {
       cholSd[ii] = phi[1][ii];
     }
     // index arrays for each type of variable

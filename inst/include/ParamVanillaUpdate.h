@@ -11,7 +11,7 @@ inline void sdeMCMC::paramVanillaUpdate(double *jumpSd, int *paramAccept) {
   for(ii = 0; ii < nParams; ii++) {
     propTheta[ii] = currTheta[ii];
   }
-  currLoglik = loglik(currTheta, currX);
+  currLoglik = loglikPar(currTheta, currX);
   // random walk metropolis updates
   for(ii = 0; ii < nParams; ii++) {
     if(!fixedTheta[ii]) {
@@ -20,7 +20,7 @@ inline void sdeMCMC::paramVanillaUpdate(double *jumpSd, int *paramAccept) {
     // only calculate acceptance if valid
     if(sde[0].isValidParams(propTheta)) {
       // likelihood
-      propLoglik = loglik(propTheta, currX);
+      propLoglik = loglikPar(propTheta, currX);
       acc = propLoglik - currLoglik;
       // prior
       acc += prior->logPrior(propTheta, currX);

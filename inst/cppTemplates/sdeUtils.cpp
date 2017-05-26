@@ -1,5 +1,12 @@
 #include <Rcpp.h>
 using namespace Rcpp;
+
+// #ifdef _OPENMP
+// #include <omp.h>
+// #else
+// int omp_get_thread_num(void) return 0;
+// #endif
+
 //[[Rcpp::depends("msdeHeaders")]]
 #include <sdeMCMC.h>
 #include <mcmcUtils.h>
@@ -19,37 +26,35 @@ int sde_getNParams() {
   return sdeModel::nParams;
 }
 
+// Best to parallelize these from within R: easier and prob faster since
+// memory can be allocated in parallel there
 //[[Rcpp::export("sde.model$drift")]]
-NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn,
-			int nReps) {
+NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn, int nReps) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
   NumericVector drOut(nReps*nDims);
   double *dr = REAL(drOut);
-  sdeModel *sde = new sdeModel[nReps];
-  // *** parallelizable for-loop ***
+  sdeModel *sde = new sdeModel[1];
   for(int ii = 0; ii < nReps; ii++) {
-    sde[ii].sdeDr(&dr[ii*nDims], &x[ii*nDims], &theta[ii*nParams]);
+    sde[0].sdeDr(&dr[ii*nDims], &x[ii*nDims], &theta[ii*nParams]);
   }
   delete [] sde;
   return drOut;
 }
 
 //[[Rcpp::export("sde.model$diff")]]
-NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn,
-		       int nReps) {
+NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn, int nReps) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
   NumericVector dfOut(nReps*nDims*nDims);
   double *df = REAL(dfOut);
-  sdeModel *sde = new sdeModel[nReps];
-  // *** parallelizable for-loop ***
+  sdeModel *sde = new sdeModel[0];
   for(int ii = 0; ii < nReps; ii++) {
-    sde[ii].sdeDf(&df[ii*nDims*nDims], &x[ii*nDims], &theta[ii*nParams]);
+    sde[0].sdeDf(&df[ii*nDims*nDims], &x[ii*nDims], &theta[ii*nParams]);
   }
   delete [] sde;
   return dfOut;
@@ -58,17 +63,17 @@ NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn,
 // SDE log-likelihood evaluation.
 //[[Rcpp::export("sde.model$loglik")]]
 NumericVector sde_LogLik(NumericVector xIn, NumericVector dTIn,
-			NumericVector thetaIn,
-			int nComp, int nReps) {
+			 NumericVector thetaIn,
+			 int nComp, int nReps, int nCores) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
   NumericVector llOut(nReps);
   double *ll = REAL(llOut);
-  sdeLogLik sdeLL(nComp, REAL(dTIn));
+  sdeLogLik sdeLL(nComp, REAL(dTIn), nCores);
   for(int ii=0; ii<nReps; ii++) {
-    ll[ii] = sdeLL.loglik(&theta[ii*nParams], &x[ii*nDims*nComp]);
+    ll[ii] = sdeLL.loglikPar(&theta[ii*nParams], &x[ii*nDims*nComp]);
   }
   return llOut;
 }
@@ -187,7 +192,7 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		  double updateParams, double updateData,
 		  List priorArgs, List tunePar,
 		  int updateLogLik, int nLogLikOut,
-		  int updateLastMiss, int nLastMissOut) {
+		  int updateLastMiss, int nLastMissOut, int nCores) {
   RNGScope scope;
   int ii, jj, kk;
 
@@ -249,7 +254,7 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
   // prior gets constructed inside of object -- is this really beneficial?
   sdeMCMC mcmc(nComp, REAL(dT), REAL(initData), REAL(initParams),
 	       INTEGER(nDimsPerObs), LOGICAL(fixedParams),
-	       phi, nArgs, nEachArg);
+	       phi, nArgs, nEachArg, nCores);
 
   // main MCMC loop
   jj = 0;
