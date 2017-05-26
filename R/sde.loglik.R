@@ -18,6 +18,9 @@ sde.loglik <- function(model, x, dt, theta, debug = FALSE) {
     ncomp <- dim(x)[2]
     x <- aperm(x, perm = 3:1)
   }
+  # fixme: what if ndims = 1?
+  # probably good to full error check on all of x and theta
+  # fixme: validate theta's before or in C++ code
   if(!is.matrix(theta)) {
     theta <- matrix(theta, ncol = 1)
   } else {
