@@ -46,7 +46,7 @@ param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
 hmod2 <- pkg2("sde.make.model")(ModelFile = "hestModel.h",
                                 param.names = param.names,
-                                data.names = data.names, openMP = TRUE,
+                                data.names = data.names, openMP = FALSE,
                                 showOutput = TRUE, rebuild = TRUE)
 ndims <- hmod2$ndims
 nparams <- hmod2$nparams
@@ -105,7 +105,7 @@ tmp/tmp[1]
 
 #--- loglikelihood evaluations ---------------------------------------------
 
-nReps <- 10000
+nReps <- 100
 nObs <- 1000
 dT <- 1/252
 
@@ -126,7 +126,8 @@ time.p1 <- system.time({
 })
 ncores <- 8
 time.p2 <- system.time({
-  ll.p2 <- pkg2("sde.loglik")(model = hmod2, x = hsim$data, dt = dT,
+  ll.p2 <- pkg2("sde.loglik")(model = hmod2, x = aperm(hsim$data, c(2,3,1)),
+                              dt = dT, debug = TRUE,
                               theta = Theta, ncores = ncores)
 })
 

@@ -45,7 +45,8 @@ hmod <- pkg1("sde.make.model")(list = hestList,
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
 #hmod2 <- file.path(pkg2(":.msdeCppPath"), "hestModel.cpp")
-hmod2 <- pkg2("sde.make.model")(param.names = param.names,
+hmod2 <- pkg2("sde.make.model")(ModelFile = "hestModel.h",
+                                param.names = param.names,
                                 data.names = data.names,
                                 showOutput = TRUE, rebuild = TRUE)
 ndims <- hmod2$ndims
@@ -53,7 +54,7 @@ nparams <- hmod2$nparams
 
 #--- loglikelihood speed comp ----------------------------------------------
 
-nReps <- 1e4
+nReps <- 1e3
 nObs <- 1e3
 dT <- 1/252
 
@@ -65,18 +66,21 @@ X0 <- apply(t(replicate(nReps, x0)), 2, jitter)
 
 # generate data
 hsim <- pkg1("sde.sim")(model = hmod, init.data = X0, params = Theta,
-                        dt = dT, dt.sim = dT, N = nObs, nreps = nReps)
+  dt = dT, dt.sim = dT, N = nObs, nreps = nReps)
+X1 <- hsim$data
+X2 <- aperm(X1, c(2, 3, 1))
 
 # loglikelihood calcs
 time.p1 <- system.time({
-  ll.p1 <- pkg1("sde.loglik")(model = hmod, x = X0, dt = dT,
+  ll.p1 <- pkg1("sde.loglik")(model = hmod, x = X1, dt = dT,
                               theta = Theta)
 })
 time.p2 <- system.time({
-  ll.p2 <- pkg2("sde.loglik")(model = hmod2, x = X0, dt = dT,
+  ll.p2 <- pkg2("sde.loglik")(model = hmod2, debug = FALSE,
+                              x = X2, dt = dT,
                               theta = Theta)
 })
-#max.diff(ll.p1, ll.p2)
+max.diff(ll.p1, ll.p2)
 tmp <- c(time.p1[3], time.p2[3])
 names(tmp) <- pkg.names
 tmp/tmp[1]

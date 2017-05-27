@@ -17,6 +17,78 @@ is.valid.hyper <- function(phi) {
   valid
 }
 
+# check a vector of lengths and make sure that they
+# are all the same or equal to 1
+is.valid.nreps <- function(nreps) {
+  nreps <- unique(nreps)
+  nreps <- c(1, nreps[nreps > 1])
+  length(nreps) <= 2
+}
+
+# format data for sde.drift, sde.diff, sde.loglik
+# output is a matrix or 3-d array with dimensions 1 and 2 permuted
+.format.data <- function(x, data.names, type = c("matrix", "array"),
+                         debug = FALSE) {
+  ndims <- length(data.names)
+  type <- match.arg(type)
+  if(debug) browser()
+  # check is.numeric, ndims, and data.names
+  if(!is.numeric(x) || !all(is.finite(x))) {
+    stop("x must be numeric with finite values.")
+  }
+  if(type == "matrix") {
+    if(is.vector(x)) x <- t(x)
+    if(!is.matrix(x)) {
+      stop("x must be a vector or matrix.")
+    }
+    if(ncol(x) != ndims) {
+      stop("dimensions of x are incompatible with ndims.")
+    }
+    if(!is.null(colnames(x)) && !identical(colnames(x), data.names)) {
+      stop("names of x do not match data.names.")
+    }
+    x <- t(x)
+  } else {
+    if(is.matrix(x)) {
+      dn <- dimnames(x)
+      x <- array(x, dim = c(dim(x), 1))
+      if(!is.null(dn)) dimnames(x) <- c(dimnames(x), list(NULL))
+    }
+    if(length(dim(x)) != 3) {
+      stop("x must be a matrix or 3-d array.")
+    }
+    if(dim(x)[2] != ndims) {
+      stop("dimensions of x are incompatible with ndims.")
+    }
+    if(!is.null(dimnames(x)) && !identical(dimnames(x)[[2]], data.names)) {
+      stop("names of x do not match data.names.")
+    }
+    x <- aperm(x, c(2,1,3))
+  }
+  x
+}
+
+# format parameters for sde.drift, sde.diff, sde.loglik
+# output is a matrix with dimensions 1 and 2 permuted
+.format.params <- function(theta, param.names) {
+  nparams <- length(param.names)
+  if(is.vector(theta)) theta <- t(theta)
+  # check is.numeric, nparams, param.names
+  if(!is.numeric(theta) || !all(is.finite(theta))) {
+    stop("theta must be a numeric with finite values.")
+  }
+  if(!is.matrix(theta)) {
+    stop("theta must be a vector or matrix.")
+  }
+  if(ncol(theta) != nparams) {
+    stop("dimensions of theta are incompatible with nparams.")
+  }
+  if(!is.null(colnames(theta)) && !identical(colnames(theta), param.names)) {
+    stop("names of theta do not match param.names.")
+  }
+  t(theta)
+}
+
 ## # check that variable names are compatible with param.names and data.names
 ## # var.names adds information to error message since .check.vars is not
 ## # an exported function

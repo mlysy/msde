@@ -26,37 +26,68 @@ int sde_getNParams() {
   return sdeModel::nParams;
 }
 
+//[[Rcpp::export("sde.model$is.data")]]
+LogicalVector sde_isData(NumericVector xIn, NumericVector thetaIn,
+			 bool singleX, bool singleTheta, int nReps) {
+  int nDims = sdeModel::nDims;
+  int nParams = sdeModel::nParams;
+  double *x = REAL(xIn);
+  double *theta = REAL(thetaIn);
+  LogicalVector validOut(nReps);
+  sdeModel sde;
+  for(int ii = 0; ii < nReps; ii++) {
+    validOut[ii] = sde.isValidData(&x[ii*(!singleX)*nDims],
+				   &theta[ii*(!singleTheta)*nParams]);
+  }
+  return validOut;
+}
+
+//[[Rcpp::export("sde.model$is.params")]]
+LogicalVector sde_isParams(NumericVector thetaIn, int nReps) {
+  int nParams = sdeModel::nParams;
+  double *theta = REAL(thetaIn);
+  LogicalVector validOut(nReps);
+  sdeModel sde;
+  for(int ii = 0; ii < nReps; ii++) {
+    validOut[ii] = sde.isValidParams(&theta[ii*nParams]);
+  }
+  return validOut;
+}
+
 // Best to parallelize these from within R: easier and prob faster since
 // memory can be allocated in parallel there
 //[[Rcpp::export("sde.model$drift")]]
-NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn, int nReps) {
+NumericVector sde_Drift(NumericVector xIn, NumericVector thetaIn,
+			bool singleX, bool singleTheta, int nReps) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
   NumericVector drOut(nReps*nDims);
   double *dr = REAL(drOut);
-  sdeModel *sde = new sdeModel[1];
+  sdeModel sde;
   for(int ii = 0; ii < nReps; ii++) {
-    sde[0].sdeDr(&dr[ii*nDims], &x[ii*nDims], &theta[ii*nParams]);
+    sde.sdeDr(&dr[ii*nDims],
+	      &x[ii*(!singleX)*nDims], &theta[ii*(!singleTheta)*nParams]);
   }
-  delete [] sde;
   return drOut;
 }
 
 //[[Rcpp::export("sde.model$diff")]]
-NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn, int nReps) {
+NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn,
+		       bool singleX, bool singleTheta, int nReps) {
   int nDims = sdeModel::nDims;
+  int nDims2 = nDims*nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
   NumericVector dfOut(nReps*nDims*nDims);
   double *df = REAL(dfOut);
-  sdeModel *sde = new sdeModel[0];
+  sdeModel sde;
   for(int ii = 0; ii < nReps; ii++) {
-    sde[0].sdeDf(&df[ii*nDims*nDims], &x[ii*nDims], &theta[ii*nParams]);
+    sde.sdeDf(&df[ii*nDims2],
+	      &x[ii*(!singleX)*nDims], &theta[ii*(!singleTheta)*nParams]);
   }
-  delete [] sde;
   return dfOut;
 }
 

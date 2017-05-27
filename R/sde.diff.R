@@ -3,37 +3,84 @@
 #' @param model An \code{sde.model} object.
 #' @param x A vector or matrix of data with \code{ndims} columns.
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
-#' @return A matrix with \code{ndims x ndims} columns containing the diffusion funtion evaluated at \code{x} and \code{theta}.  Each row corresponds to the upper triangular cholesky factor of the diffusion matrix.
+#' @return A matrix with \code{ndims^2} columns containing the diffusion funtion evaluated at \code{x} and \code{theta}.  Each row corresponds to the upper triangular cholesky factor of the diffusion matrix.  If either input contains invalid sde data or parameters an error is thrown.
 #' @export
-sde.diff <- function(model, x, theta) {
-  if(class(model) != "sde.model")
-    stop("Expecting object of class sde.model.  Use sde.make.model to create.")
-  # model constants
-  ndims <- model$ndims
-  data.names <- model$data.names
-  nparams <- model$nparams
-  param.names <- model$param.names
+sde.diff <- function(model, x, theta, debug = FALSE) {
+  if(class(model) != "sde.model") {
+    stop("model must be an sde.model object.")
+  }
+  ## # model constants
+  ## ndims <- model$ndims
+  ## data.names <- model$data.names
+  ## nparams <- model$nparams
+  ## param.names <- model$param.names
+  ## # initialize
+  ## if(!is.matrix(x)) {
+  ##   x <- matrix(x, ncol = 1)
+  ## } else {
+  ##   x <- t(x)
+  ## }
+  ## if(!is.matrix(theta)) {
+  ##   theta <- matrix(theta, ncol = 1)
+  ## } else {
+  ##   theta <- t(theta)
+  ## }
   # initialize
-  if(!is.matrix(x)) {
-    x <- matrix(x, ncol = 1)
-  } else {
-    x <- t(x)
-  }
-  if(!is.matrix(theta)) {
-    theta <- matrix(theta, ncol = 1)
-  } else {
-    theta <- t(theta)
-  }
-  nreps <- max(ncol(x), ncol(theta))
-  if(ncol(x) == 1) x <- matrix(x, ndims, nreps)
-  if(ncol(theta) == 1) theta <- matrix(theta, nparams, nreps)
-  if(!all(c(ncol(x), ncol(theta)) == nreps)) {
+  x <- .format.data(x, model$data.names, type = "matrix")
+  theta <- .format.params(theta, model$param.names)
+  # check singles and compatible x and theta
+  nreps <- c(ncol(x), ncol(theta))
+  single.x <- nreps[1] == 1
+  single.theta <- nreps[2] == 1
+  if(!is.valid.nreps(nreps)) {
     stop("x and theta have incompatible dimensions.")
   }
+  nreps <- max(nreps)
+  ## if(ncol(x) == 1) x <- matrix(x, ndims, nreps)
+  ## if(ncol(theta) == 1) theta <- matrix(theta, nparams, nreps)
+  ## if(!all(c(ncol(x), ncol(theta)) == nreps)) {
+  ##   stop("x and theta have incompatible dimensions.")
+  ## }
+  if(debug) browser()
+  # validate
+  if(!all(model$is.params(thetaIn = as.double(theta),
+                          nReps = as.integer(ifelse(single.theta, 1
+                                                  , nreps))))) {
+    stop("theta contains invalid sde parameters.")
+  }
+  if(!all(model$is.data(xIn = as.double(x),
+                        thetaIn = as.double(theta),
+                        singleX = as.logical(single.x),
+                        singleTheta = as.logical(single.theta),
+                        nReps = as.integer(nreps)))) {
+    stop("x contains invalid sde data.")
+  }
+  ## val <- model$is.params(thetaIn = as.double(theta),
+  ##                        nReps = as.integer(ifelse(single.theta, 1, nreps)))
+  ## if(single.theta) val <- rep(val, nreps)
+  ## val <- val & model$is.data(xIn = as.double(x),
+  ##                            thetaIn = as.double(theta),
+  ##                            singleX = as.logical(single.x),
+  ##                            singleTheta = as.logical(single.theta),
+  ##                            nReps = as.integer(nreps))
   # compute
-  ans <- model$diff(xIn = as.double(x), thetaIn = as.double(theta),
-                    nReps = as.integer(nreps))
-  df <- matrix(ans, nreps, ndims^2, byrow = TRUE)
+  ## df <- matrix(NA, ndims^2, nreps)
+  ## if(any(val)) {
+  ##   ans <- model$diff(xIn = as.double(x[,val]),
+  ##                     thetaIn = as.double(theta[,val]),
+  ##                     singleX = as.logical(single.x),
+  ##                     singleTheta = as.logical(single.theta),
+  ##                     nReps = as.integer(sum(val)))
+  ##   df[,val] <- ans
+  ## }
+  ## # put zeros into the off-triangular elements
+  ## df[val,lower.tri(diag(ndims))] <- 0
+  df <- model$diff(xIn = as.double(x),
+                   thetaIn = as.double(theta),
+                   singleX = as.logical(single.x),
+                   singleTheta = as.logical(single.theta),
+                   nReps = as.integer(nreps))
+  df <- matrix(df, nrow = nreps, ncol = model$ndims^2, byrow = TRUE)
   # put zeros into the off-triangular elements
   df[,lower.tri(diag(ndims))] <- 0
   df

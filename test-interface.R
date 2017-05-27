@@ -41,6 +41,8 @@ x0 <- c(X = log(1000), Z = 0.1)
 nReps <- 10
 Theta <- apply(t(replicate(nReps, theta)), 2, jitter)
 X0 <- apply(t(replicate(nReps, x0)), 2, jitter)
+#X0[1,2] <- -5
+#Theta[1,5] <- 5
 
 # R functions
 dr.R <- hest.dr(x = X0, theta = Theta)
