@@ -95,7 +95,8 @@ NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn,
 //[[Rcpp::export("sde.model$loglik")]]
 NumericVector sde_LogLik(NumericVector xIn, NumericVector dTIn,
 			 NumericVector thetaIn,
-			 int nComp, int nReps, int nCores) {
+			 int nComp, int nReps,
+			 bool singleX, bool singleTheta, int nCores) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
@@ -104,13 +105,15 @@ NumericVector sde_LogLik(NumericVector xIn, NumericVector dTIn,
   double *ll = REAL(llOut);
   sdeLogLik sdeLL(nComp, REAL(dTIn), nCores);
   for(int ii=0; ii<nReps; ii++) {
-    ll[ii] = sdeLL.loglikPar(&theta[ii*nParams], &x[ii*nDims*nComp]);
+    ll[ii] = sdeLL.loglikPar(&theta[ii*(!singleTheta)*nParams],
+			     &x[ii*(!singleX)*nDims*nComp]);
   }
   return llOut;
 }
 
 //[[Rcpp::export("sde.model$logprior")]]
 NumericVector sde_Prior(NumericVector thetaIn, NumericVector xIn,
+			bool singleTheta, bool singleX,
 			int nReps, List phiIn) {
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
@@ -134,7 +137,8 @@ NumericVector sde_Prior(NumericVector thetaIn, NumericVector xIn,
   // NOTE: this can't be parallelized because private storage is common
   // to parallelize need array of Prior objects
   for(ii=0; ii<nReps; ii++) {
-    lp[ii] = prior.logPrior(&theta[ii*nParams], &x[ii*nDims]);
+    lp[ii] = prior.logPrior(&theta[ii*(!singleTheta)*nParams],
+			    &x[ii*(!singleX)*nDims]);
   }
   delete [] phi;
   delete [] nEachArg;
@@ -142,10 +146,14 @@ NumericVector sde_Prior(NumericVector thetaIn, NumericVector xIn,
 }
 
 
+// NOTE: doesn't output initial data value to simplify algorithm
+// easier to do this at R level
 //[[Rcpp::export("sde.model$sim")]]
 List sdeEulerSim(int nDataOut,
-		 int N, int reps, int r, double dT,
-		 int MAXBAD, NumericVector initData, NumericVector params) {
+		 int N, int burn, int reps, int r, double dT,
+		 int MAXBAD,
+		 NumericVector initData, NumericVector params,
+		 bool singleX, bool singleTheta) {
   RNGScope scope;
 
   int nDims = sdeModel::nDims;
@@ -163,36 +171,31 @@ List sdeEulerSim(int nDataOut,
   double *X = new double[nDims]; // current value
   double *tmpX = new double[nDims]; // proposed value
   double *Z = new double[nDims]; // random draw
-
+  double *theta; // pointer to parameter
   int ii,jj,kk;
+
   for(ii = 0; ii < reps; ii++) {
-    for(jj = 0; jj < N*r; jj++) {
-      // initialize chains
-      if(jj == 0) {
+    // initialize chains
+    for(kk = 0; kk < nDims; kk++) {
+      X[kk] = initData[ii*(!singleX)*nDims + kk];
+    }
+    theta = &params[ii*(!singleTheta)*nParams];
+    // loop through
+    for(jj = -burn*r; jj < N*r; jj++) {
+      // repeatedly draw from Euler until proposal is valid
+      mvEuler(mean, sd, X, dT, sqrtDT, theta, sde);
+      do {
 	for(kk = 0; kk < nDims; kk++) {
-	  X[kk] = initData[ii*nDims + kk];
+	  Z[kk] = norm_rand();
 	}
-      }
-      else {
-	mvEuler(mean, sd, X, dT, sqrtDT, &params[ii*nParams], sde);
-	// repeatedly draw from Euler until proposal is valid
-	do {
-	  for(kk = 0; kk < nDims; kk++) {
-	    Z[kk] = norm_rand();
-	  }
-	  xmvn(tmpX, Z, mean, sd, nDims);
-	  // validate draw
-	} while(!sde->isValidData(tmpX, &params[ii*nParams]) &&
-		bad++ < MAXBAD);
-	if (bad == MAXBAD) {
-	  goto stop;
-	}
-	for(kk = 0; kk < nDims; kk++) {
-	  X[kk] = tmpX[kk];
-	}
+	xmvn(X, Z, mean, sd, nDims);
+	// validate draw
+      } while(!sde->isValidData(X, theta) && bad++ < MAXBAD);
+      if (bad == MAXBAD) {
+	goto stop;
       }
       // store
-      if(jj % r == 0) {
+      if(jj >= 0 && (jj+1) % r == 0) {
 	for(kk = 0; kk < nDims; kk++) {
 	  dataOut[ii*N*nDims + (jj/r)*nDims + kk] = X[kk];
 	}

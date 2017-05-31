@@ -127,7 +127,7 @@ time.p1 <- system.time({
 ncores <- 8
 time.p2 <- system.time({
   ll.p2 <- pkg2("sde.loglik")(model = hmod2, x = aperm(hsim$data, c(2,3,1)),
-                              dt = dT, debug = TRUE,
+                              dt = dT, debug = FALSE,
                               theta = Theta, ncores = ncores)
 })
 
@@ -147,29 +147,36 @@ tmp/tmp[1]
 same.rnd <- TRUE
 SEED <- 3843
 
+nReps <- 2
 theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
 x0 <- c(X = log(1000), Z = 0.1)
+Theta <- apply(t(replicate(nReps, theta)), 2, jitter)
+X0 <- apply(t(replicate(nReps, x0)), 2, jitter)
 
 # each of these takes about 3s
-nObs <- 1e3
-nReps <- 200
+nObs <- 3
+burn <- 1
 dT <- 1/252
+dt.sim <- dT/2
 if(same.rnd) set.seed(SEED)
 time.p1 <- system.time({
-  hsim.p1 <- pkg1("sde.sim")(model = hmod, init.data = x0, params = theta,
-                             dt = dT, dt.sim = dT/100,
-                             N = nObs, nreps = nReps)
+  hsim.p1 <- pkg1("sde.sim")(model = hmod, init.data = X0, params = Theta,
+                             dt = dT, dt.sim = dt.sim,
+                             N = nObs+1, burn = burn, nreps = nReps)
 })
 if(same.rnd) set.seed(SEED)
 time.p2 <- system.time({
-  hsim.p2 <- pkg2("sde.sim")(model = hmod2, init.data = x0, params = theta,
-                             dt = dT, dt.sim = dT/100,
-                             N = nObs, nreps = nReps, debug = FALSE)
+  hsim.p2 <- pkg2("sde.sim")(model = hmod2, x0 = X0, theta = Theta,
+                             dt = dT, dt.sim = dt.sim, debug = FALSE,
+                             nobs = nObs, burn = burn, nreps = nReps)
 })
+sim1 <- aperm(hsim.p1$data, c(2,3,1))[-1,,]
+sim2 <- hsim.p2$data
 
 if(same.rnd) {
-  sapply(names(hsim.p1),
-         function(nm) max.diff(hsim.p1[[nm]], hsim.p2[[nm]]))
+  ## sapply(names(hsim.p1),
+  ##        function(nm) max.diff(hsim.p1[[nm]], hsim.p2[[nm]]))
+  max.diff(sim1, sim2)
 }
 
 tmp <- c(time.p1[3], time.p2[3])

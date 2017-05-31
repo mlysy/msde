@@ -39,25 +39,33 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
     }
   }
   # compile C++ code
-  flag <- file.copy(from = PriorFile,
-            to = file.path(tempdir(), "sdePrior.h"),
-            overwrite = TRUE, copy.date = TRUE)
-  if(!flag) {
-    stop("PriorFile \"", PriorFile, "\" not found.")
+  rebuild <- .copy.cpp.files(ModelFile, PriorFile)
+  ## flag <- file.copy(from = PriorFile,
+  ##           to = file.path(tempdir(), "sdePrior.h"),
+  ##           overwrite = TRUE, copy.date = TRUE)
+  ## if(!flag) {
+  ##   stop("PriorFile \"", PriorFile, "\" not found.")
+  ## }
+  ## flag <- file.copy(from = ModelFile,
+  ##           to = file.path(tempdir(), "sdeModel.h"),
+  ##           overwrite = TRUE, copy.date = TRUE)
+  ## if(!flag) {
+  ##   stop("ModelFile \"", ModelFile, "\" not found.")
+  ## }
+  ## file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
+  ##           to = file.path(tempdir(), "sdeUtils.cpp"),
+  ##           overwrite = TRUE, copy.date = TRUE)
+  cpp.args <- list(...)
+  if(is.null(cpp.args$rebuild) || !cpp.args$rebuild) {
+    cpp.args$rebuild <- rebuild
   }
-  flag <- file.copy(from = ModelFile,
-            to = file.path(tempdir(), "sdeModel.h"),
-            overwrite = TRUE, copy.date = TRUE)
-  if(!flag) {
-    stop("ModelFile \"", ModelFile, "\" not found.")
-  }
-  file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
-            to = file.path(tempdir(), "sdeUtils.cpp"),
-            overwrite = TRUE, copy.date = TRUE)
+  cpp.args <- c(list(file = file.path(tempdir(), "sdeUtils.cpp"),
+                     env = environment()), cpp.args)
   # openMP support
   if(openMP) old.env <- .omp.set()
-  sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
-            env = environment(), ...)
+  do.call(sourceCpp, cpp.args)
+  ## sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
+  ##           env = environment(), ...)
   if(openMP) .omp.unset(env = old.env)
   environment(sde.model$sim) <- globalenv()
   environment(sde.model$post) <- globalenv()
@@ -84,6 +92,42 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   # output
   class(sde.model) <- "sde.model"
   sde.model
+}
+
+# flags appropriate errors and returns T/F of whether
+# both files have any changes
+.copy.cpp.files <- function(ModelFile, PriorFile) {
+  rebuild <- FALSE
+  # prior
+  fname <- file.path(tempdir(), "sdePrior.h")
+  if(file.exists(fname)) {
+    fold <- readLines(con = fname)
+    fnew <- readLines(con = PriorFile)
+    rebuild <- !identical(fold, fnew)
+  }
+  flag <- file.copy(from = PriorFile,
+                    to = fname,
+                    overwrite = TRUE, copy.date = TRUE)
+  if(!flag) {
+    stop("PriorFile \"", PriorFile, "\" not found.")
+  }
+  # model
+  fname <- file.path(tempdir(), "sdeModel.h")
+  if(file.exists(fname)) {
+    fold <- readLines(con = fname)
+    fnew <- readLines(con = ModelFile)
+    rebuild <- !identical(fold, fnew)
+  }
+  flag <- file.copy(from = ModelFile,
+                    to = fname,
+                    overwrite = TRUE, copy.date = TRUE)
+  if(!flag) {
+    stop("ModelFile \"", ModelFile, "\" not found.")
+  }
+  file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
+            to = file.path(tempdir(), "sdeUtils.cpp"),
+            overwrite = TRUE, copy.date = TRUE)
+  rebuild
 }
 
 #--- omp set and unset ---------------------------------------------------------

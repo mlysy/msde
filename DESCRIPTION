@@ -17,7 +17,8 @@ Imports:
     Rcpp (>= 0.12.7)
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 VignetteBuilder: knitr
 License: >= GPL-3
 LazyData: true

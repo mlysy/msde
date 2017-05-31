@@ -66,9 +66,7 @@ sde.loglik <- function(model, x, dt, theta, ncores = 1, debug = FALSE) {
     ncores <- 1
   }
   # validate
-  if(!all(model$is.params(thetaIn = as.double(theta),
-                          nReps = as.integer(ifelse(single.theta, 1
-                                                  , nreps))))) {
+  if(!all(.is.valid.params(model, theta, single.theta, nreps))) {
     stop("theta contains invalid sde parameters.")
   }
   if(!single.theta) {
@@ -76,17 +74,33 @@ sde.loglik <- function(model, x, dt, theta, ncores = 1, debug = FALSE) {
   } else {
     theta.ind <- 1
   }
-  if(!all(model$is.data(xIn = as.double(x),
-                        thetaIn = as.double(theta[,theta.ind]),
-                        singleX = as.logical(single.x),
-                        singleTheta = as.logical(single.theta),
-                        nReps = as.integer(nreps)))) {
+  if(!all(.is.valid.data(model, x, theta[,theta.ind],
+                         single.x, single.theta, nreps*ncomp))) {
     stop("x contains invalid sde data.")
   }
+  ## if(!all(model$is.params(thetaIn = as.double(theta),
+  ##                         nReps = as.integer(ifelse(single.theta, 1
+  ##                                                 , nreps))))) {
+  ##   stop("theta contains invalid sde parameters.")
+  ## }
+  ## if(!single.theta) {
+  ##   theta.ind <- rep(1:nreps, each = ncomp)
+  ## } else {
+  ##   theta.ind <- 1
+  ## }
+  ## if(!all(model$is.data(xIn = as.double(x),
+  ##                       thetaIn = as.double(theta[,theta.ind]),
+  ##                       singleX = as.logical(single.x),
+  ##                       singleTheta = as.logical(single.theta),
+  ##                       nReps = as.integer(nreps)))) {
+  ##   stop("x contains invalid sde data.")
+  ## }
   # compute
   model$loglik(xIn = as.double(x), dTIn = as.double(dt),
                thetaIn = as.double(theta),
                nComp = as.integer(ncomp),
                nReps = as.integer(nreps),
+               singleX = as.logical(single.x),
+               singleTheta = as.logical(single.theta),
                nCores = as.integer(ncores))
 }

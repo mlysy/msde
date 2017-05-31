@@ -1,6 +1,6 @@
 #' Argument checking for the default multivariate normal prior
 #'
-#' @param prior.args A list with elements \code{mu} and \code{Sigma}, corresponding to a named mean vector and variance matrix (see Details).
+#' @param hyper The normal prior's hyperparameters: a list with elements \code{mu} and \code{Sigma}, corresponding to a named mean vector and variance matrix (see Details).
 #' @param param.names Vector of parameter names (see Details).
 #' @param data.names Vector of data names (see Details).
 #' @return A list with the following elements:
@@ -12,21 +12,21 @@
 #' }
 #' @details This function is not meant to be called directly by the user, but rather to parse the hyper-parameters of a "default" multivariate normal prior distribution to be passed to the C++ code in \code{\link{sde.prior}} and \code{\link{sde.post}}.  This default prior is multivariate normal on the elements of \code{(theta, x0)} specified by each of \code{names(mu)}, \code{rownames(Sigma)}, and \code{colnames(Sigma)}.  The remaining components are given Lebesgue priors.  If the names of \code{mu} and \code{Sigma} are inconsistent an error is thrown.
 #' @export
-mvn.prior.spec <- function(prior.args, param.names, data.names, debug = FALSE) {
+mvn.prior.spec <- function(hyper, param.names, data.names, debug = FALSE) {
   nparams <- length(param.names)
   ndims <- length(data.names)
   var.names <- c(param.names, data.names)
   prior.names <- c("mu", "Sigma")
-  if(!is.null(prior.args)) {
+  if(!is.null(hyper)) {
     # error checking
-    if(is.null(names(prior.args)) ||
-       !identical(sort(names(prior.args)), sort(prior.names))) {
-      stop("prior.args must be NULL or a list with elements mu and Sigma.")
+    if(is.null(names(hyper)) ||
+       !identical(sort(names(hyper)), sort(prior.names))) {
+      stop("hyper must be NULL or a list with elements mu and Sigma.")
     }
     # check argument names
-    mu.names <- names(prior.args$mu)
-    Sigma.rnames <- rownames(prior.args$Sigma)
-    Sigma.cnames <- colnames(prior.args$Sigma)
+    mu.names <- names(hyper$mu)
+    Sigma.rnames <- rownames(hyper$Sigma)
+    Sigma.cnames <- colnames(hyper$Sigma)
     if(!identical(mu.names, Sigma.rnames) ||
        !identical(mu.names, Sigma.cnames)) {
       stop("names(mu), rownames(Sigma), and colnames(Sigma) are not consistent.")
@@ -39,8 +39,8 @@ mvn.prior.spec <- function(prior.args, param.names, data.names, debug = FALSE) {
     var.id <- sapply(mu.names, function(x) which(x == var.names))
     # order the variables
     var.ord <- order(var.id)
-    mu <- prior.args$mu[var.ord]
-    Sigma <- prior.args$Sigma[var.ord,var.ord]
+    mu <- hyper$mu[var.ord]
+    Sigma <- hyper$Sigma[var.ord,var.ord]
     var.id <- sort(var.id)
     # separate into theta and x components
     theta.id <- var.id[var.id <= nparams]

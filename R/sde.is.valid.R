@@ -3,7 +3,7 @@
 #' @export
 sde.valid.data <- function(model, x, theta) {
   if(class(model) != "sde.model")
-    stop("Expecting object of class sde.model.  Use sde.make.model to create.")
+    stop("model must be an sde.model object.")
   # initialize
   x <- .format.data(x, model$data.names, type = "matrix")
   theta <- .format.params(theta, model$param.names)
@@ -32,7 +32,22 @@ sde.valid.params <- function(model, theta) {
   theta <- .format.params(theta, model$param.names)
   # check singles and compatible x and theta
   nreps <- ncol(theta)
-  model$is.params(xIn = as.double(x),
-                  thetaIn = as.double(theta),
+  model$is.params(thetaIn = as.double(theta),
                   nReps = as.integer(nreps))
+}
+
+#--- internal versions: no argument checking/formatting ------------------------
+
+.is.valid.data <- function(model, x, theta, single.x, single.theta, nreps) {
+  model$is.data(xIn = as.double(x),
+                thetaIn = as.double(theta),
+                singleX = as.logical(single.x),
+                singleTheta = as.logical(single.theta),
+                nReps = as.integer(nreps))
+}
+
+.is.valid.params <- function(model, theta, single.theta, nreps) {
+  rep(model$is.params(thetaIn = as.double(theta),
+                      nReps = as.integer(ifelse(single.theta, 1, nreps))),
+      times = ifelse(single.theta, nreps, 1))
 }

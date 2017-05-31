@@ -1,0 +1,16 @@
+### Changes in input + output: msde -> msdeHeaders ###
+
+* sde.make.model: C++ code in strings -> C++ code in header files
+
+* sde.drift, sde.diff, sde.prior, sde.loglik, sde.init, sde.sim, sde.post: inputs called x/data/init.data, theta/params/init.params -> inputs called x/x0, theta
+
+* sde.loglik, sde.sim: dim(data) == c(nreps, nobs, ndims) -> dim(data) == c(nobs, ndims, nreps)
+
+* sde.sim: data output is (X0, ..., X_{N-1}) -> data output is (X1, ..., XN).
+
+* sde.prior: Default normal prior now input as list with named mean vector and variance matrix.
+
+* sde.post: init, init.data, dt, par.index, init.params -> init
+  	    prior -> hyper
+	    rw.jump.sd -> mwg.sd, adapt
+	    data.out is scalar/vector/list(row, col) -> data.out is scalar/vector/list(iobs, idims, isamples)

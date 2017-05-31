@@ -52,7 +52,7 @@ is.valid.nreps <- function(nreps) {
     if(is.matrix(x)) {
       dn <- dimnames(x)
       x <- array(x, dim = c(dim(x), 1))
-      if(!is.null(dn)) dimnames(x) <- c(dimnames(x), list(NULL))
+      if(!is.null(dn)) dimnames(x) <- c(dn, list(NULL))
     }
     if(length(dim(x)) != 3) {
       stop("x must be a matrix or 3-d array.")

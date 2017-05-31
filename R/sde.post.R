@@ -1,21 +1,21 @@
 #' Gibbs sampler for Multivariate SDEs
 #'
 #' @param model An \code{sde.model} object constructed with \code{\link{sde.make.model}}.
-#' @param init.data An \code{sde.data} object constructed with \code{\link{sde.data}}.
-#' @param init.params Initial values for all \code{nparams} parameters.
-#' @param hyper.params Hyper parameters for the model, to be read by \code{sde.mmodel$prior.spec}.
+#' @param init An \code{sde.init} object constructed with \code{\link{sde.init}}.
+#' @param hyper The hyperparameters of the SDE prior.  See \code{\link{sde.prior}}.
 #' @param nsamples Number of iterations.
 #' @param burn Integer number of burnin samples, or fraction of \code{nsamples} to prepend as burnin.
 #' @param mwg.sd standard deviation jump size for Metropolis-within-Gibbs steps (see Details).
-#' @param adapt Adaptive Metropolis-within-Gibbs sampling (see Details).
+#' @param adapt Logical or list to specify adaptive Metropolis-within-Gibbs sampling (see Details).
 #' @param loglik.out Logical, whether to return the loglikelihood at each step.
 #' @param last.miss.out Logical, whether to return the missing sde components of the last observation.
 #' @param update.data Logical, whether to update the missing data.
-#' @param data.out Determines the subset of data to be returned (see Details).
+#' @param data.out A scalar, integer vector, or list of three integer vectors determines the subset of data to be returned (see Details).
 #' @param update.params Logical, whether to update the model parameters.
+#' @param fixed.params Logical vector of length \code{nparams} indicating which parameters are to be held fixed in the MCMC sampler.
+#' @param ncores If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.
 #' @param verbose Logical, whether to periodically output MCMC status.
 #' @param details The MWG jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{nmiss0} and \code{fixed.params}.  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
-#'
 #'
 #' \code{adapt = TRUE} implements an adaptive MCMC by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
 #' \deqn{
@@ -24,28 +24,40 @@
 #' When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
 #'
 #' For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{row} and \code{col} determines which samples to return with the former, and which of the \code{ncomp} time-points to return with the latter.
+#' @return A list with elements:
+#' \describe{
+#'   \item{params}{An \code{nsamples x nparams} matrix of posterior parameter draws.}
+#'   \item{data}{A 3-d array of posterior missing data draws, for which the output dimensions are specified by \code{data.out}.}
+#'   \item{data.out}{A list of three integer vectors specifying which timepoints, variables, and MCMC iterations correspond to the values in the \code{data} output.}
+#'   \item{init}{The \code{sde.init} object which initialized the sampler.}
+#'   \item{loglik}{If \code{loglik.out == TRUE}, the vector of \code{nsamples} complete data loglikelihoods calculated at each posterior sample.}
+#'   \item{last.iter}{A list with elements \code{data} and \code{params} giving the last MCMC sample.  Useful for resuming the MCMC from that point.}
+#'   \item{last.miss}{If \code{last.miss.out == TRUE}, a \code{nsamples x nmissN} matrix of all posterior draws for the missing data in the final observation.  Useful for SDE forecasting at future timepoints.}
+#'   \item{accept}{A named list of acceptance rates for the various components of the MCMC sampler.}
+#' }
 #' @export
-sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
+sde.post <- function(model, init, hyper,
                      nsamples, burn, mwg.sd = NULL, adapt = TRUE,
                      loglik.out = FALSE, last.miss.out = FALSE,
                      update.data = TRUE, data.out,
-                     update.params = TRUE, verbose = TRUE,
-                     ncores = 1, debug = FALSE) {
+                     update.params = TRUE, fixed.params,
+                     ncores = 1, verbose = TRUE, debug = FALSE) {
   # model constants
   if(class(model) != "sde.model") {
-    stop("model must be of class sde.model.  Use sde.make.model to create.")
+    stop("model must be an sde.model object.")
   }
   ndims <- model$ndims
   data.names <- model$data.names
   nparams <- model$nparams
   param.names <- model$param.names
   # initialize x and dt
-  if(class(init.data) != "sde.data") {
-    stop("init.data must be of class sde.data.  Use sde.init to create.")
+  if(class(init) != "sde.init") {
+    stop("init must be an sde.init object.")
   }
-  dt <- init.data$dt
-  par.index <- init.data$par.index
-  init.data <- init.data$data
+  dt <- init$dt.m
+  par.index <- init$nvar.obs.m
+  init.data <- init$data
+  init.params <- init$params
   # initialize parameters
   if(missing(fixed.params)) fixed.params <- rep(FALSE, nparams)
   # parse inputs
@@ -68,12 +80,12 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
   if(nmissN == 0) last.miss.out <- FALSE
   nlast.miss.out <- ifelse(last.miss.out, nsamples*nmissN, 1)
   # prior specification
-  prior <- hyper.params
+  prior <- hyper
   # format hyperparameters
   prior <- model$prior.spec(prior, param.names, data.names)
   # C++ format check (is phi a list with vector-double elements)
   if(!is.valid.hyper(prior)) {
-    stop("model$prior.spec must convert hyper.params to a list with NULL or vector-double elements.")
+    stop("model$prior.spec must convert hyper to a list with NULL or vector-double elements.")
   }
   # random walk jump size
   if(is.null(mwg.sd)) mwg.sd <- .25 * abs(c(init.params, init.data[1,]))
@@ -138,9 +150,8 @@ sde.post <- function(model, init.data, init.params, fixed.params, hyper.params,
     out <- c(out, list(data = x.out))
   } else out <- c(out, list(data = init.data))
   if(loglik.out) out <- c(out, list(loglik = ans$logLikOut))
-  out <- c(out, list(dt = dt, par.index = par.index, data.out = data.out,
-                     init.data = init.data, init.params = init.params,
-                     mwg.sd = ans$mwgSd, hyper.params = hyper.params))
+  out <- c(out, list(init = init, data.out = data.out,
+                     mwg.sd = ans$mwgSd, hyper = hyper))
   last.iter <- list(params = ans$lastIter[1:nparams],
                     data = matrix(ans$lastIter[nparams + 1:(ncomp*ndims)],
                                   ncomp, ndims, byrow = TRUE))

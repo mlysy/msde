@@ -1,16 +1,26 @@
 #--- msde interface ------------------------------------------------------------
 
+# TODO:
+# 1. Shouldn't need to rebuild = TRUE
+
+# 2. C++ diffusion specification
+
+# 3. Input specification for sde.sim, sde.init, even sde.post
+#    options: (x, theta, phi) vs (data, params, hyper)
+#    how about: x/x0, theta, hyper
+
+# 4. Output specification for sde.sim and sde.post:
+#    nobs x ndims x nreps,
+#    similarly, data.out should be scalar, vector, or list of length 3.
+
+
 require(msdeHeaders)
-# TODO: shouldn't need to rebuild = TRUE
-# TODO: prior specification
 max.diff <- function(x1, x2) {
-  c(abs = max(abs(x1-x2)), rel = max(abs(x1-x2)/abs(x1)))
+  c(abs = max(abs(x1-x2)), rel = max(abs(x1-x2)/max(abs(x1), 1e-8)))
 }
 
 #--- example 1: heston model ---------------------------------------------------
 
-param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
-data.names <- c("X", "Z")
 hest.dr <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)
   if(!is.matrix(theta)) theta <- t(theta)
@@ -27,11 +37,15 @@ hest.df <- function(x, theta) {
 # compile model
 # TODO: delete rebuild dependency.
 # for now must always rebuild
-hmod <- sde.make.model(ModelFile = "hestModel.h", rebuild = TRUE,
+param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+data.names <- c("X", "Z")
+hmod <- sde.make.model(ModelFile = "hestModel.h",
                        param.names = param.names,
                        data.names = data.names)
 ndims <- hmod$ndims
 nparams <- hmod$nparams
+
+ghmod <- sde.make.model(ModelFile = "ghestModel.h")
 
 # test drift and diffusion functions
 # assuming there are no errors on our end, this is all the user should
