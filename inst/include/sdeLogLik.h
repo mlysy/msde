@@ -46,7 +46,7 @@ class sdeLogLik {
   double *dT, *sqrtDT; // times
   // log-density
   double loglik(double *theta, double *x);
-  double loglikPar(double *theta, double *x);
+  //double loglikPar(double *theta, double *x);
   // constructor and destructor
   sdeLogLik(int n, double *dt);
   sdeLogLik(int n, double *dt, int ncores);
@@ -105,21 +105,21 @@ inline sdeLogLik::~sdeLogLik() {
   delete [] sqrtDT;
 }
 
-// full log-likelihood evaluation
-inline double sdeLogLik::loglik(double *theta, double *x) {
-  double ll = 0;
-  // *** PARALLELIZABLE FOR-LOOP ***
-  for(int ii = 0; ii < nComp-1; ii++) {
-    mvEuler(&propMean[ii*nDims], &propSd[ii*nDims2],
-	    &x[ii*nDims], dT[ii], sqrtDT[ii], theta, &sde[ii]);
-    ll += lmvn(&x[(ii+1)*nDims], &propZ[ii*nDims],
-	       &propMean[ii*nDims], &propSd[ii*nDims2], nDims);
-  }
-  return(ll);
-}
+/* // full log-likelihood evaluation */
+/* inline double sdeLogLik::loglik(double *theta, double *x) { */
+/*   double ll = 0; */
+/*   // *** PARALLELIZABLE FOR-LOOP *** */
+/*   for(int ii = 0; ii < nComp-1; ii++) { */
+/*     mvEuler(&propMean[ii*nDims], &propSd[ii*nDims2], */
+/* 	    &x[ii*nDims], dT[ii], sqrtDT[ii], theta, &sde[ii]); */
+/*     ll += lmvn(&x[(ii+1)*nDims], &propZ[ii*nDims], */
+/* 	       &propMean[ii*nDims], &propSd[ii*nDims2], nDims); */
+/*   } */
+/*   return(ll); */
+/* } */
 
 // full log-likelihood evaluation
-inline double sdeLogLik::loglikPar(double *theta, double *x) {
+inline double sdeLogLik::loglik(double *theta, double *x) {
   double ll = 0;
   // *** PARALLELIZABLE FOR-LOOP ***
   #ifdef _OPENMP

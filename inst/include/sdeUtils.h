@@ -18,6 +18,9 @@ inline void mvEuler(double *mean, double *sd,
   }
   // sd = diff(x,t,theta)*sqrt(dT)
   sde->sdeDf(sd, x, theta);
+  if(!sdeModel::sdDiff) {
+    chol_decomp(sd, sd, sdeModel::nDims);
+  }
   U_mult(sd, sqrtDT, sdeModel::nDims);
   return;
 }

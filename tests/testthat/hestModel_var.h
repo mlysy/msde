@@ -17,7 +17,7 @@ class sdeModel {
  public:
   static const int nParams = 5;
   static const int nDims = 2;
-  static const bool sdDiff = true;
+  static const bool sdDiff = false;
   static const bool diagDiff = false;
   void sdeDr(double *dr, double *x, double *theta);
   void sdeDf(double *df, double *x, double *theta);
@@ -43,9 +43,9 @@ inline void sdeModel::sdeDr(double *dr, double *x, double *theta) {
 // diffusion function
 inline void sdeModel::sdeDf(double *df, double *x, double *theta) {
   df[0] = .5 * x[1];
-  df[2] = theta[3];
-  df[3] = sqrt(1.0-theta[4]*theta[4]) * df[2];
-  df[2] *= theta[4];
+  df[2] = theta[3] * theta[4] * df[0];
+  df[3] = theta[3]*theta[3];
+  df[0] *= df[0];
   return;
 }
 

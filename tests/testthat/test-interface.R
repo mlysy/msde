@@ -7,8 +7,7 @@ context("msde interface")
 # compile heston model
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
-hmod <- sde.make.model(ModelFile = file.path(msdeHeaders:::.msdeCppPath,
-                                             "hestModel.h"),
+hmod <- sde.make.model(ModelFile = "hestModel_var.h",
                        param.names = param.names,
                        data.names = data.names)
 ndims <- hmod$ndims

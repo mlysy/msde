@@ -19,7 +19,6 @@
 #' @details The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.
 #'
 #' The code is compiled by copying the \code{ModelFile} to the \code{tmpdir} directory, along with a wrapper \code{.cpp} file to be compiled by \code{Rcpp::sourceCpp}.
-#' @note TODO: fix \code{rebuild = TRUE}.  This could be done with \code{utils::changedFiles}.
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, prior.spec,
@@ -59,7 +58,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   if(is.null(cpp.args$rebuild) || !cpp.args$rebuild) {
     cpp.args$rebuild <- rebuild
   }
-  cpp.args <- c(list(file = file.path(tempdir(), "sdeUtils.cpp"),
+  cpp.args <- c(list(file = file.path(tempdir(), "msdeExports.cpp"),
                      env = environment()), cpp.args)
   # openMP support
   if(openMP) old.env <- .omp.set()
@@ -124,9 +123,15 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   if(!flag) {
     stop("ModelFile \"", ModelFile, "\" not found.")
   }
-  file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
-            to = file.path(tempdir(), "sdeUtils.cpp"),
-            overwrite = TRUE, copy.date = TRUE)
+  # put together exports file
+  msdeExports <- c(readLines(file.path(.msdeCppPath, "sdeUtils.cpp")),
+                   readLines(file.path(.msdeCppPath, "sdeSim.cpp")),
+                   readLines(file.path(.msdeCppPath, "sdePost.cpp")))
+  cat(msdeExports, sep = "\n",
+      file = file.path(tempdir(), "msdeExports.cpp"))
+  ## file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
+  ##           to = file.path(tempdir(), "sdeUtils.cpp"),
+  ##           overwrite = TRUE, copy.date = TRUE)
   rebuild
 }
 
