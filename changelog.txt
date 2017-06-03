@@ -4,6 +4,10 @@
 
 * sde.drift, sde.diff, sde.prior, sde.loglik, sde.init, sde.sim, sde.post: inputs called x/data/init.data, theta/params/init.params -> inputs called x/x0, theta
 
+* sdeDr, sdeDf: no longer include dT/sqrtDT
+
+* sdeDf: sdDiff = true/false and diagDiff = true/flags
+
 * sde.loglik, sde.sim: dim(data) == c(nreps, nobs, ndims) -> dim(data) == c(nobs, ndims, nreps)
 
 * sde.sim: data output is (X0, ..., X_{N-1}) -> data output is (X1, ..., XN).

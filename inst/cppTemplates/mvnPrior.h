@@ -80,7 +80,7 @@ inline double Prior::logPrior(double *theta, double *x) {
   for(ii=0; ii<nDataRV; ii++) {
     tmpX[nParamRV+ii] = x[dataId[ii]];
   }
-  lp = lmvn(tmpX, tmpZ, mean, cholSd, nRV);
+  lp = lmvn_chol(tmpX, tmpZ, mean, cholSd, nRV);
   return(lp);
 }
 
