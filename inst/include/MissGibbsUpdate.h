@@ -15,10 +15,11 @@ inline void sdeMCMC::mvEraker(double *mean, double *sd,
     mean[ii] = x0[ii] * b + x2[ii] * b1;
   }
   sde->sdeDf(sd, x0, theta);
-  if(!sdeModel::sdDiff) {
-    chol_decomp(sd, sd, sdeModel::nDims);
-  }
-  U_mult(sd, b2, sdeModel::nDims);
+  scaleDiff(sd, b2);
+  /* if(!sdeModel::sdDiff) { */
+  /*   chol_decomp(sd, sd, sdeModel::nDims); */
+  /* } */
+  /* U_mult(sd, b2, sdeModel::nDims); */
   return;
 }
 

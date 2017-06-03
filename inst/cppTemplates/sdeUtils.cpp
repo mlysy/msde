@@ -9,6 +9,14 @@ using namespace Rcpp;
 //
 // the function are: sde's drift, diffusion, log-likelihood, prior.
 
+// //[[Rcpp::export(".get.sde.consts")]]
+// List sde_getConsts() {
+//   return List::create(_["ndims"] = sdeModel::nDims,
+// 		      _["nparams"] = sdeModel::nParams,
+// 		      _["sd.diff"] = sdeModel::sdDiff,
+// 		      _["diag.diff"] = sdeModel::diagDiff);
+// }
+
 //[[Rcpp::export("ndims")]]
 int sde_getNDims() {
   return sdeModel::nDims;
@@ -74,14 +82,27 @@ NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn,
   int nParams = sdeModel::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
-  NumericVector dfOut(nReps*nDims*nDims);
+  NumericVector dfOut(nReps*nDims2);
   double *df = REAL(dfOut);
   sdeModel sde;
-  for(int ii = 0; ii < nReps; ii++) {
+  int ii,jj;
+  for(ii=0; ii<nReps; ii++) {
     sde.sdeDf(&df[ii*nDims2],
 	      &x[ii*(!singleX)*nDims], &theta[ii*(!singleTheta)*nParams]);
-    if(!sdeModel::sdDiff) {
-      chol_decomp(&df[ii*nDims2], &df[ii*nDims2], nDims);
+    if(sdeModel::diagDiff) {
+      if(sdeModel::sdDiff) {
+	for(jj=1; jj<nDims; jj++) {
+	  df[ii*nDims2 + jj*nDims + jj] = df[ii*nDims2+jj];
+	}
+      } else {
+	for(jj=1; jj<nDims; jj++) {
+	  df[ii*nDims2 + jj*nDims + jj] = sqrt(df[ii*nDims2+jj]);
+	}
+      }
+    } else {
+      if(!sdeModel::diagDiff) {
+	chol_decomp(&df[ii*nDims2], &df[ii*nDims2], nDims);
+      }
     }
   }
   return dfOut;

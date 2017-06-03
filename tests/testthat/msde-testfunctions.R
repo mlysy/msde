@@ -10,10 +10,10 @@ hest.dr <- function(x, theta) {
   if(!is.matrix(theta)) theta <- t(theta)
   cbind(theta[,1] - .125 * x[,2]^2, theta[,3]/x[,2] - .5*theta[,2]*x[,2])
 }
-hest.df <- function(x, theta) {
+hest.df <- function(x, theta, norho = FALSE) {
   if(!is.matrix(x)) x <- t(x)
   if(!is.matrix(theta)) theta <- t(theta)
-  cv <- .5*theta[,5]*theta[,4]*x[,2]
+  cv <- if(norho) 0 else .5*theta[,5]*theta[,4]*x[,2]
   ans <- cbind(.25 * x[,2]^2, cv, cv, theta[,4]^2)
   t(apply(ans, 1, function(x) chol(matrix(x,2,2))))
 }
@@ -24,8 +24,9 @@ hest.data <- function(nreps) {
   if(nreps > 1) X0 <- apply(t(replicate(nreps, X0)), 2, jitter)
   X0
 }
-hest.params <- function(nreps) {
+hest.params <- function(nreps, norho = FALSE) {
   Theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+  if(norho) Theta <- Theta[1:4]
   if(nreps > 1) Theta <- apply(t(replicate(nreps, Theta)), 2, jitter)
   Theta
 }
@@ -58,23 +59,23 @@ rmvn <- function(mean, cholsd) {
 }
 
 # R likelihood
-hest.ll <- function(x, theta, dt) {
+hest.ll <- function(x, theta, dt, norho = FALSE) {
   ncomp <- nrow(x)
   mu <- x[-ncomp,,drop=FALSE] + hest.dr(x[-ncomp,], theta) * dt
-  cholsd <- hest.df(x[-ncomp,,drop=FALSE], theta) * sqrt(dt)
+  cholsd <- hest.df(x[-ncomp,,drop=FALSE], theta, norho) * sqrt(dt)
   sum(sapply(2:ncomp-1, function(ii) {
     lmvn(x[ii+1,], mu[ii,], cholsd[ii,])
   }))
 }
 
 # R simulation
-hest.sim <- function(nobs, dt, rr, x0, theta) {
+hest.sim <- function(nobs, dt, rr, x0, theta, norho = FALSE) {
   X <- matrix(NA, nobs, length(x0))
   x <- x0
   for(ii in 1:nobs) {
     for(jj in 1:rr) {
       mu <- x + hest.dr(x, theta) * (dt/rr)
-      csd <- hest.df(x, theta) * sqrt(dt/rr)
+      csd <- hest.df(x, theta, norho) * sqrt(dt/rr)
       x <- rmvn(mu, csd)
       while(x[2] <= 0) x <- rmvn(mu, csd)
     }
@@ -85,7 +86,7 @@ hest.sim <- function(nobs, dt, rr, x0, theta) {
 
 #--- initialize single/multiple inputs -----------------------------------------
 
-input.init <- function(nreps, sx, st) {
+input.init <- function(nreps, sx, st, norho = FALSE) {
   has.ncomp <- length(nreps) > 1
   if(!has.ncomp) {
     ncomp <- 1
@@ -94,7 +95,7 @@ input.init <- function(nreps, sx, st) {
     nreps <- nreps[2]
   }
   X <- hest.data(nreps*ncomp)
-  Theta <- hest.params(nreps)
+  Theta <- hest.params(nreps, norho)
   if(nreps == 1) {
     Theta <- t(Theta)
   }

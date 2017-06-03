@@ -48,7 +48,7 @@ class sdeLogLik {
   double loglik(double *theta, double *x);
   //double loglikPar(double *theta, double *x);
   // constructor and destructor
-  sdeLogLik(int n, double *dt);
+  //sdeLogLik(int n, double *dt);
   sdeLogLik(int n, double *dt, int ncores);
   ~sdeLogLik();
 };
@@ -56,35 +56,35 @@ class sdeLogLik {
 
 // constructors ------------------------------------------------------------
 
-inline sdeLogLik::sdeLogLik(int n, double *dt) {
-  nComp = n;
-  nDims = sdeModel::nDims;
-  nDims2 = nDims*nDims;
-  nParams = sdeModel::nParams;
-  // create storage space
-  sde = new sdeModel[nComp];
-  propMean = new double[nComp*nDims];
-  propSd = new double[nComp*nDims*nDims];
-  propZ = new double[nComp*nDims];
-  dT = new double[nComp];
-  sqrtDT = new double[nComp];
-  // timing
-  for(int ii=0; ii<nComp-1; ii++) {
-    dT[ii] = dt[ii];
-    sqrtDT[ii] = sqrt(dT[ii]);
-  }
-}
+/* inline sdeLogLik::sdeLogLik(int n, double *dt) { */
+/*   nComp = n; */
+/*   nDims = sdeModel::nDims; */
+/*   nDims2 = sdeModel::diagDiff ? nDims : nDims*nDims; */
+/*   nParams = sdeModel::nParams; */
+/*   // create storage space */
+/*   sde = new sdeModel[nComp]; */
+/*   propMean = new double[nComp*nDims]; */
+/*   propSd = new double[nComp*nDims2]; */
+/*   propZ = new double[nComp*nDims]; */
+/*   dT = new double[nComp]; */
+/*   sqrtDT = new double[nComp]; */
+/*   // timing */
+/*   for(int ii=0; ii<nComp-1; ii++) { */
+/*     dT[ii] = dt[ii]; */
+/*     sqrtDT[ii] = sqrt(dT[ii]); */
+/*   } */
+/* } */
 
 inline sdeLogLik::sdeLogLik(int n, double *dt, int ncores) {
   nComp = n;
   nCores = ncores;
   nDims = sdeModel::nDims;
-  nDims2 = nDims*nDims;
+  nDims2 = sdeModel::diagDiff ? nDims : nDims*nDims;
   nParams = sdeModel::nParams;
   // create storage space
   sde = new sdeModel[nCores];
   propMean = new double[nCores*nDims];
-  propSd = new double[nCores*nDims*nDims];
+  propSd = new double[nCores*nDims2];
   propZ = new double[nComp*nDims]; // RV draws can't be parallelized
   dT = new double[nComp];
   sqrtDT = new double[nComp];
