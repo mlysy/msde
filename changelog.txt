@@ -17,4 +17,8 @@
 * sde.post: init, init.data, dt, par.index, init.params -> init
   	    prior -> hyper
 	    rw.jump.sd -> mwg.sd, adapt
-	    data.out is scalar/vector/list(row, col) -> data.out is scalar/vector/list(iobs, idims, isamples)
+	    data.out is scalar/vector/list(row, col) -> data.out is scalar/
+	    vector/list(iobs, idims, isamples)
+
+* sde.init: theta input now mandatory
+  	    model input now required

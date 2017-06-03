@@ -23,7 +23,6 @@
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, prior.spec,
                            openMP = FALSE, ..., debug = FALSE) {
-  if(debug) browser()
   sde.model <- list()
   # prior specification
   if(PriorFile == "default") {
@@ -62,6 +61,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
                      env = environment()), cpp.args)
   # openMP support
   if(openMP) old.env <- .omp.set()
+  if(debug) browser()
   do.call(sourceCpp, cpp.args)
   ## sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
   ##           env = environment(), ...)
@@ -123,15 +123,17 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   if(!flag) {
     stop("ModelFile \"", ModelFile, "\" not found.")
   }
-  # put together exports file
-  msdeExports <- c(readLines(file.path(.msdeCppPath, "sdeUtils.cpp")),
-                   readLines(file.path(.msdeCppPath, "sdeSim.cpp")),
-                   readLines(file.path(.msdeCppPath, "sdePost.cpp")))
-  cat(msdeExports, sep = "\n",
-      file = file.path(tempdir(), "msdeExports.cpp"))
-  ## file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
-  ##           to = file.path(tempdir(), "sdeUtils.cpp"),
-  ##           overwrite = TRUE, copy.date = TRUE)
+  # export file
+  if(!file.exists(file.path(.msdeCppPath, "msdeExports.cpp"))) {
+    msdeExports <- c(readLines(file.path(.msdeCppPath, "sdeUtils.cpp")),
+                     readLines(file.path(.msdeCppPath, "sdeSim.cpp")),
+                     readLines(file.path(.msdeCppPath, "sdePost.cpp")))
+    cat(msdeExports, sep = "\n",
+        file = file.path(.msdeCppPath, "msdeExports.cpp"))
+  }
+  file.copy(from = file.path(.msdeCppPath, "msdeExports.cpp"),
+            to = file.path(tempdir(), "msdeExports.cpp"),
+            overwrite = TRUE, copy.date = TRUE)
   rebuild
 }
 

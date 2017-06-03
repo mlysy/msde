@@ -50,31 +50,32 @@ sde.post <- function(model, init, hyper,
   data.names <- model$data.names
   nparams <- model$nparams
   param.names <- model$param.names
-  # initialize x and dt
+  # initial values
   if(class(init) != "sde.init") {
+    # all argument checking done at construction time
     stop("init must be an sde.init object.")
   }
   dt <- init$dt.m
   par.index <- init$nvar.obs.m
   init.data <- init$data
   init.params <- init$params
-  # initialize parameters
   if(missing(fixed.params)) fixed.params <- rep(FALSE, nparams)
   # parse inputs
   ncomp <- nrow(init.data)
   nmiss0 <- ndims - par.index[1]
   nparams2 <- nparams+nmiss0
-  if(length(dt) == 1) dt <- rep(dt, ncomp-1) # time
-  .check.init(init.data, dt, init.params, param.names, data.names)
+  ## if(length(dt) == 1) dt <- rep(dt, ncomp-1) # time
+  ## .check.init(init.data, dt, init.params, param.names, data.names)
   if(missing(burn)) burn <- max(.1, 1e3)
   if(burn < 1) burn <- nsamples*burn
   burn <- floor(burn)
   # output sizes
   if(all(par.index == ndims)) update.data <- FALSE
-  data.out <- .set.data.out(data.out, nsamples, ncomp, update.data)
-  nsamples.out <- length(data.out$row)
-  ncomp.out <- length(data.out$col)
-  ndata.out <- ifelse(update.data, nsamples.out*ndims*ncomp.out, 1)
+  data.out <- .set.data.out(data.out, nsamples, ncomp, ndims, update.data)
+  nsamples.out <- length(data.out$isamples)
+  ncomp.out <- length(data.out$icomp)
+  ndims.out <- length(data.out$idims)
+  ndata.out <- ifelse(update.data, nsamples.out*ndims.out*ncomp.out, 1)
   nparams.out <- ifelse(update.params, nsamples*nparams, 1)
   nmissN <- ndims - par.index[ncomp] # last missing output
   if(nmissN == 0) last.miss.out <- FALSE
@@ -114,8 +115,9 @@ sde.post <- function(model, init, hyper,
                     burn = as.integer(burn),
                     nParamsOut = as.integer(nparams.out),
                     nDataOut = as.integer(ndata.out),
-                    dataOutRow = as.integer(data.out$row-1),
-                    dataOutCol = as.integer(data.out$col-1),
+                    dataOutSmp = as.integer(data.out$isamples-1),
+                    dataOutComp = as.integer(data.out$icomp-1),
+                    dataOutDims = as.integer(data.out$idims-1),
                     updateParams = as.double(update.params),
                     updateData = as.double(update.data),
                     priorArgs = prior,
@@ -144,9 +146,9 @@ sde.post <- function(model, init, hyper,
   } else out <- c(out, list(params = init.params))
   if(update.data) {
     x.out <- array(ans$dataOut,
-                   dim = c(ndims, ncomp.out, nsamples.out),
-                   dimnames = list(data.names, NULL, NULL))
-    x.out <- aperm(x.out, perm = 3:1)
+                   dim = c(ndims.out, ncomp.out, nsamples.out),
+                   dimnames = list(data.names[data.out$idims], NULL, NULL))
+    x.out <- aperm(x.out, perm = c(2,1,3))
     out <- c(out, list(data = x.out))
   } else out <- c(out, list(data = init.data))
   if(loglik.out) out <- c(out, list(loglik = ans$logLikOut))
@@ -170,33 +172,75 @@ sde.post <- function(model, init, hyper,
 #--- helper functions ----------------------------------------------------------
 
 # which MCMC iterations and which time points are returned
-.set.data.out <- function(data.out, nsamples, ncomp, update.data) {
+# input is a scalar, integer vector, or list of integer vectors named
+# with names(data.out) = c("icomp", "idims", "isamples") (in any order)
+# output is a list of integer vectors with elements named as above
+.set.data.out <- function(data.out, nsamples, ncomp, ndims, update.data) {
   if(missing(data.out)) data.out <- 2e3
   if(!is.list(data.out)) {
-    # keep all observations
-    data.out.row <- data.out
-    data.out.col <- 1:ncomp
+    # keep complete data matrix at isamples == data.out
+    isamples <- data.out
+    icomp <- 1:ncomp
+    idims <- 1:ndims
   } else {
-    # which samples and time points
-    if(!identical(sort(names(data.out)), sort(c("row", "col")))) {
-      stop("data.out must be scalar, vector, or list with elements row and col.")
+    if(!identical(sort(names(data.out)),
+                  sort(c("icomp", "idims", "isamples")))) {
+      stop("data.out must be scalar, vector, or list with elements icomp, idims, and isamples.")
     }
-    data.out.row <- data.out$row
-    data.out.col <- data.out$col
+    isamples <- data.out$isamples
+    icomp <- data.out$icomp
+    idims <- data.out$idims
   }
-  if(length(data.out.row) == 1) {
+  if(length(isamples) == 1) {
     # evenly space returned samples
-    data.out.row <- unique(floor(seq(1, nsamples, len = data.out.row)))
+   isamples <- unique(floor(seq(1, nsamples, len = isamples)))
   }
   if(!update.data) {
     # return the data once
-    data.out.row <- 1:nsamples
-    data.out.col <- 1:ncomp
+    isamples <- 1:nsamples
+    icomp <- 1:ncomp
+    idims <- 1:ndims
   }
-  if(is.logical(data.out.row)) data.out.row <- which(data.out.row)
-  if(is.logical(data.out.col)) data.out.col <- which(data.out.col)
-  list(row = data.out.row, col = data.out.col)
+  # check inputs
+  if(anyDuplicated(icomp) || !all(icomp %in% 1:ncomp)) {
+    stop("data.out$icomp must be a vector of integers between 1 and ncomp.")
+  }
+  if(anyDuplicated(idims) || !all(idims %in% 1:ndims)) {
+    stop("data.out$idims must be a vector of integers between 1 and ndims.")
+  }
+  if(anyDuplicated(isamples) || !all(isamples %in% 1:nsamples)) {
+    stop("data.out$isamples must be a vector of integers between 1 and nsamples.")
+  }
+  list(icomp = sort(icomp), idims = sort(idims), isamples = sort(isamples))
 }
+
+## .set.data.out <- function(data.out, nsamples, ncomp, update.data) {
+##   if(missing(data.out)) data.out <- 2e3
+##   if(!is.list(data.out)) {
+##     # keep all observations
+##     data.out.row <- data.out
+##     data.out.col <- 1:ncomp
+##   } else {
+##     # which samples and time points
+##     if(!identical(sort(names(data.out)), sort(c("row", "col")))) {
+##       stop("data.out must be scalar, vector, or list with elements row and col.")
+##     }
+##     data.out.row <- data.out$row
+##     data.out.col <- data.out$col
+##   }
+##   if(length(data.out.row) == 1) {
+##     # evenly space returned samples
+##     data.out.row <- unique(floor(seq(1, nsamples, len = data.out.row)))
+##   }
+##   if(!update.data) {
+##     # return the data once
+##     data.out.row <- 1:nsamples
+##     data.out.col <- 1:ncomp
+##   }
+##   if(is.logical(data.out.row)) data.out.row <- which(data.out.row)
+##   if(is.logical(data.out.col)) data.out.col <- which(data.out.col)
+##   list(row = data.out.row, col = data.out.col)
+## }
 
 # jump sizes
 .set.jump <- function(mwg.sd, adapt, param.names, data.names) {
@@ -255,33 +299,31 @@ sde.post <- function(model, init, hyper,
        rate = as.double(arate), adapt = as.logical(amax > 0))
 }
 
-# name and dim check for data and params, length check for dt
-.check.init <- function(init.data, dt, init.params, param.names, data.names) {
-  nparams <- length(param.names)
-  ndims <- length(data.names)
-  ## if(ndims != ncol(init.data))
-  ##   stop("init.data does not have the right number of components.")
-  ## if(!is.null(colnames(init.data))) {
-  ##   if(any(colnames(init.data) != data.names))
-  ##     stop("Incorrect data.names.")
-  ## }
-  ## if(nparams != length(init.params))
-  ##   stop("init.params does not have the right length.")
-  ## if(!is.null(colnames(init.params))) {
-  ##   if(any(colnames(init.params) != param.names))
-  ##     stop("Incorrect param.names.")
-  ## }
-  if(!identical(colnames(init.data), data.names)) {
-    stop("colnames(init.data) does not match data.names.")
-  }
-  if(!identical(names(init.params), param.names)) {
-    stop("names(init.params) does not match param.names.")
-  }
-  if(length(dt) != nrow(init.data)-1) {
-    stop("init.data and dt have incompatible sizes.")
-  }
-  TRUE
-}
+## # name and dim check for data and params, length check for dt
+## .check.init <- function(init) {
+##   nparams <- length(param.names)
+##   ndims <- length(data.names)
+##   if(class(init) != "sde.init") {
+##     stop("init must be an sde.init object.")
+##   }
+##   if(!identical(colnames(init$data), data.names)) {
+##     stop("colnames(init$data) does not match data.names.")
+##   }
+##   if(!identical(names(init$params), param.names)) {
+##     stop("names(init$params) does not match param.names.")
+##   }
+##   # these should never happen if constructed with sde.init...
+##   if(length(init$dt.m) != nrow(init$data)-1) {
+##     stop("init$data and init$dt.m have incompatible sizes.")
+##   }
+##   if(length(init$nvar.obs.m) != nrow(init$data)) {
+##     stop("init$data and init$nvar.obs.m have incompatible sizes.")
+##   }
+##   if(!all(init$nvar.obs.m %in% 0:ndims)) {
+##     stop("init$nvar.obs.m must have elements between 0 and ndims.")
+##   }
+##   TRUE
+## }
 
 # parse acceptance rates
 .set.accept <- function(bb.accept, vnl.accept, nsamples,
@@ -293,9 +335,11 @@ sde.post <- function(model, init, hyper,
   accept <- NULL
   if(update.data) {
     accept <- c(accept, list(data = bb.accept/nsamples))
+    bb.acc <- accept$data[par.index < ndims]*100
+    bb.acc <- signif(c(min(bb.acc), mean(bb.acc)), 3)
     if(verbose) {
-      message("Avg. bridge accept: ",
-              signif(mean(accept$data[par.index < ndims])*100,3), "%")
+      message("Bridge accept: min = ", bb.acc[1],
+              "%, avg = ", bb.acc[2], "%")
     }
   }
   if(update.params) {

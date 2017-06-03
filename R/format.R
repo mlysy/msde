@@ -28,7 +28,7 @@ is.valid.nreps <- function(nreps) {
 # format data for sde.drift, sde.diff, sde.loglik
 # output is a matrix or 3-d array with dimensions 1 and 2 permuted
 .format.data <- function(x, data.names, type = c("matrix", "array"),
-                         debug = FALSE) {
+                         strict = FALSE, debug = FALSE) {
   ndims <- length(data.names)
   type <- match.arg(type)
   if(debug) browser()
@@ -37,7 +37,13 @@ is.valid.nreps <- function(nreps) {
     stop("x must be numeric with finite values.")
   }
   if(type == "matrix") {
-    if(is.vector(x)) x <- t(x)
+    if(is.vector(x)) {
+      if(strict) {
+        stop("x must be a matrix.")
+      } else {
+        x <- t(x)
+      }
+    }
     if(!is.matrix(x)) {
       stop("x must be a vector or matrix.")
     }
@@ -50,9 +56,13 @@ is.valid.nreps <- function(nreps) {
     x <- t(x)
   } else {
     if(is.matrix(x)) {
-      dn <- dimnames(x)
-      x <- array(x, dim = c(dim(x), 1))
-      if(!is.null(dn)) dimnames(x) <- c(dn, list(NULL))
+      if(strict) {
+        stop("x must be an array.")
+      } else {
+        dn <- dimnames(x)
+        x <- array(x, dim = c(dim(x), 1))
+        if(!is.null(dn)) dimnames(x) <- c(dn, list(NULL))
+      }
     }
     if(length(dim(x)) != 3) {
       stop("x must be a matrix or 3-d array.")
@@ -65,6 +75,7 @@ is.valid.nreps <- function(nreps) {
     }
     x <- aperm(x, c(2,1,3))
   }
+  dimnames(x)[[1]] <- data.names
   x
 }
 
@@ -86,6 +97,7 @@ is.valid.nreps <- function(nreps) {
   if(!is.null(colnames(theta)) && !identical(colnames(theta), param.names)) {
     stop("names of theta do not match param.names.")
   }
+  dimnames(theta)[[2]] <- param.names
   t(theta)
 }
 

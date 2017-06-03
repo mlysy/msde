@@ -11,7 +11,9 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
 		  LogicalVector fixedParams,
 		  int nSamples, int burn,
 		  int nParamsOut, int nDataOut,
-		  IntegerVector dataOutRow, IntegerVector dataOutCol,
+		  IntegerVector dataOutSmp,
+		  IntegerVector dataOutComp,
+		  IntegerVector dataOutDims,
 		  double updateParams, double updateData,
 		  List priorArgs, List tunePar,
 		  int updateLogLik, int nLogLikOut,
@@ -23,7 +25,8 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
   int nDims = sdeModel::nDims;
   int nParams = sdeModel::nParams;
   int nComp = initData.length()/nDims;
-  int nCompOut = dataOutCol.length();
+  int nDimsOut = dataOutDims.length();
+  int nCompOut = dataOutComp.length();
   int nMiss0 = nDims-nDimsPerObs[0]; // unobserved states in first observation
   int nMissN = nDims-nDimsPerObs[nComp-1]; // unobserved states in last observation
 
@@ -91,11 +94,14 @@ List sdeEulerMCMC(NumericVector initParams, NumericVector initData,
       if(updateLogLik) logLikOut[smp] = mcmc.loglik(mcmc.currTheta, mcmc.currX);
     }
     // storage
-    if(smp == dataOutRow[jj]) {
+    if(smp == dataOutSmp[jj]) {
       if(updateData > 0.0) {
 	for(ii=0; ii<nCompOut; ii++) {
-	  for(kk=0; kk<nDims; kk++) {
-	    dataOut[jj*nDims*nCompOut+ii*nDims+kk] = mcmc.currX[dataOutCol[ii]*nDims+kk];
+	  //Rprintf("dataOutComp[%i] = %i\n", ii, dataOutComp[ii]);
+	  for(kk=0; kk<nDimsOut; kk++) {
+	    // Rprintf("dataOut[%i,%i,%i] = currX[%i,%i] = \n",
+	    // 	    kk, ii, jj, dataOutDims[kk], dataOutComp[ii]);
+	    dataOut[jj*nDimsOut*nCompOut+ii*nDimsOut+kk] = mcmc.currX[dataOutComp[ii]*nDims+dataOutDims[kk]];
 	  }
 	}
       }

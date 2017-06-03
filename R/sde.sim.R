@@ -34,11 +34,18 @@ sde.sim <- function(model, x0, theta, dt, dt.sim,
   ndims <- model$ndims
   x0 <- .format.data(x0, model$data.names, type = "matrix")
   theta <- .format.params(theta, model$param.names)
+  # check validity
   N <- c(ncol(x0), ncol(theta))
   single.x <- N[1] == 1
   single.theta <- N[2] == 1
   if(!is.valid.nreps(c(N, nreps))) {
     stop("Incompatible dimensions of x0, theta, and nreps.")
+  }
+  if(!all(.is.valid.params(model, theta, single.theta, nreps))) {
+    stop("theta contains invalid sde parameters.")
+  }
+  if(!all(.is.valid.data(model, x0, theta, single.x, single.theta, nreps))) {
+    stop("x0 contains invalid sde data.")
   }
   # time
   if(dt.sim <= dt) {
@@ -74,7 +81,7 @@ sde.sim <- function(model, x0, theta, dt, dt.sim,
   data <- aperm(array(ans$dataOut, dim = c(ndims, nobs, nreps)),
                 perm = c(2,1,3))
   dimnames(data) <- list(NULL, model$data.names, NULL)
-  out <- list(data = data, params = drop(t(theta)),
+  out <- list(data = drop(data), params = drop(t(theta)),
               dt = dt, dt.sim = dT,
               nbad = ans$nBadDraws)
   out

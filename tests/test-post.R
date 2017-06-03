@@ -12,26 +12,25 @@ param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
 hmod <- sde.make.model(ModelFile = "hestModel.h",
                        param.names = param.names,
-                       data.names = data.names)
+                       data.names = data.names, debug = FALSE)
 ndims <- hmod$ndims
 nparams <- hmod$nparams
 
 # posterior inference
 theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
 x0 <- c(X = log(1000), Z = 0.1)
-same.rnd <- TRUE
-SEED <- 2531
 
 # simulate data
-nObs <- 1e3
+nObs <- 13
 dT <- 1/252
-hsim <- sde.sim(model = hmod, init.data = x0, params = theta,
-                dt = dT, dt.sim = dT/100, N = nObs, nreps = 1)
+hsim <- sde.sim(model = hmod, x0 = x0, theta = theta,
+                dt = dT, dt.sim = dT/100, nobs = nObs, nreps = 1)
 # check input parsing
 m <- 2 # degree of Euler approximation: dt_euler = dt/m
-par.index <- c(2, rep(nObs-1, 1)) # all but first vol unobserved
-init <- sde.init(data = hsim$data, dt = dT, m = m,
-                 par.index = par.index)
+nvar.obs <- c(2, rep(1, nObs-1)) # all but first vol unobserved
+init <- sde.init(model = hmod, x = hsim$data, dt = dT, m = m,
+                 nvar.obs = nvar.obs, theta = theta, debug = FALSE)
+
 # prior
 prior <- list(mu = c(.1, .35, 1.0, .5, -.81),
               Sigma = crossprod(matrix(rnorm(25),5)))
@@ -47,23 +46,32 @@ mwg.sd <- NULL
 update.params <- TRUE
 update.data <- TRUE
 nsamples <- 1e3 # ifelse(update.data, 2e4, 4e4)
-burn <- 1e2
+data.out <- list(isamples = sample(nsamples, 1),
+                 idims = sample(ndims,1), icomp = sample(nrow(init$data), 5))
+burn <- 100
+SEED <- 549
 
-if(same.rnd) set.seed(SEED)
+set.seed(SEED)
 hpost1 <- sde.post(model = hmod,
-                   init.data = init, init.params = theta,
+                   init = init,
                    nsamples = nsamples, burn = burn,
-                   hyper.params = prior, debug = FALSE,
+                   hyper = prior, debug = FALSE,
                    mwg.sd = mwg.sd, adapt = TRUE,
+                   data.out = 1:nsamples,
                    update.params = update.params,
                    update.data = update.data)
 
-if(same.rnd) set.seed(SEED)
-hpost2 <- sde.post2(model = hmod,
-                    init = init, init.params = theta,
-                    nsamples = nsamples, burn = burn,
-                    prior = prior, debug = FALSE,
-                    rw.jump.sd = mwg.sd,
-                    update.data = update.data, update.params = update.params)
+set.seed(SEED)
+hpost2 <- sde.post(model = hmod,
+                   init = init,
+                   nsamples = nsamples, burn = burn,
+                   hyper = prior, debug = FALSE,
+                   mwg.sd = mwg.sd, adapt = TRUE,
+                   data.out = data.out,
+                   update.params = update.params,
+                   update.data = update.data)
 
-sapply(names(hpost1), function(ii) identical(hpost1[[ii]], hpost2[[ii]]))
+dout <- hpost2$data.out
+all(hpost1$data[dout$icomp,
+                dout$idims,
+                dout$isamples, drop=FALSE] == hpost2$data)
