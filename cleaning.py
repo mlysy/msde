@@ -2,19 +2,34 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
+def clean_data(raw_data):
+    # Initialising empty data frame for output
+    clean = pd.DataFrame()
 
-trainData = pd.read_csv("train.csv")
-testData = pd.read_csv("test.csv")
+    # Loop through columns to replace categorical data with labels
+    for column in raw_data:
+        current_column = raw_data[column]
+        if current_column.dtype == "object":
+            lbl = LabelEncoder()
+            lbl.fit(list(current_column)) # Fit the labels of current column
+            clean[column] = lbl.transform(list(current_column)) # return labels in from 0,...,n-1
+    
+    return clean
 
-for colIndex in trainData.columns:
-    if trainData[colIndex].dtype == 'object':
-        lbl = LabelEncoder()
-        lbl.fit(list(trainData[colIndex].values) + list(testData[colIndex].values))
-        trainData[colIndex] = lbl.transform(list(trainData[colIndex].values))
-        testData[colIndex] = lbl.transform(list(testData[colIndex].values))
+#trainData = pd.read_csv("train.csv")
+#testData = pd.read_csv("test.csv")
+#
+#ipdb.set_trace()
+#
+#for colIndex in trainData.columns:
+#    if trainData[colIndex].dtype == 'object':
+#        lbl.fit(list(trainData[colIndex].values) + list(testData[colIndex].values))
+#        trainData[colIndex] = lbl.transform(list(trainData[colIndex].values))
+#        testData[colIndex] = lbl.transform(list(testData[colIndex].values))
+#
+#trainData.to_csv('train1.csv', index = False)
+#testData.to_csv('test1.csv', index = False)
 
-trainData.to_csv('train1.csv', index = False)
-testData.to_csv('test1.csv', index = False)
 #for colIndex in xrange(2,10):
 #    uniqueId = trainData.iloc[:,colIndex].unique()
 #    tmpLen = len(uniqueId)
