@@ -8,12 +8,6 @@
 
 source("msde-testfunctions.R")
 
-model <- sde.make.model(ModelFile = ModelFile,
-                        param.names = param.names,
-                        data.names = data.names)
-ndims <- model$ndims
-nparams <- model$nparams
-
 #--- test drift and diffusion --------------------------------------------------
 
 nreps <- 10
@@ -77,7 +71,7 @@ test_that("sim.R == sim.cpp", {
                              theta = init$Theta.R[jj,],
                              dr = drift.fun, df = diff.fun)[burn+1:nobs,]
     }
-    max.diff(sim, sim.R)
+    max.diff(sim, drop(sim.R))
   })
   sapply(mxd, expect_equal, expected = 0)
 })

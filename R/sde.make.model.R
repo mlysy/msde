@@ -22,7 +22,7 @@
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, prior.spec,
-                           openMP = FALSE, ..., debug = FALSE) {
+                           OpenMP = FALSE, ..., debug = FALSE) {
   sde.model <- list()
   # prior specification
   if(PriorFile == "default") {
@@ -59,13 +59,13 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   }
   cpp.args <- c(list(file = file.path(tempdir(), "msdeExports.cpp"),
                      env = environment()), cpp.args)
-  # openMP support
-  if(openMP) old.env <- .omp.set()
+  # OpenMP support
+  if(OpenMP) old.env <- .omp.set()
   if(debug) browser()
   do.call(sourceCpp, cpp.args)
   ## sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
   ##           env = environment(), ...)
-  if(openMP) .omp.unset(env = old.env)
+  if(OpenMP) .omp.unset(env = old.env)
   environment(sde.model$sim) <- globalenv()
   environment(sde.model$post) <- globalenv()
   environment(sde.model$drift) <- globalenv()
@@ -87,7 +87,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   sde.model <- c(sde.model,
                  list(ndims = ndims, nparams = nparams,
                       data.names = data.names, param.names = param.names,
-                      prior.spec = prior.spec, omp = openMP))
+                      prior.spec = prior.spec, omp = OpenMP))
   # output
   class(sde.model) <- "sde.model"
   sde.model

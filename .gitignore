@@ -4,4 +4,5 @@
 *.o
 *.dll
 *.Rd
+*.pdf
 inst/doc
