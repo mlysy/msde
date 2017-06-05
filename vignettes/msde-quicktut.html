@@ -12,7 +12,7 @@
 
 <meta name="author" content="Martin Lysy" />
 
-<meta name="date" content="2017-05-21" />
+<meta name="date" content="2017-06-05" />
 
 <title>Inference for multivariate Stochastic Differential Equations with msde</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Inference for multivariate Stochastic Differential Equations with <strong><code>msde</code></strong></h1>
 <h4 class="author"><em>Martin Lysy</em></h4>
-<h4 class="date"><em>2017-05-21</em></h4>
+<h4 class="date"><em>2017-06-05</em></h4>
 
 
 <div id="TOC">
@@ -80,8 +80,12 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li><a href="#optimize-settings-for-the-c-compiler-optional">Optimize settings for the <strong>C++</strong> compiler (optional)</a></li>
 <li><a href="#enable-openmp-support-optional">Enable <strong><code>OpenMP</code></strong> support (optional)</a></li>
 </ul></li>
+<li><a href="#creating-an-sde.model-object">Creating an <code>sde.model</code> object</a><ul>
 <li><a href="#stochastic-lotka-volterra-predator-prey-model">Stochastic Lotka-Volterra predator-prey model</a></li>
-<li><a href="#compiling-and-checking-the-sdemodel">Compiling and checking the <strong><code>sdeModel</code></strong></a></li>
+<li><a href="#the-sdemodel-class-definition">The <code>sdeModel</code> class definition</a></li>
+<li><a href="#compiling-and-checking-the-sde.model-object">Compiling and checking the <code>sde.model</code> object</a></li>
+</ul></li>
+<li><a href="#inference-for-multivariate-sde-models">Inference for multivariate SDE models</a></li>
 <li><a href="#references">References</a></li>
 </ul>
 </div>
@@ -117,11 +121,20 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>Note that these compiler directives alone will not enable <strong><code>OpenMP</code></strong> support. This happens at compile time by linking against <code>-fopenmp</code>, which is done internally by <strong><code>msde</code></strong>.</p>
 </div>
 </div>
-<div id="stochastic-lotka-volterra-predator-prey-model" class="section level2">
-<h2>Stochastic Lotka-Volterra predator-prey model</h2>
+<div id="creating-an-sde.model-object" class="section level2">
+<h2>Creating an <code>sde.model</code> object</h2>
+<p>A <span class="math inline">\(d\)</span>-dimensional SDE <span class="math inline">\({{\boldsymbol{Y}}}_t = ({Y_{1t},\ldots,Y_{dt}})\)</span> is written as <span class="math display">\[
+{\mathrm{d}}{{\boldsymbol{Y}}}_t = {{\boldsymbol{\Lambda}}}_{{{\boldsymbol{\theta}}}}({{\boldsymbol{Y}}}_t)\,{\mathrm{d}}t + {{\boldsymbol{\Sigma}}}_{{{\boldsymbol{\theta}}}}({{\boldsymbol{Y}}}_t)^{1/2}\,{\mathrm{d}}{{\boldsymbol{B}}}_t,
+\]</span> where <span class="math inline">\({{\boldsymbol{\Lambda}}}_{{{\boldsymbol{\theta}}}}({{\boldsymbol{y}}})\)</span> and <span class="math inline">\({{\boldsymbol{\Sigma}}}_{{{\boldsymbol{\theta}}}}({{\boldsymbol{y}}})\)</span> are the drift and diffusion functions, <!-- $$ --> <!-- \dr_{\tth}(\y) = \lim_{\dt \to 0} \frac{E[\Y_{t+\dt} - \Y_t \mid \Y_t = \y]}{\dt}, \qquad \df_{\tth}(\y) = \lim_{\dt \to 0} \frac{\var(\Y_{t+\dt} - \Y_t \mid \Y_t = \y)}{\dt}, --> <!-- $$ --> and <span class="math inline">\({{\boldsymbol{B}}}_t = ({B_{1t},\ldots,B_{dt}})\)</span> is <span class="math inline">\(d\)</span>-dimensional Brownian motion.</p>
+<div id="stochastic-lotka-volterra-predator-prey-model" class="section level3">
+<h3>Stochastic Lotka-Volterra predator-prey model</h3>
 <p>Let <span class="math inline">\(H_t\)</span> and <span class="math inline">\(L_t\)</span> denote the number of Hare and Lynx at time <span class="math inline">\(t\)</span> coexisting in a given habitat. An SDE describing the interactions between these two animal populations is given by the following stochastic Lotka-Volterra predator-prey model <span class="citation">(Golightly and Wilkinson <a href="#ref-golightly-wilkinson10">2010</a>)</span>: <span class="math display">\[
-\begin{pmatrix} \mathrm{d} H_t \\ \mathrm{d} L_t \end{pmatrix} = \begin{pmatrix} \alpha H_t - \beta H_tL_t \\ \beta H_tL_t - \gamma L_t \end{pmatrix} \mathrm{d} t + \begin{pmatrix} \alpha H_t + \beta H_tL_t &amp; -\beta H_tL_t \\ -\beta H_tL_t &amp; \beta H_tL_t + \gamma L_t\end{pmatrix}^{1/2} \begin{pmatrix} \mathrm{d} B_{1t} \\ \mathrm{d} B_{2t} \end{pmatrix}.
-\]</span> In order to build this model in <strong>C++</strong>, we create a header file <code>lotvolModel.h</code> containing the class definition for an <code>sdeModel</code> object. The basic structure of this class is given below:</p>
+\begin{pmatrix} \mathrm{d} H_t \\ \mathrm{d} L_t \end{pmatrix} = \begin{pmatrix} {\alpha}H_t - {\beta}H_tL_t \\ {\beta}H_tL_t - {\gamma}L_t \end{pmatrix}\, \mathrm{d} t + \begin{pmatrix} {\alpha}H_t + {\beta}H_tL_t &amp; -{\beta}H_tL_t \\ -{\beta}H_tL_t &amp; {\beta}H_tL_t + {\gamma}L_t\end{pmatrix}^{1/2} \begin{pmatrix} \mathrm{d} B_{1t} \\ \mathrm{d} B_{2t} \end{pmatrix}.
+\]</span> Thus we have <span class="math inline">\(d = 2\)</span>, <span class="math inline">\({{\boldsymbol{Y}}}_t = (H_t, L_t)\)</span>, and <span class="math inline">\({{\boldsymbol{\theta}}}= ({\alpha}, {\beta}, {\gamma})\)</span>.</p>
+</div>
+<div id="the-sdemodel-class-definition" class="section level3">
+<h3>The <code>sdeModel</code> class definition</h3>
+<p>In order to build this model in <strong>C++</strong>, we create a header file <code>lotvolModel.h</code> containing the class definition for an <code>sdeModel</code> object. The basic structure of this class is given below:</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// sde model object</span>
 <span class="kw">class</span> sdeModel {
  <span class="kw">public</span>:
@@ -136,12 +149,12 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 };</code></pre></div>
 <p>The meaning of each class member is as follows:</p>
 <ul>
-<li><code>nParams</code>: The number of model parameters. For the Lotka-Volterra model we have <span class="math inline">\({\boldsymbol{\theta}}= ({\alpha}, {\beta}, {\gamma})\)</span>, such that <code>nParams = 3</code>.</li>
-<li><code>nDims</code>: The number of dimensions in the multivariate SDE. In this case we have <span class="math inline">\({\boldsymbol{Y}}_t = (H_t, L_t)\)</span>, such that <code>nDims = 2</code>.</li>
+<li><code>nParams</code>: The number of model parameters. For the Lotka-Volterra model we have <span class="math inline">\({{\boldsymbol{\theta}}}= ({\alpha}, {\beta}, {\gamma})\)</span>, such that <code>nParams = 3</code>.</li>
+<li><code>nDims</code>: The number of dimensions in the multivariate SDE. In this case we have <span class="math inline">\({{\boldsymbol{Y}}}_t = (H_t, L_t)\)</span>, such that <code>nDims = 2</code>.</li>
 <li><p><code>sdeDr</code>: The SDE drift function. In <strong>R</strong>, this function would be implemented as</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sde.drift &lt;-<span class="st"> </span><span class="cf">function</span>(x, theta) {
-  dr &lt;-<span class="st"> </span><span class="kw">c</span>(theta[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>], <span class="co"># alpha * H - beta * H * L</span>
-      theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>theta[<span class="dv">3</span>]<span class="op">*</span>x[<span class="dv">2</span>]) <span class="co"># beta * H * L - gamma * L</span>
+  dr &lt;-<span class="st"> </span><span class="kw">c</span>(theta[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>], <span class="co"># alpha * H - beta * H*L</span>
+      theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>theta[<span class="dv">3</span>]<span class="op">*</span>x[<span class="dv">2</span>]) <span class="co"># beta * H*L - gamma * L</span>
   dr
 }</code></pre></div>
 <p>In <strong>C++</strong> the same thing is accomplished with</p>
@@ -153,10 +166,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li><p><code>sdeDf</code>: The SDE diffusion function. This can be specified on the standard deviation scale, or on the variance scale as above. In this case, an <strong>R</strong> implementation would be</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sde.diff &lt;-<span class="st"> </span><span class="cf">function</span>(x, theta) {
   df &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="ot">NA</span>, <span class="dv">2</span>, <span class="dv">2</span>)
-  df[<span class="dv">1</span>,<span class="dv">1</span>] &lt;-<span class="st"> </span>theta[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># alpha * H + beta * H * L</span>
-  df[<span class="dv">1</span>,<span class="dv">2</span>] &lt;-<span class="st"> </span><span class="op">-</span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># -beta * H * L</span>
-  df[<span class="dv">2</span>,<span class="dv">1</span>] &lt;-<span class="st"> </span>df[<span class="dv">1</span>,<span class="dv">2</span>] <span class="co"># -beta * H * L</span>
-  df[<span class="dv">2</span>,<span class="dv">2</span>] &lt;-<span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span>theta[<span class="dv">3</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># beta * H * L + gamma * L</span>
+  df[<span class="dv">1</span>,<span class="dv">1</span>] &lt;-<span class="st"> </span>theta[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># alpha * H + beta * H*L</span>
+  df[<span class="dv">1</span>,<span class="dv">2</span>] &lt;-<span class="st"> </span><span class="op">-</span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># -beta * H*L</span>
+  df[<span class="dv">2</span>,<span class="dv">1</span>] &lt;-<span class="st"> </span>df[<span class="dv">1</span>,<span class="dv">2</span>] <span class="co"># -beta * H*L</span>
+  df[<span class="dv">2</span>,<span class="dv">2</span>] &lt;-<span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span>theta[<span class="dv">3</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># beta * H*L + gamma * L</span>
   df
 }</code></pre></div>
 <p>In <strong>C++</strong> the specification is slightly different. First we set <code>sdDiff = false</code> in order to tell <strong><code>msde</code></strong> to use the variance scale. Next, the diffusion function is coded as</p>
@@ -166,15 +179,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
   df[<span class="dv">3</span>] = theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>] + theta[<span class="dv">2</span>]*x[<span class="dv">1</span>]; <span class="co">// element (2,2)</span>
   <span class="cf">return</span>;
 }</code></pre></div>
-<p>Thus there are two major differences with the <strong>R</strong> version. The first is that the <code>df</code> matrix is stored as a vector (or “array” in <strong>C++</strong>). Its elements are stored in column-major order, i.e., by stacking the columns one after the other into one long vector. The second difference is that <strong><code>msde</code></strong> only uses the <em>upper triangular</em> portion of the (symmetric) variance matrix. The elements below the diagonal can be set to any value or not set at all without affecting the computations.</p>
+<p>Thus there are two major differences with the <strong>R</strong> version. The first is that the <code>df</code> matrix is stored as a vector (or “array” in <strong>C++</strong>). Its elements are stored in column-major order, i.e., by stacking the columns one after the other into one long vector. The second difference is that <strong><code>msde</code></strong> only uses the <em>upper triangular</em> portion of the (symmetric) matrix <span class="math inline">\({{\boldsymbol{\Sigma}}}_{{{\boldsymbol{\theta}}}}({{\boldsymbol{y}}})\)</span>. The elements below the diagonal can be set to any value or not set at all without affecting the computations.</p>
 <p><strong><code>msde</code></strong> internally computes the Cholesky decomposition of the diffusion function when it is specified on the variance scale. For small problems such as this one, it is more efficient to specify the Cholesky decomposition directly, i.e., specify the diffusion on the standard deviation scale. In this case, the Cholesky decomposition of the diffusion function is <span class="math display">\[
-\begin{pmatrix} \alpha H_t + \beta H_tL_t &amp; -\beta H_tL_t \\ -\beta H_tL_t &amp; \beta H_tL_t + \gamma L_t\end{pmatrix}^{1/2} = \begin{pmatrix} \sqrt{{\alpha}H_t + {\beta}H_tL_t} &amp; -\frac{{\beta}H_tL_t}{\sqrt{{\alpha}H_t + {\beta}H_tL_t}} \\ 0 &amp; \sqrt{{\beta}H_tL_t - {\gamma}L_t - \frac{({\beta}H_tL_t)^2}{{\alpha}H_t + {\beta}H_tL_t}} \end{pmatrix},
+\begin{pmatrix} {\alpha}H_t + {\beta}H_tL_t &amp; -{\beta}H_tL_t \\ -{\beta}H_tL_t &amp; {\beta}H_tL_t + {\gamma}L_t\end{pmatrix}^{1/2} = \begin{pmatrix} \sqrt{{\alpha}H_t + {\beta}H_tL_t} &amp; -\frac{{\beta}H_tL_t}{\sqrt{{\alpha}H_t + {\beta}H_tL_t}} \\ 0 &amp; \sqrt{{\beta}H_tL_t + {\gamma}L_t - \frac{({\beta}H_tL_t)^2}{{\alpha}H_t + {\beta}H_tL_t}} \end{pmatrix},
 \]</span> which is passed to <strong><code>msde</code></strong> by setting <code>sdDiff = true</code> and</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">void</span> sdeDf(<span class="dt">double</span> *df, <span class="dt">double</span> *x, <span class="dt">double</span> *theta) {
-  <span class="dt">double</span> bHL = theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>]; <span class="co">// beta*H*L</span>
-  df[<span class="dv">0</span>] = sqrt(theta[<span class="dv">0</span>]*x[<span class="dv">0</span>] + bHL); <span class="co">// sqrt(alpha*H + bHL)</span>
+  <span class="dt">double</span> bHL = theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>]; <span class="co">// beta * H*L</span>
+  df[<span class="dv">0</span>] = sqrt(theta[<span class="dv">0</span>]*x[<span class="dv">0</span>] + bHL); <span class="co">// sqrt(alpha * H + bHL)</span>
   df[<span class="dv">2</span>] = -bHL/df[<span class="dv">0</span>];
-  df[<span class="dv">3</span>] = sqrt(bHL - theta[<span class="dv">2</span>]*x[<span class="dv">1</span>] - df[<span class="dv">2</span>]*df[<span class="dv">2</span>]);
+  df[<span class="dv">3</span>] = sqrt(bHL + theta[<span class="dv">2</span>]*x[<span class="dv">1</span>] - df[<span class="dv">2</span>]*df[<span class="dv">2</span>]);
   <span class="cf">return</span>;
 }</code></pre></div>
 <strong>TODO:</strong> <code>diagDiff</code> for diagonal diffusion functions.</li>
@@ -182,7 +195,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">bool</span> isValidParams(<span class="dt">double</span> *theta) {
   <span class="dt">bool</span> val = theta[<span class="dv">0</span>] &gt; <span class="fl">0.0</span>;
   val = val &amp;&amp; theta[<span class="dv">1</span>] &gt; <span class="fl">0.0</span>;
-  val = val ** theta[<span class="dv">2</span>] &gt; <span class="fl">0.0</span>;
+  val = val &amp;&amp; theta[<span class="dv">2</span>] &gt; <span class="fl">0.0</span>;
   <span class="cf">return</span> val;
 }</code></pre></div></li>
 <li><p><code>isValidData</code>: A logical used to specify the SDE support, which can be parameter-dependent. In this case we simply have <span class="math inline">\(H_t, L_t &gt; 0\)</span>, such that</p>
@@ -210,39 +223,138 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 };
 
 <span class="co">// drift function</span>
-<span class="kw">inline</span> <span class="dt">void</span> sdeDr(<span class="dt">double</span> *dr, <span class="dt">double</span> *x, <span class="dt">double</span> *theta) {
-  dr[<span class="dv">0</span>] = theta[<span class="dv">0</span>]*x[<span class="dv">0</span>] - theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>]; <span class="co">// alpha*H - beta*H*L</span>
-  dr[<span class="dv">1</span>] = theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>] - theta[<span class="dv">2</span>]*x[<span class="dv">1</span>]; <span class="co">// beta*H*L - gamma*L</span>
+<span class="kw">inline</span> <span class="dt">void</span> sdeModel::sdeDr(<span class="dt">double</span> *dr, <span class="dt">double</span> *x, <span class="dt">double</span> *theta) {
+  dr[<span class="dv">0</span>] = theta[<span class="dv">0</span>]*x[<span class="dv">0</span>] - theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>]; <span class="co">// alpha * H - beta * H*L</span>
+  dr[<span class="dv">1</span>] = theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>] - theta[<span class="dv">2</span>]*x[<span class="dv">1</span>]; <span class="co">// beta * H*L - gamma * L</span>
   <span class="cf">return</span>;
 }
 
 <span class="co">// diffusion function (sd scale)</span>
-<span class="kw">inline</span> <span class="dt">void</span> sdeDf(<span class="dt">double</span> *df, <span class="dt">double</span> *x, <span class="dt">double</span> *theta) {
-  <span class="dt">double</span> bHL = theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>]; <span class="co">// beta*H*L</span>
-  df[<span class="dv">0</span>] = sqrt(theta[<span class="dv">0</span>]*x[<span class="dv">0</span>] + bHL); <span class="co">// sqrt(alpha*H + bHL)</span>
+<span class="kw">inline</span> <span class="dt">void</span> sdeModel::sdeDf(<span class="dt">double</span> *df, <span class="dt">double</span> *x, <span class="dt">double</span> *theta) {
+  <span class="dt">double</span> bHL = theta[<span class="dv">1</span>]*x[<span class="dv">0</span>]*x[<span class="dv">1</span>]; <span class="co">// beta * H*L</span>
+  df[<span class="dv">0</span>] = sqrt(theta[<span class="dv">0</span>]*x[<span class="dv">0</span>] + bHL); <span class="co">// sqrt(alpha * H + bHL)</span>
   df[<span class="dv">2</span>] = -bHL/df[<span class="dv">0</span>];
-  df[<span class="dv">3</span>] = sqrt(bHL - theta[<span class="dv">2</span>]*x[<span class="dv">1</span>] - df[<span class="dv">2</span>]*df[<span class="dv">2</span>]);
+  df[<span class="dv">3</span>] = sqrt(bHL + theta[<span class="dv">2</span>]*x[<span class="dv">1</span>] - df[<span class="dv">2</span>]*df[<span class="dv">2</span>]);
   <span class="cf">return</span>;
 }
 
 <span class="co">// parameter validator</span>
-<span class="kw">inline</span> <span class="dt">bool</span> isValidParams(<span class="dt">double</span> *theta) {
+<span class="kw">inline</span> <span class="dt">bool</span> sdeModel::isValidParams(<span class="dt">double</span> *theta) {
   <span class="dt">bool</span> val = theta[<span class="dv">0</span>] &gt; <span class="fl">0.0</span>;
   val = val &amp;&amp; theta[<span class="dv">1</span>] &gt; <span class="fl">0.0</span>;
-  val = val ** theta[<span class="dv">2</span>] &gt; <span class="fl">0.0</span>;
+  val = val &amp;&amp; theta[<span class="dv">2</span>] &gt; <span class="fl">0.0</span>;
   <span class="cf">return</span> val;
 }
 
 <span class="co">// data validator</span>
-<span class="kw">inline</span> <span class="dt">bool</span> isValidData(<span class="dt">double</span> *x, <span class="dt">double</span> *theta) {
+<span class="kw">inline</span> <span class="dt">bool</span> sdeModel::isValidData(<span class="dt">double</span> *x, <span class="dt">double</span> *theta) {
   <span class="cf">return</span> (x[<span class="dv">0</span>] &gt; <span class="fl">0.0</span>) &amp;&amp; (x[<span class="dv">1</span>] &gt; <span class="fl">0.0</span>);
 }
 
 <span class="pp">#endif</span></code></pre></div>
-<p>The only additions to the previous code sections are (i) the header include guards (<code>#ifndef</code>/<code>#define</code>/<code>#endif</code>) and (ii) the <code>inline</code> keyword before the class member definitions, both of which ensure that only one instance of these functions is passed to the <strong>C++</strong> compiler.</p>
+<p>The additions to the previous code sections are: 1. The header include guards (<code>#ifndef</code>/<code>#define</code>/<code>#endif</code>). 2. The <code>sdeModel::</code> identifier is prepended to the class member definitions when these are written outside of the class declaration itself. 3. The <code>inline</code> keyword before the class member definitions, both of which ensure that only one instance of these functions is passed to the <strong>C++</strong> compiler.</p>
 </div>
-<div id="compiling-and-checking-the-sdemodel" class="section level2">
-<h2>Compiling and checking the <strong><code>sdeModel</code></strong></h2>
+<div id="compiling-and-checking-the-sde.model-object" class="section level3">
+<h3>Compiling and checking the <code>sde.model</code> object</h3>
+<p>One the <code>sdeModel</code> class is created as the <strong>C++</strong> level, it is compiled in <strong>R</strong> using the following commands:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(msdeHeaders)
+
+<span class="co"># put lotvolModel.h in the working directory</span>
+data.names &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;H&quot;</span>, <span class="st">&quot;L&quot;</span>)
+param.names &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;alpha&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;gamma&quot;</span>)
+lvmod &lt;-<span class="st"> </span><span class="kw">sde.make.model</span>(<span class="dt">ModelFile =</span> <span class="st">&quot;lotvolModel.h&quot;</span>,
+                        <span class="dt">data.names =</span> data.names,
+                        <span class="dt">param.names =</span> param.names)</code></pre></div>
+<p>Before using the model for inference, it is useful to make sure that the <strong>C++</strong> entrypoints are error-free. To facilitate this, <strong><code>msde</code></strong> provides <strong>R</strong> wrappers to the internal <strong>C++</strong> drift, diffusion, and validator functions, which can then be checked against <strong>R</strong> versions as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># helper functions</span>
+
+<span class="co"># random matrix of size nreps x length(x) from vector x</span>
+jit.vec &lt;-<span class="st"> </span><span class="cf">function</span>(x, nreps) {
+  <span class="kw">apply</span>(<span class="kw">t</span>(<span class="kw">replicate</span>(<span class="dt">n =</span> nreps, <span class="dt">expr =</span> x, <span class="dt">simplify =</span> <span class="st">&quot;matrix&quot;</span>)), <span class="dv">2</span>, jitter)
+}
+<span class="co"># maximum absolute and relative error between two arrays</span>
+max.diff &lt;-<span class="st"> </span><span class="cf">function</span>(x1, x2) {
+  <span class="kw">c</span>(<span class="dt">abs =</span> <span class="kw">max</span>(<span class="kw">abs</span>(x1<span class="op">-</span>x2)), <span class="dt">rel =</span> <span class="kw">max</span>(<span class="kw">abs</span>(x1<span class="op">-</span>x2)<span class="op">/</span><span class="kw">max</span>(<span class="kw">abs</span>(x1), <span class="fl">1e-8</span>)))
+}
+
+<span class="co"># R sde functions</span>
+
+<span class="co"># drift and diffusion</span>
+lv.drift &lt;-<span class="st"> </span><span class="cf">function</span>(x, theta) {
+  dr &lt;-<span class="st"> </span><span class="kw">c</span>(theta[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>], <span class="co"># alpha * H - beta * H*L</span>
+          theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="op">-</span><span class="st"> </span>theta[<span class="dv">3</span>]<span class="op">*</span>x[<span class="dv">2</span>]) <span class="co"># beta * H*L - gamma * L</span>
+  dr
+}
+lv.diff &lt;-<span class="st"> </span><span class="cf">function</span>(x, theta) {
+  df &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="ot">NA</span>, <span class="dv">2</span>, <span class="dv">2</span>)
+  df[<span class="dv">1</span>,<span class="dv">1</span>] &lt;-<span class="st"> </span>theta[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">1</span>] <span class="op">+</span><span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># alpha * H + beta * H*L</span>
+  df[<span class="dv">1</span>,<span class="dv">2</span>] &lt;-<span class="st"> </span><span class="op">-</span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># -beta * H*L</span>
+  df[<span class="dv">2</span>,<span class="dv">1</span>] &lt;-<span class="st"> </span>df[<span class="dv">1</span>,<span class="dv">2</span>] <span class="co"># -beta * H*L</span>
+  df[<span class="dv">2</span>,<span class="dv">2</span>] &lt;-<span class="st"> </span>theta[<span class="dv">2</span>]<span class="op">*</span>x[<span class="dv">1</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="op">+</span><span class="st"> </span>theta[<span class="dv">3</span>]<span class="op">*</span>x[<span class="dv">2</span>] <span class="co"># beta * H*L + gamma * L</span>
+  <span class="kw">chol</span>(df) <span class="co"># always use sd scale in R</span>
+}
+
+<span class="co"># validators</span>
+lv.valid.data &lt;-<span class="st"> </span><span class="cf">function</span>(x, theta) <span class="kw">all</span>(x <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>)
+lv.valid.params &lt;-<span class="st"> </span><span class="cf">function</span>(theta) <span class="kw">all</span>(theta <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>)
+
+<span class="co"># generate some test values</span>
+nreps &lt;-<span class="st"> </span><span class="dv">12</span>
+x0 &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">H =</span> <span class="dv">71</span>, <span class="dt">L =</span> <span class="dv">79</span>)
+theta0 &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">alpha =</span> .<span class="dv">5</span>, <span class="dt">beta =</span> .<span class="dv">0025</span>, <span class="dt">gamma =</span> .<span class="dv">3</span>)
+X &lt;-<span class="st"> </span><span class="kw">jit.vec</span>(x0, nreps)
+Theta &lt;-<span class="st"> </span><span class="kw">jit.vec</span>(theta0, nreps)
+
+<span class="co"># drift and diffusion check</span>
+
+<span class="co"># R versions</span>
+dr.R &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="ot">NA</span>, nreps, lvmod<span class="op">$</span>ndims) <span class="co"># drift</span>
+df.R &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="ot">NA</span>, nreps, lvmod<span class="op">$</span>ndims<span class="op">^</span><span class="dv">2</span>) <span class="co"># diffusion</span>
+<span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>nreps) {
+  dr.R[ii,] &lt;-<span class="st"> </span><span class="kw">lv.drift</span>(<span class="dt">x =</span> X[ii,], <span class="dt">theta =</span> Theta[ii,])
+  <span class="co"># flattens diffusion matrix into a row</span>
+  df.R[ii,] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">lv.diff</span>(<span class="dt">x =</span> X[ii,], <span class="dt">theta =</span> Theta[ii,]))
+}
+
+<span class="co"># C++ versions</span>
+dr.cpp &lt;-<span class="st"> </span><span class="kw">sde.drift</span>(<span class="dt">model =</span> lvmod, <span class="dt">x =</span> X, <span class="dt">theta =</span> Theta)
+df.cpp &lt;-<span class="st"> </span><span class="kw">sde.diff</span>(<span class="dt">model =</span> lvmod, <span class="dt">x =</span> X, <span class="dt">theta =</span> Theta)
+
+<span class="co"># compare</span>
+<span class="kw">max.diff</span>(dr.R, dr.cpp)</code></pre></div>
+<pre><code>##          abs          rel 
+## 3.552714e-15 1.594409e-16</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max.diff</span>(df.R, df.cpp)</code></pre></div>
+<pre><code>##          abs          rel 
+## 8.881784e-16 1.247315e-16</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># validator check</span>
+
+<span class="co"># generate invalid data and parameters</span>
+X.bad &lt;-<span class="st"> </span>X
+X.bad[<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>),<span class="dv">1</span>] &lt;-<span class="st"> </span><span class="op">-</span>X.bad[<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>),<span class="dv">1</span>]
+Theta.bad &lt;-<span class="st"> </span>Theta
+Theta.bad[<span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>),<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="op">-</span>Theta.bad[<span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>),<span class="dv">3</span>]
+
+<span class="co"># R versions</span>
+x.R &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, nreps)
+theta.R &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, nreps)
+<span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span>nreps) {
+  x.R[ii] &lt;-<span class="st"> </span><span class="kw">lv.valid.data</span>(<span class="dt">x =</span> X.bad[ii,], <span class="dt">theta =</span> Theta.bad[ii,])
+  theta.R[ii] &lt;-<span class="st"> </span><span class="kw">lv.valid.params</span>(<span class="dt">theta =</span> Theta.bad[ii,])
+}
+
+<span class="co"># C++ versions</span>
+x.cpp &lt;-<span class="st"> </span><span class="kw">sde.valid.data</span>(<span class="dt">model =</span> lvmod, <span class="dt">x =</span> X.bad, <span class="dt">theta =</span> Theta.bad)
+theta.cpp &lt;-<span class="st"> </span><span class="kw">sde.valid.params</span>(<span class="dt">model =</span> lvmod, <span class="dt">theta =</span> Theta.bad)
+
+<span class="co"># compare</span>
+<span class="kw">c</span>(<span class="dt">x =</span> <span class="kw">all</span>(x.R <span class="op">==</span><span class="st"> </span>x.cpp), <span class="dt">theta =</span> <span class="kw">all</span>(theta.R <span class="op">==</span><span class="st"> </span>theta.cpp))</code></pre></div>
+<pre><code>##     x theta 
+##  TRUE  TRUE</code></pre>
+</div>
+</div>
+<div id="inference-for-multivariate-sde-models" class="section level2">
+<h2>Inference for multivariate SDE models</h2>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2>References</h2>

@@ -13,11 +13,22 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-\newcommand{\tth}{\boldsymbol{\theta}}
-\newcommand{\Y}{\boldsymbol{Y}}
-\newcommand{\a}{\alpha}
-\newcommand{\b}{\beta}
+\newcommand{\bm}[1]{\boldsymbol{#1}}
+\newcommand{\tth}{\bm{\theta}}
+\newcommand{\Y}{\bm{Y}}
+\newcommand{\y}{\bm{y}}
+\newcommand{\B}{\bm{B}}
+\renewcommand{\a}{\alpha}
+\renewcommand{\b}{\beta}
 \newcommand{\g}{\gamma}
+\newcommand{\rv}[3][1]{#2_{#1},\ldots,#2_{#3}}
+\newcommand{\dr}{\bm{\Lambda}}
+\newcommand{\df}{\bm{\Sigma}}
+\newcommand{\dt}{\Delta t}
+\newcommand{\ud}{\mathrm{d}}
+\newcommand{\var}{\mathrm{var}}
+\newcommand{\cov}{\mathrm{cov}}
+
 
 ## Installation
 
@@ -55,12 +66,28 @@ CXX=/usr/local/opt/llvm/bin/clang++
 ```
 Note that these compiler directives alone will not enable **`OpenMP`** support.  This happens at compile time by linking against `-fopenmp`, which is done internally by **`msde`**.
 
-## Stochastic Lotka-Volterra predator-prey model
+## Creating an `sde.model` object
+
+A $d$-dimensional SDE $\Y_t = (\rv [1t] Y {dt})$ is written as
+$$
+\ud \Y_t = \dr_{\tth}(\Y_t)\,\ud t + \df_{\tth}(\Y_t)^{1/2}\,\ud \B_t,
+$$
+where $\dr_{\tth}(\y)$ and $\df_{\tth}(\y)$ are the drift and diffusion functions,
+<!-- $$ -->
+<!-- \dr_{\tth}(\y) = \lim_{\dt \to 0} \frac{E[\Y_{t+\dt} - \Y_t \mid \Y_t = \y]}{\dt}, \qquad \df_{\tth}(\y) = \lim_{\dt \to 0} \frac{\var(\Y_{t+\dt} - \Y_t \mid \Y_t = \y)}{\dt}, -->
+<!-- $$ -->
+and $\B_t = (\rv [1t] B {dt})$ is $d$-dimensional Brownian motion.
+
+### Stochastic Lotka-Volterra predator-prey model
 
 Let $H_t$ and $L_t$ denote the number of Hare and Lynx at time $t$ coexisting in a given habitat.  An SDE describing the interactions between these two animal populations is given by the following stochastic Lotka-Volterra predator-prey model [@golightly-wilkinson10]:
 $$
-\begin{pmatrix} \mathrm{d} H_t \\ \mathrm{d} L_t \end{pmatrix} = \begin{pmatrix} \alpha H_t - \beta H_tL_t \\ \beta H_tL_t - \gamma L_t \end{pmatrix} \mathrm{d} t + \begin{pmatrix} \alpha H_t + \beta H_tL_t & -\beta H_tL_t \\ -\beta H_tL_t & \beta H_tL_t + \gamma L_t\end{pmatrix}^{1/2} \begin{pmatrix} \mathrm{d} B_{1t} \\ \mathrm{d} B_{2t} \end{pmatrix}.
+\begin{pmatrix} \mathrm{d} H_t \\ \mathrm{d} L_t \end{pmatrix} = \begin{pmatrix} \a H_t - \b H_tL_t \\ \b H_tL_t - \g L_t \end{pmatrix}\, \mathrm{d} t + \begin{pmatrix} \a H_t + \b H_tL_t & -\b H_tL_t \\ -\b H_tL_t & \b H_tL_t + \g L_t\end{pmatrix}^{1/2} \begin{pmatrix} \mathrm{d} B_{1t} \\ \mathrm{d} B_{2t} \end{pmatrix}.
 $$
+Thus we have $d = 2$, $\Y_t = (H_t, L_t)$, and $\tth = (\a, \b, \g)$.
+
+### The `sdeModel` class definition
+
 In order to build this model in **C++**, we create a header file `lotvolModel.h` containing the class definition for an `sdeModel` object.  The basic structure of this class is given below:
 ```{Rcpp, eval = FALSE}
 // sde model object
@@ -83,8 +110,8 @@ The meaning of each class member is as follows:
 * `sdeDr`: The SDE drift function.  In **R**, this function would be implemented as
     ```{r, eval = FALSE}
 sde.drift <- function(x, theta) {
-  dr <- c(theta[1]*x[1] - theta[2]*x[1]*x[2], # alpha * H - beta * H * L
-          theta[2]*x[1]*x[2] - theta[3]*x[2]) # beta * H * L - gamma * L
+  dr <- c(theta[1]*x[1] - theta[2]*x[1]*x[2], # alpha * H - beta * H*L
+          theta[2]*x[1]*x[2] - theta[3]*x[2]) # beta * H*L - gamma * L
   dr
 }
 ```
@@ -100,10 +127,10 @@ void sdeDr(double *dr, double *x, double *theta) {
     ```{r, eval = FALSE}
 sde.diff <- function(x, theta) {
   df <- matrix(NA, 2, 2)
-  df[1,1] <- theta[1]*x[1] + theta[2]*x[1]*x[2] # alpha * H + beta * H * L
-  df[1,2] <- -theta[2]*x[1]*x[2] # -beta * H * L
-  df[2,1] <- df[1,2] # -beta * H * L
-  df[2,2] <- theta[2]*x[1]*x[2] + theta[3]*x[2] # beta * H * L + gamma * L
+  df[1,1] <- theta[1]*x[1] + theta[2]*x[1]*x[2] # alpha * H + beta * H*L
+  df[1,2] <- -theta[2]*x[1]*x[2] # -beta * H*L
+  df[2,1] <- df[1,2] # -beta * H*L
+  df[2,2] <- theta[2]*x[1]*x[2] + theta[3]*x[2] # beta * H*L + gamma * L
   df
 }
 ```
@@ -116,41 +143,41 @@ void sdeDf(double *df, double *x, double *theta) {
   return;
 }
 ```
-    Thus there are two major differences with the **R** version.  The first is that the `df` matrix is stored as a vector (or "array" in **C++**).  Its elements are stored in column-major order, i.e., by stacking the columns one after the other into one long vector.  The second difference is that **`msde`** only uses the *upper triangular* portion of the (symmetric) variance matrix.  The elements below the diagonal can be set to any value or not set at all without affecting the computations.
+    Thus there are two major differences with the **R** version.  The first is that the `df` matrix is stored as a vector (or "array" in **C++**).  Its elements are stored in column-major order, i.e., by stacking the columns one after the other into one long vector.  The second difference is that **`msde`** only uses the *upper triangular* portion of the (symmetric) matrix $\df_{\tth}(\y)$.  The elements below the diagonal can be set to any value or not set at all without affecting the computations.
 
 	**`msde`** internally computes the Cholesky decomposition of the diffusion function when it is specified on the variance scale.  For small problems such as this one, it is more efficient to specify the Cholesky decomposition directly, i.e., specify the diffusion on the standard deviation scale.  In this case, the Cholesky decomposition of the diffusion function is
 $$
-\begin{pmatrix} \alpha H_t + \beta H_tL_t & -\beta H_tL_t \\ -\beta H_tL_t & \beta H_tL_t + \gamma L_t\end{pmatrix}^{1/2} = \begin{pmatrix} \sqrt{\a H_t + \b H_tL_t} & -\frac{\b H_tL_t}{\sqrt{\a H_t + \b H_tL_t}} \\ 0 & \sqrt{\b H_tL_t - \g L_t - \frac{(\b H_tL_t)^2}{\a H_t + \b H_tL_t}} \end{pmatrix},
+\begin{pmatrix} \a H_t + \b H_tL_t & -\b H_tL_t \\ -\b H_tL_t & \b H_tL_t + \g L_t\end{pmatrix}^{1/2} = \begin{pmatrix} \sqrt{\a H_t + \b H_tL_t} & -\frac{\b H_tL_t}{\sqrt{\a H_t + \b H_tL_t}} \\ 0 & \sqrt{\b H_tL_t + \g L_t - \frac{(\b H_tL_t)^2}{\a H_t + \b H_tL_t}} \end{pmatrix},
 $$
 which is passed to **`msde`** by setting `sdDiff = true` and
     ```{Rcpp, eval = FALSE}
 void sdeDf(double *df, double *x, double *theta) {
-  double bHL = theta[1]*x[0]*x[1]; // beta*H*L
-  df[0] = sqrt(theta[0]*x[0] + bHL); // sqrt(alpha*H + bHL)
+  double bHL = theta[1]*x[0]*x[1]; // beta * H*L
+  df[0] = sqrt(theta[0]*x[0] + bHL); // sqrt(alpha * H + bHL)
   df[2] = -bHL/df[0];
-  df[3] = sqrt(bHL - theta[2]*x[1] - df[2]*df[2]);
+  df[3] = sqrt(bHL + theta[2]*x[1] - df[2]*df[2]);
   return;
 }
 ```
 **TODO:** `diagDiff` for diagonal diffusion functions.
 * `isValidParams`: A logical used to specify the parameter support.  In this case we have $\a, \b, \g > 0$, such that
-    ````{Rcpp, eval = FALSE}
+    ```{Rcpp, eval = FALSE}
 bool isValidParams(double *theta) {
   bool val = theta[0] > 0.0;
   val = val && theta[1] > 0.0;
-  val = val ** theta[2] > 0.0;
+  val = val && theta[2] > 0.0;
   return val;
 }
-````
+```
 * `isValidData`: A logical used to specify the SDE support, which can be parameter-dependent.  In this case we simply have $H_t, L_t > 0$, such that
-    ````{Rcpp, eval = FALSE}
+    ```{Rcpp, eval = FALSE}
 bool isValidData(double *x, double *theta) {
   return (x[0] > 0.0) && (x[1] > 0.0);
 }
-````
+```
 
 Thus the whole file `lotvolModel.h` is given below:
-````{Rcpp, eval = FALSE}
+```{Rcpp, eval = FALSE}
 #ifndef sdeModel_h
 #define sdeModel_h 1
 
@@ -170,38 +197,139 @@ class sdeModel {
 };
 
 // drift function
-inline void sdeDr(double *dr, double *x, double *theta) {
-  dr[0] = theta[0]*x[0] - theta[1]*x[0]*x[1]; // alpha*H - beta*H*L
-  dr[1] = theta[1]*x[0]*x[1] - theta[2]*x[1]; // beta*H*L - gamma*L
+inline void sdeModel::sdeDr(double *dr, double *x, double *theta) {
+  dr[0] = theta[0]*x[0] - theta[1]*x[0]*x[1]; // alpha * H - beta * H*L
+  dr[1] = theta[1]*x[0]*x[1] - theta[2]*x[1]; // beta * H*L - gamma * L
   return;
 }
 
 // diffusion function (sd scale)
-inline void sdeDf(double *df, double *x, double *theta) {
-  double bHL = theta[1]*x[0]*x[1]; // beta*H*L
-  df[0] = sqrt(theta[0]*x[0] + bHL); // sqrt(alpha*H + bHL)
+inline void sdeModel::sdeDf(double *df, double *x, double *theta) {
+  double bHL = theta[1]*x[0]*x[1]; // beta * H*L
+  df[0] = sqrt(theta[0]*x[0] + bHL); // sqrt(alpha * H + bHL)
   df[2] = -bHL/df[0];
-  df[3] = sqrt(bHL - theta[2]*x[1] - df[2]*df[2]);
+  df[3] = sqrt(bHL + theta[2]*x[1] - df[2]*df[2]);
   return;
 }
 
 // parameter validator
-inline bool isValidParams(double *theta) {
+inline bool sdeModel::isValidParams(double *theta) {
   bool val = theta[0] > 0.0;
   val = val && theta[1] > 0.0;
-  val = val ** theta[2] > 0.0;
+  val = val && theta[2] > 0.0;
   return val;
 }
 
 // data validator
-inline bool isValidData(double *x, double *theta) {
+inline bool sdeModel::isValidData(double *x, double *theta) {
   return (x[0] > 0.0) && (x[1] > 0.0);
 }
 
 #endif
-````
-The only additions to the previous code sections are (i) the header include guards (`#ifndef`/`#define`/`#endif`) and (ii) the `inline` keyword before the class member definitions, both of which ensure that only one instance of these functions is passed to the **C++** compiler.
+```
+The additions to the previous code sections are:
+1. The header include guards (`#ifndef`/`#define`/`#endif`).
+2. The `sdeModel::` identifier is prepended to the class member definitions when these are written outside of the class declaration itself.
+3. The `inline` keyword before the class member definitions, both of which ensure that only one instance of these functions is passed to the **C++** compiler.
 
-## Compiling and checking the **`sdeModel`**
+### Compiling and checking the `sde.model` object
+
+One the `sdeModel` class is created as the **C++** level, it is compiled in **R** using the following commands:
+```{r}
+require(msdeHeaders)
+
+# put lotvolModel.h in the working directory
+data.names <- c("H", "L")
+param.names <- c("alpha", "beta", "gamma")
+lvmod <- sde.make.model(ModelFile = "lotvolModel.h",
+                        data.names = data.names,
+                        param.names = param.names)
+```
+Before using the model for inference, it is useful to make sure that the **C++** entrypoints are error-free.  To facilitate this, **`msde`** provides **R** wrappers to the internal **C++** drift, diffusion, and validator functions, which can then be checked against **R** versions as follows:
+```{r}
+# helper functions
+
+# random matrix of size nreps x length(x) from vector x
+jit.vec <- function(x, nreps) {
+  apply(t(replicate(n = nreps, expr = x, simplify = "matrix")), 2, jitter)
+}
+# maximum absolute and relative error between two arrays
+max.diff <- function(x1, x2) {
+  c(abs = max(abs(x1-x2)), rel = max(abs(x1-x2)/max(abs(x1), 1e-8)))
+}
+
+# R sde functions
+
+# drift and diffusion
+lv.drift <- function(x, theta) {
+  dr <- c(theta[1]*x[1] - theta[2]*x[1]*x[2], # alpha * H - beta * H*L
+          theta[2]*x[1]*x[2] - theta[3]*x[2]) # beta * H*L - gamma * L
+  dr
+}
+lv.diff <- function(x, theta) {
+  df <- matrix(NA, 2, 2)
+  df[1,1] <- theta[1]*x[1] + theta[2]*x[1]*x[2] # alpha * H + beta * H*L
+  df[1,2] <- -theta[2]*x[1]*x[2] # -beta * H*L
+  df[2,1] <- df[1,2] # -beta * H*L
+  df[2,2] <- theta[2]*x[1]*x[2] + theta[3]*x[2] # beta * H*L + gamma * L
+  chol(df) # always use sd scale in R
+}
+
+# validators
+lv.valid.data <- function(x, theta) all(x > 0)
+lv.valid.params <- function(theta) all(theta > 0)
+
+# generate some test values
+nreps <- 12
+x0 <- c(H = 71, L = 79)
+theta0 <- c(alpha = .5, beta = .0025, gamma = .3)
+X <- jit.vec(x0, nreps)
+Theta <- jit.vec(theta0, nreps)
+
+# drift and diffusion check
+
+# R versions
+dr.R <- matrix(NA, nreps, lvmod$ndims) # drift
+df.R <- matrix(NA, nreps, lvmod$ndims^2) # diffusion
+for(ii in 1:nreps) {
+  dr.R[ii,] <- lv.drift(x = X[ii,], theta = Theta[ii,])
+  # flattens diffusion matrix into a row
+  df.R[ii,] <- c(lv.diff(x = X[ii,], theta = Theta[ii,]))
+}
+
+# C++ versions
+dr.cpp <- sde.drift(model = lvmod, x = X, theta = Theta)
+df.cpp <- sde.diff(model = lvmod, x = X, theta = Theta)
+
+# compare
+max.diff(dr.R, dr.cpp)
+max.diff(df.R, df.cpp)
+
+# validator check
+
+# generate invalid data and parameters
+X.bad <- X
+X.bad[c(1,3,5),1] <- -X.bad[c(1,3,5),1]
+Theta.bad <- Theta
+Theta.bad[c(2,4,6),3] <- -Theta.bad[c(2,4,6),3]
+
+# R versions
+x.R <- rep(NA, nreps)
+theta.R <- rep(NA, nreps)
+for(ii in 1:nreps) {
+  x.R[ii] <- lv.valid.data(x = X.bad[ii,], theta = Theta.bad[ii,])
+  theta.R[ii] <- lv.valid.params(theta = Theta.bad[ii,])
+}
+
+# C++ versions
+x.cpp <- sde.valid.data(model = lvmod, x = X.bad, theta = Theta.bad)
+theta.cpp <- sde.valid.params(model = lvmod, theta = Theta.bad)
+
+# compare
+c(x = all(x.R == x.cpp), theta = all(theta.R == theta.cpp))
+
+```
+
+## Inference for multivariate SDE models
 
 ## References

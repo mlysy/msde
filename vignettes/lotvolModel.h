@@ -17,31 +17,31 @@ class sdeModel {
 };
 
 // drift function
-inline void sdeDr(double *dr, double *x, double *theta) {
-  dr[0] = theta[0]*x[0] - theta[1]*x[0]*x[1]; // alpha*H - beta*H*L
-  dr[1] = theta[1]*x[0]*x[1] - theta[2]*x[1]; // beta*H*L - gamma*L
+inline void sdeModel::sdeDr(double *dr, double *x, double *theta) {
+  dr[0] = theta[0]*x[0] - theta[1]*x[0]*x[1]; // alpha * H - beta * H*L
+  dr[1] = theta[1]*x[0]*x[1] - theta[2]*x[1]; // beta * H*L - gamma * L
   return;
 }
 
 // diffusion function (sd scale)
-inline void sdeDf(double *df, double *x, double *theta) {
-  double bHL = theta[1]*x[0]*x[1]; // beta*H*L
-  df[0] = sqrt(theta[0]*x[0] + bHL); // sqrt(alpha*H + bHL)
+inline void sdeModel::sdeDf(double *df, double *x, double *theta) {
+  double bHL = theta[1]*x[0]*x[1]; // beta * H*L
+  df[0] = sqrt(theta[0]*x[0] + bHL); // sqrt(alpha * H + bHL)
   df[2] = -bHL/df[0];
-  df[3] = sqrt(bHL - theta[2]*x[1] - df[2]*df[2]);
+  df[3] = sqrt(bHL + theta[2]*x[1] - df[2]*df[2]);
   return;
 }
 
 // parameter validator
-inline bool isValidParams(double *theta) {
+inline bool sdeModel::isValidParams(double *theta) {
   bool val = theta[0] > 0.0;
   val = val && theta[1] > 0.0;
-  val = val ** theta[2] > 0.0;
+  val = val && theta[2] > 0.0;
   return val;
 }
 
 // data validator
-inline bool isValidData(double *x, double *theta) {
+inline bool sdeModel::isValidData(double *x, double *theta) {
   return (x[0] > 0.0) && (x[1] > 0.0);
 }
 

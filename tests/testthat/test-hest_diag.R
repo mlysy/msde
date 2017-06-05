@@ -33,5 +33,11 @@ randt <- function(nreps) {
 
 context("heston model -- diag/sd scale")
 
+model <- sde.make.model(ModelFile = ModelFile,
+                        param.names = param.names,
+                        data.names = data.names)
+ndims <- model$ndims
+nparams <- model$nparams
+
 source("msde-test_debug.R")
 
