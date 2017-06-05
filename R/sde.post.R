@@ -23,7 +23,7 @@
 #' }
 #' When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
 #'
-#' For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{row} and \code{col} determines which samples to return with the former, and which of the \code{ncomp} time-points to return with the latter.
+#' For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{isamples}, \code{icomp}, and \code{idims} determines which samples, time points, and SDE variables to return.  The first of these can be a scalar or vector with the same meaning as before.
 #' @return A list with elements:
 #' \describe{
 #'   \item{params}{An \code{nsamples x nparams} matrix of posterior parameter draws.}

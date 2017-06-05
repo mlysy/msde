@@ -332,4 +332,37 @@ c(x = all(x.R == x.cpp), theta = all(theta.R == theta.cpp))
 
 ## Inference for multivariate SDE models
 
+### Simulating trajectories from the Lotka-Volterra Model
+
+This is accomplished with the function `sde.sim`.  Here we'll generate $N = 50$ observations of the process with initial values $\Y_0 = (71, 79)$, and parameter values $\tth = (.5, .0025,.3)$.
+```{r, fig.width = 10, fig.height = 5, out.width = "90%"}
+
+# simulation parameters
+theta0 <- c(alpha = .5, beta = .0025, gamma = .3) # true parameter values
+x0 <- c(H = 71, L = 79) # initial SDE values
+N <- 50 # number of observations
+dT <- 1 # time between observations (years)
+
+# simulate data
+lvsim <- sde.sim(model = lvmod, x0 = x0, theta = theta0,
+                 nobs = N-1, # N-1 steps forward
+                 dt = dT,
+                 dt.sim = dT/100) # internal observation time
+
+# plot data
+X <- rbind(c(x0), lvsim$data) # include first observation
+tseq <- (1:N-1)*dT # observation times
+clrs <- c("black", "red")
+par(mar = c(4, 4, 1, 0)+.1)
+plot(x = 0, type = "n", xlim = range(tseq), ylim = range(X),
+     xlab = "Time (years)", ylab = "Population")
+lines(tseq, X[,"H"], type = "o", pch = 16, col = clrs[1])
+lines(tseq, X[,"L"], type = "o", pch = 16, col = clrs[2])
+legend("topleft", legend = c("Hare", "Lynx"), fill = clrs)
+```
+
+### Parameter inference
+
+
+
 ## References
