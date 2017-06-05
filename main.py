@@ -10,3 +10,7 @@ train = cleaning.clean_data(train_raw)
 test  = cleaning.clean_data(test_raw)
 
 ipdb.set_trace()
+
+# Identifying response, y, and features, X
+y_train = train["y"]
+x_train = train.drop(["ID","y"], axis = 1)
