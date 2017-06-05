@@ -3,10 +3,10 @@ import pandas as pd
 import sklearn as sk
 import cleaning, xgb, ipdb, time
 
-train_data = pd.read_csv("train.csv")
-test_data  = pd.read_csv("test.csv")
+train_raw = pd.read_csv("train.csv")
+test_raw  = pd.read_csv("test.csv")
 
-train_clean = cleaning.clean_data(train_data)
-test_clean  = cleaning.clean_data(test_data)
+train = cleaning.clean_data(train_raw)
+test  = cleaning.clean_data(test_raw)
 
 ipdb.set_trace()
