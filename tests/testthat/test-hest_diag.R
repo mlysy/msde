@@ -2,6 +2,8 @@
 
 library(msdeHeaders)
 
+context("heston model -- diag/sd scale")
+
 # setup heston model
 ModelFile <- "hestModel_diag.h"
 param.names <- c("alpha", "gamma", "beta", "sigma")
@@ -31,13 +33,5 @@ randt <- function(nreps) {
   Theta
 }
 
-context("heston model -- diag/sd scale")
-
-model <- sde.make.model(ModelFile = ModelFile,
-                        param.names = param.names,
-                        data.names = data.names)
-ndims <- model$ndims
-nparams <- model$nparams
-
-source("msde-test_debug.R")
+source("msde-test_debug.R", local = TRUE)
 

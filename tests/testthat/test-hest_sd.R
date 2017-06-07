@@ -1,6 +1,7 @@
 #--- heston model on sd scale --------------------------------------------------
 
 library(msdeHeaders)
+context("heston model -- sd scale")
 
 # setup heston model
 ModelFile <- "hestModel.h"
@@ -31,7 +32,5 @@ randt <- function(nreps) {
   Theta
 }
 
-context("heston model -- sd scale")
-
-source("msde-test_debug.R")
+source("msde-test_debug.R", local = TRUE)
 

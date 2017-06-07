@@ -6,6 +6,12 @@
 # ModelFile
 # PriorFile: mvnPrior
 
+model <- sde.make.model(ModelFile = ModelFile,
+                        param.names = param.names,
+                        data.names = data.names)
+ndims <- model$ndims
+nparams <- model$nparams
+
 source("msde-testfunctions.R")
 
 #--- test drift and diffusion --------------------------------------------------
