@@ -1,0 +1,8 @@
+*.DS_Store
+*.Rapp.history
+*.Rhistory
+*.o
+*.dll
+*.pdf
+*.html
+inst/doc
