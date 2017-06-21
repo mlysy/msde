@@ -35,6 +35,64 @@
 #'   \item{last.miss}{If \code{last.miss.out == TRUE}, a \code{nsamples x nmissN} matrix of all posterior draws for the missing data in the final observation.  Useful for SDE forecasting at future timepoints.}
 #'   \item{accept}{A named list of acceptance rates for the various components of the MCMC sampler.}
 #' }
+#'
+#' @example
+#' # we assume the model's header file is created and it is call, hestModel.h
+#' library(msdeHeaders)
+#' 
+#' # We first initialize the names for data and parameters
+#' param.names <- c('alpha','gamma','beta','sigma','rho')
+#' data.names <- c("X","Z")
+#'
+#' # Initialize the model
+#' modfile <- "hestModel.h"
+#' hmod <- sde.make.model(ModelFile = modfile,
+#'												param.names = param.names,
+#'												data.names = data.names)
+#'
+#' # randomly pick the starting point for the process and parameters
+#' nDim <- hmod$ndims
+#' nparams <- hmod$nparams
+#' X0 <- c(X = log(1000), Z = 0.1)
+#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+#' dT <- 1/252
+#' nobs.sim <- 2000
+#' burn <- 500
+#' hest.sim <- sde.sim(model = hmod,
+#'	                   x0 = X0,
+#'                     theta = theta,
+#'                     dt = dT,
+#'                     dt.sim = dT,
+#'                     nobs = nobs.sim,
+#'                     burn = burn)
+#'
+#' # intialize argument for sde.init
+#' nobs.post <- 128 # observations for posterior
+#' nvar.obs <- c(nDim, sample(c(0:nDim),nobs.post-1,replace=TRUE))
+#' m <- sample(c(1:5),1) # this can be chosen at random
+#'
+#' # We need to create a sde.init object for sde.post to work
+#' init.data <- sde.init(model = hmod,
+#'                       x = as.matrix(hest.sim$data)[1:nobs.post,],
+#'                       dt = hest.sim$dt,
+#'                       m = m,
+#'                       nvar.obs = nvar.obs,
+#'                       theta = theta)
+#'
+#' # Initialize posterior sampling argument
+#' nsamples <- 5000
+#' hyper.param <- NULL
+#' adapt <- TRUE
+#' hest.post <- sde.post(model = hmod,
+#'                       init = init.data,
+#'                       hyper = hyper.param,
+#'                       adapt = adapt,
+#'                       nsamples = nsamples,
+#'                       burn = burn)
+#'
+#' # plot the histogram for the sampled parameters
+#' hist(hest.post$params,breaks=100)
+#'
 #' @export
 sde.post <- function(model, init, hyper,
                      nsamples, burn, mwg.sd = NULL, adapt = TRUE,
