@@ -22,6 +22,32 @@
 #'   \item{dt,dt.sim}{The actual and internal interobservation times.}
 #'   \item{nbad}{The total number of bad draws.}
 #' }
+#' @example
+#' library(msdeHeaders)
+#' modfile <- "hestModel.h"
+#' 
+#' # Initialize Heston model in C++ using sde.make.model
+#' param.names <- c("alpha","gamma","beta","sigma","rho")
+#' data.names <- c("X","Z")
+#' hmod <- sde.make.model(ModelFile = modfile,
+#'                        param.names = param.names,
+#'                        data.names = data.names)
+#'
+#' # Initialize simulated data
+#' X0 <- c(X = log(1000), Z = 0.1)
+#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+#' dT = 1/252
+#' nobs.sim <- 2000
+#' burn <- 500
+#' hest.sim <- sde.sim(model = hmod, 
+#'                     x0 = X0,
+#'                     theta = theta,
+#'                     dt = dT,
+#'                     dt.sim = dT,
+#'                     nobs = nobs.sim,
+#'                     burn = burn)
+#'
+#' # end of drift example
 #' @export
 sde.sim <- function(model, x0, theta, dt, dt.sim,
                     nobs, burn = 0, nreps = 1,

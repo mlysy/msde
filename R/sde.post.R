@@ -35,7 +35,6 @@
 #'   \item{last.miss}{If \code{last.miss.out == TRUE}, a \code{nsamples x nmissN} matrix of all posterior draws for the missing data in the final observation.  Useful for SDE forecasting at future timepoints.}
 #'   \item{accept}{A named list of acceptance rates for the various components of the MCMC sampler.}
 #' }
-#'
 #' @example
 #' # we assume the model's header file is created and it is call, hestModel.h
 #' library(msdeHeaders)
@@ -92,7 +91,6 @@
 #'
 #' # plot the histogram for the sampled parameters
 #' hist(hest.post$params[,1],breaks=100)
-#'
 #' @export
 sde.post <- function(model, init, hyper,
                      nsamples, burn, mwg.sd = NULL, adapt = TRUE,

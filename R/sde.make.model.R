@@ -19,6 +19,17 @@
 #' @details The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.
 #'
 #' The code is compiled by copying the \code{ModelFile} to the \code{tmpdir} directory, along with a wrapper \code{.cpp} file to be compiled by \code{Rcpp::sourceCpp}.
+#' @example
+#' modfile <- "hestModel.h"
+#' param.names <- c("alpha","beta","gamma","sigma","rho")
+#' data.names <- c("X","Z")
+#'
+#' # Initialize Heston model in C++ using sde.make.model
+#' hmod <- sde.make.model(ModelFile = modfile,
+#'                        param.names = param.names,
+#'                        data.names = data.names)
+#'
+#' end of sde.make.model example
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, prior.spec,
