@@ -47,8 +47,8 @@
 #' # Initialize the model
 #' modfile <- "hestModel.h"
 #' hmod <- sde.make.model(ModelFile = modfile,
-#'												param.names = param.names,
-#'												data.names = data.names)
+#'                        param.names = param.names,
+#'                        data.names = data.names)
 #'
 #' # randomly pick the starting point for the process and parameters
 #' nDim <- hmod$ndims
@@ -59,7 +59,7 @@
 #' nobs.sim <- 2000
 #' burn <- 500
 #' hest.sim <- sde.sim(model = hmod,
-#'	                   x0 = X0,
+#'                     x0 = X0,
 #'                     theta = theta,
 #'                     dt = dT,
 #'                     dt.sim = dT,
