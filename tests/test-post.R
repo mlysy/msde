@@ -23,20 +23,32 @@ test.post <- function(theta, Gamma, Lambda, Psi, init = 1,debug=FALSE){
 	
 	# Initialize model in C++
 	message("Initializing Model in C++")
+	message(".")
+	message(".")
+	message(".")
+
 	moumod <- sde.make.model(ModelFile = "mOUModel.h",
-													 param.names=param.names,
+													 data.names = data.names,
+													 param.names = param.names,
 													 rebuild=TRUE)
 	
 	message("Model initialization complete.")
+	message(".")
+	message(".")
+	message(".")
+
 	nreps <- 0
-	# check init
-	if(is.numeric(init)){
+
+	if(as.numeric(init) == init){
 		# Make a list of sde.init object
 		# generate data
+		message(init," repetitions.")
 		nreps <- init
-#		data.list <- NULL
 
 		for(reps in 1:nreps){
+			message("Rep ",reps,": ")
+			message(".")
+			message(".")
 			X0 <- runif(ndims, min = -1, max = 1)
 			dT <- 1/250
 
@@ -59,7 +71,9 @@ test.post <- function(theta, Gamma, Lambda, Psi, init = 1,debug=FALSE){
 
 
 		
-			message("init.data completed.")
+			message("Rep (",reps,")------init.data completed.")
+			message(".")
+			message(".")
 
 			nsamples <- 50000
 			mou.post <- sde.post(model = moumod,
@@ -69,6 +83,9 @@ test.post <- function(theta, Gamma, Lambda, Psi, init = 1,debug=FALSE){
 													 nsamples = nsamples,
 													 burn = burn)
 
+			message("Rep (",reps,")------sde.post completed.")
+			message(".")
+			message(".")
 			h <- hist(mou.post$params, breaks=100, plot = FALSE)
 			supp <- h$breaks
 			res <- length(supp)
@@ -92,6 +109,9 @@ test.post <- function(theta, Gamma, Lambda, Psi, init = 1,debug=FALSE){
 																				log = TRUE,
 																				debug=FALSE)
 			}
+			message("Rep (",reps,")------Kalman completed.")
+			message(".")
+			message(".")
 			xden.kalman <- exp(ll.kalman - max(ll.kalman))
 			h$density <- h$counts/sum(h$counts)
 			h$density <- h$density/max(h$density)
@@ -104,13 +124,16 @@ test.post <- function(theta, Gamma, Lambda, Psi, init = 1,debug=FALSE){
 			lines(supp,xden.kalman,col="blue")
 			abline(v=theta,lty=2,col='red')
 			dev.off()
+			message("Rep (",reps,")-----Completed.")
+			message(".")
+			message(".")
 		}
 	}
 	else if(is.list(init)){
 		stop("not implemented yet.")
 	}
 	else{
-		stop("Please provide init as an integer or list of sde.init object.")
+		stop("Please provide init as an integer.")
 	}
 	# define a variable to track the number of plots needed
 #	return(mou.post)
