@@ -91,7 +91,7 @@
 #'                       burn = burn)
 #'
 #' # plot the histogram for the sampled parameters
-#' hist(hest.post$params,breaks=100)
+#' hist(hest.post$params[,1],breaks=100)
 #'
 #' @export
 sde.post <- function(model, init, hyper,
