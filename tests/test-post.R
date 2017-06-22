@@ -1,140 +1,77 @@
-library(msdeHeaders)
-source("mOU-Kalman-revised.R")
-source("r-code-parser.R")
-require("mvtnorm")
+#--- check posterior -----------------------------------------------------------
 
-# Only for mou case. This theta is one dimensional
-# Need data.names to be X_1,...,X_ndims
-test.post <- function(theta, Gamma, Lambda, Psi, init = 1,debug=FALSE){
+# ok want to check inputs from sde.post vs sde.post2
 
-	ndims <- length(Lambda) # length of Lambda == number of dimension
+devtools::document()
+devtools::install()
 
-	# Initialize param.names
-	param.names <- names(theta)
+require(msdeHeaders)
 
-	# Initialize data.names
-	data.names <- c("X1")
-	for(nn in 2:ndims){
-		data.names <- c(data.names,paste0('X',nn))
-	}
+# build model
+param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+data.names <- c("X", "Z")
+hmod <- sde.make.model(ModelFile = "hestModel.h",
+                       param.names = param.names,
+                       data.names = data.names, debug = FALSE)
+ndims <- hmod$ndims
+nparams <- hmod$nparams
 
-	# Initialize the model file. Message will confirm the conversion
-	quickParse(Gamma,Lambda,Psi)
-	
-	# Initialize model in C++
-	message("Initializing Model in C++")
-	message(".")
-	message(".")
-	message(".")
+# posterior inference
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+x0 <- c(X = log(1000), Z = 0.1)
 
-	moumod <- sde.make.model(ModelFile = "mOUModel.h",
-													 data.names = data.names,
-													 param.names = param.names,
-													 rebuild=TRUE)
-	
-	message("Model initialization complete.")
-	message(".")
-	message(".")
-	message(".")
+# simulate data
+nObs <- 13
+dT <- 1/252
+hsim <- sde.sim(model = hmod, x0 = x0, theta = theta,
+                dt = dT, dt.sim = dT/100, nobs = nObs, nreps = 1)
+# check input parsing
+m <- 2 # degree of Euler approximation: dt_euler = dt/m
+nvar.obs <- c(2, rep(1, nObs-1)) # all but first vol unobserved
+init <- sde.init(model = hmod, x = hsim$data, dt = dT, m = m,
+                 nvar.obs = nvar.obs, theta = theta, debug = FALSE)
 
-	nreps <- 0
+# prior
+prior <- list(mu = c(.1, .35, 1.0, .5, -.81),
+              Sigma = crossprod(matrix(rnorm(25),5)))
+prior$Sigma <- sqrt(diag(c(.1, 8, .15, .002, .002))) %*% cov2cor(prior$Sigma)
+prior$Sigma <- prior$Sigma %*% sqrt(diag(c(.1, 8, .15, .002, .002)))
+names(prior$mu) <- param.names
+colnames(prior$Sigma) <- param.names
+rownames(prior$Sigma) <- param.names
+# mcmc specs
+#mwg.sd <- c(.1, 1, .1, .01, .01) # random walk metropolis for params
+#names(mwg.sd) <- param.names
+mwg.sd <- NULL
+update.params <- TRUE
+update.data <- TRUE
+nsamples <- 1e3 # ifelse(update.data, 2e4, 4e4)
+data.out <- list(isamples = sample(nsamples, 1),
+                 idims = sample(ndims,1), icomp = sample(nrow(init$data), 5))
+burn <- 100
+SEED <- 549
 
-	if(as.numeric(init) == init){
-		# Make a list of sde.init object
-		# generate data
-		message(init," repetitions.")
-		nreps <- init
+set.seed(SEED)
+hpost1 <- sde.post(model = hmod,
+                   init = init,
+                   nsamples = nsamples, burn = burn,
+                   hyper = prior, debug = FALSE,
+                   mwg.sd = mwg.sd, adapt = TRUE,
+                   data.out = 1:nsamples,
+                   update.params = update.params,
+                   update.data = update.data)
 
-		for(reps in 1:nreps){
-			message("Rep ",reps,": ")
-			message(".")
-			message(".")
-			X0 <- runif(ndims, min = -1, max = 1)
-			dT <- 1/250
+set.seed(SEED)
+hpost2 <- sde.post(model = hmod,
+                   init = init,
+                   nsamples = nsamples, burn = burn,
+                   hyper = prior, debug = FALSE,
+                   mwg.sd = mwg.sd, adapt = TRUE,
+                   data.out = data.out,
+                   update.params = update.params,
+                   update.data = update.data)
 
-			# generate nobs, burn
-			burn <- 0
-			nObs.sim <- 2000
-			mou.sim <- sde.sim(model = moumod, x0 = X0, theta = theta,
-												 dt = dT, dt.sim = dT, nobs = nObs.sim, burn=burn)
-
-		# need to generate par.index,
-			nObs.post <- 256
-			nvar.obs <- c(ndims,sample(c(0:ndims),nObs.post-1,replace=TRUE))
-			m <- sample(c(1:3),1)
-			init.data <- sde.init(model = moumod,
-														x = as.matrix(mou.sim$data[1:nObs.post,]),
-														dt = mou.sim$dt,
-														m = m,
-														nvar.obs = nvar.obs,
-														theta = theta)
-
-
-		
-			message("Rep (",reps,")------init.data completed.")
-			message(".")
-			message(".")
-
-			nsamples <- 50000
-			mou.post <- sde.post(model = moumod,
-													 init = init.data,
-													 hyper = NULL,
-													 adapt = TRUE,
-													 nsamples = nsamples,
-													 burn = burn)
-
-			message("Rep (",reps,")------sde.post completed.")
-			message(".")
-			message(".")
-			h <- hist(mou.post$params, breaks=100, plot = FALSE)
-			supp <- h$breaks
-			res <- length(supp)
-
-			ll.kalman <- rep(NA,res)
-			len_WO <- dim(init.data$data)[1]
-
-			data1 <- init.data$data[2:len_WO,]
-			dts <- init.data$dt.m[2:(len_WO-1)]
-
-			for(index in 1:res){
-				TT <- supp[index]
-				ll.kalman[index] <- dmou.Kalman(X = data1,
-																				X0 = init.data$data[1,],
-																				dt = dts,
-																				dt0 = init.data$dt.m[1],
-																				Gamma*TT,
-																				Lambda*TT,
-																				Psi*TT,
-																				init.data$nvar.obs.m[2:len_WO],
-																				log = TRUE,
-																				debug=FALSE)
-			}
-			message("Rep (",reps,")------Kalman completed.")
-			message(".")
-			message(".")
-			xden.kalman <- exp(ll.kalman - max(ll.kalman))
-			h$density <- h$counts/sum(h$counts)
-			h$density <- h$density/max(h$density)
-			m.frac <- 1 - sum(init.data$nvar.obs.m)/(ndims*length(init.data$nvar.obs.m))
-			main.title <- paste0("p",reps,": ndims=",ndims,", m.frac=",signif(m.frac,3))
-			png(paste0('plot',reps,'.png'))
-			plot(h,freq=FALSE,ylim=range(xden.kalman),xlim=range(supp),
-						 xlab=expression(theta),ylab=expression(loglik(theta*" | X")),
-						 main=main.title)
-			lines(supp,xden.kalman,col="blue")
-			abline(v=theta,lty=2,col='red')
-			dev.off()
-			message("Rep (",reps,")-----Completed.")
-			message(".")
-			message(".")
-		}
-	}
-	else if(is.list(init)){
-		stop("not implemented yet.")
-	}
-	else{
-		stop("Please provide init as an integer.")
-	}
-	# define a variable to track the number of plots needed
-#	return(mou.post)
-}
+dout <- hpost2$data.out
+all(hpost1$data[dout$icomp,
+                dout$idims,
+                dout$isamples, drop=FALSE] == hpost2$data)
