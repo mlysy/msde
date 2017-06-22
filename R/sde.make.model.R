@@ -29,7 +29,7 @@
 #'                        param.names = param.names,
 #'                        data.names = data.names)
 #'
-#' end of sde.make.model example
+#' # end of sde.make.model example
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, prior.spec,

@@ -91,6 +91,7 @@
 #'
 #' # plot the histogram for the sampled parameters
 #' hist(hest.post$params[,1],breaks=100)
+#' # end of sde.post example
 #' @export
 sde.post <- function(model, init, hyper,
                      nsamples, burn, mwg.sd = NULL, adapt = TRUE,

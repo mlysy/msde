@@ -57,7 +57,7 @@
 #'                       nvar.obs = nvar.obs,
 #'                       theta = theta)
 #'
-#' end of sde.init example
+#' # end of sde.init example
 #' @export
 sde.init <- function(model, x, dt, m = 1, nvar.obs, theta, debug = FALSE) {
   if(class(model) != "sde.model") {
