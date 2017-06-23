@@ -14,50 +14,33 @@
 #'   \item{nvar.obs.m}{The number of variables observed per row of \code{data}.  Note that \code{nvar.obs.m[(i-1)*m+1] == nvar.obs[ii]}, and that \code{nvar.obs.m[i-1] == 0} if \code{i} is not a multiple of \code{m}.}
 #'   \item{params}{Parameter initial values.}
 #' }
-#' @example
-#' # we assume the model's header file is created and it is call, hestModel.h
-#' library(msdeHeaders)
-#' 
-#' # We first initialize the names for data and parameters
-#' param.names <- c('alpha','gamma','beta','sigma','rho')
-#' data.names <- c("X","Z")
+#' @examples
+#' \donttest{
+#' # compile Heston's model
+#' hex <- example.models("hest")
+#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
+#'                        param.names = hex$param.names,
+#'                        data.names = hex$data.names)
 #'
-#' # Initialize the model
-#' modfile <- "hestModel.h"
-#' hmod <- sde.make.model(ModelFile = modfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
-#'
-#' # randomly pick the starting point for the process and parameters
-#' nDim <- hmod$ndims
-#' nparams <- hmod$nparams
-#' X0 <- c(X = log(1000), Z = 0.1)
+#' # generate some observed data
+#' nObs <- 5
+#' x0 <- c(X = log(1000), Z = 0.1)
+#' X0 <- apply(t(replicate(nObs, x0)), 2, jitter)
+#' dT <- .6
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' dT <- 1/252
-#' nobs.sim <- 2000
-#' burn <- 500
-#' hest.sim <- sde.sim(model = hmod,
-#'                     x0 = X0,
-#'                     theta = theta,
-#'                     dt = dT,
-#'                     dt.sim = dT,
-#'                     nobs = nobs.sim,
-#'                     burn = burn)
 #'
-#' # Intialize argument for sde.init
-#' nobs.post <- 128 # observations for posterior
-#' nvar.obs <- c(nDim, sample(c(0:nDim),nobs.post-1,replace=TRUE))
-#' m <- sample(c(1:5),1) # this can be chosen at random
+#' # no missing data
+#' sde.init(model = hmod, x = X0, dt = dT, m = 1, nvar.obs = 2)
 #'
-#' # We need to create a sde.init object for sde.post to work
-#' init.data <- sde.init(model = hmod,
-#'                       x = as.matrix(hest.sim$data)[1:nobs.post,],
-#'                       dt = hest.sim$dt,
-#'                       m = m,
-#'                       nvar.obs = nvar.obs,
-#'                       theta = theta)
+#' # all but endpoint volatilities are missing
+#' sde.init(model = hmod, x = X0, dt = dT, m = 1,
+#'          nvar.obs = c(2, rep(1, nObs-2), 2))
 #'
-#' # end of sde.init example
+#' # all volatilities missing,
+#' # two completely missing SDE timepoints between observations
+#' m <- 3 # divide each observation interval into m equally spaced timepoints
+#' sde.init(model = hmod, x = X0, dt = dT, m = m, nvar.obs = 1)
+#' }
 #' @export
 sde.init <- function(model, x, dt, m = 1, nvar.obs, theta, debug = FALSE) {
   if(class(model) != "sde.model") {

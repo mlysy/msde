@@ -19,3 +19,26 @@ A matrix with \code{ndims^2} columns containing the diffusion funtion evaluated 
 \description{
 SDE Diffusion Function
 }
+\examples{
+\donttest{
+# compile model
+hex <- example.models("hest")
+hmod <- sde.make.model(ModelFile = hex$ModelFile,
+                       param.names = hex$param.names,
+                       data.names = hex$data.names)
+
+# single input
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+x0 <- c(X = log(1000), Z = 0.1)
+sde.diff(model = hmod, x = x0, theta = theta)
+
+# multiple inputs
+nreps <- 10
+Theta <- apply(t(replicate(nreps, theta)), 2, jitter)
+X0 <- apply(t(replicate(nreps, x0)), 2, jitter)
+sde.diff(model = hmod, x = X0, theta = Theta)
+
+# mixed inputs
+sde.diff(model = hmod, x = x0, theta = Theta)
+}
+}

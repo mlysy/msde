@@ -14,12 +14,13 @@ Description: MCMC sampling of the posterior distribution of the parameters of a
 Depends:
     R (>= 3.0.0)
 Imports:
-    Rcpp (>= 0.12.7)
+    Rcpp (>= 0.12.7),
+    stats
 Suggests:
     knitr,
     rmarkdown,
     testthat
 VignetteBuilder: knitr
-License: >= GPL-3
+License: GPL-3
 LazyData: true
 RoxygenNote: 6.0.1

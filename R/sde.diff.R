@@ -4,36 +4,28 @@
 #' @param x A vector or matrix of data with \code{ndims} columns.
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
 #' @return A matrix with \code{ndims^2} columns containing the diffusion funtion evaluated at \code{x} and \code{theta}.  Each row corresponds to the upper triangular cholesky factor of the diffusion matrix.  If either input contains invalid sde data or parameters an error is thrown.
-#' @example
-#' library(msdeHeaders)
-#' modfile <- "hestModel.h"
-#' 
-#' # Initialize Heston model in C++ using sde.make.model
-#' param.names <- c("alpha","gamma","beta","sigma","rho")
-#' data.names <- c("X","Z")
-#' hmod <- sde.make.model(ModelFile = modfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
+#' @examples
+#' \donttest{
+#' # compile model
+#' hex <- example.models("hest")
+#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
+#'                        param.names = hex$param.names,
+#'                        data.names = hex$data.names)
 #'
-#' # Initialize simulated data
-#' X0 <- c(X = log(1000), Z = 0.1)
+#' # single input
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' dT = 1/252
-#' nobs.sim <- 2000
-#' burn <- 500
-#' hest.sim <- sde.sim(model = hmod, 
-#'                     x0 = X0,
-#'                     theta = theta,
-#'                     dt = dT,
-#'                     dt.sim = dT,
-#'                     nobs = nobs.sim,
-#'                     burn = burn)
+#' x0 <- c(X = log(1000), Z = 0.1)
+#' sde.diff(model = hmod, x = x0, theta = theta)
 #'
-#' # sde.diff will calculate the diffusion function given data
-#' dr <- sde.diff(model = hmod,
-#'                x = hest.sim$data[1:100,],
-#'                theta = theta)
-#' # end of sde.diff example
+#' # multiple inputs
+#' nreps <- 10
+#' Theta <- apply(t(replicate(nreps, theta)), 2, jitter)
+#' X0 <- apply(t(replicate(nreps, x0)), 2, jitter)
+#' sde.diff(model = hmod, x = X0, theta = Theta)
+#'
+#' # mixed inputs
+#' sde.diff(model = hmod, x = x0, theta = Theta)
+#' }
 #' @export
 sde.diff <- function(model, x, theta, debug = FALSE) {
   if(class(model) != "sde.model") {
