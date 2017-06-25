@@ -4,7 +4,7 @@
 \alias{sde.prior}
 \title{SDE Prior Function}
 \usage{
-sde.prior(model, theta, x, hyper, debug = FALSE)
+sde.prior(model, theta, x, hyper)
 }
 \arguments{
 \item{model}{An \code{sde.model} object.}

@@ -6,45 +6,28 @@
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
 #' @param ncores If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.
 #' @return A vector of likelihood evaluations.  If input contains invalid data or parameters an error is thrown.
-#' @example
-#' # we assume the model's header file is created and it is call, hestModel.h
-#' library(msdeHeaders)
-#' 
-#' # We first initialize the names for data and parameters
-#' param.names <- c('alpha','gamma','beta','sigma','rho')
-#' data.names <- c("X","Z")
+#' @examples
+#' \donttest{
+#' hex <- example.models("hest")
+#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
+#'                        param.names = hex$param.names,
+#'                        data.names = hex$data.names)
 #'
-#' # Initialize the model
-#' modfile <- "hestModel.h"
-#' hmod <- sde.make.model(ModelFile = modfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
-#'
-#' # Randomly pick the starting point for the process and parameters
-#' nDim <- hmod$ndims
-#' nparams <- hmod$nparams
-#' X0 <- c(X = log(1000), Z = 0.1)
+#' # Input param
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+#' x0 <- c(X = log(1000), Z = 0.1)
+#' nreps <- 10
+#' X0 <- apply(t(replicate(nreps,x0)), 2, jitter)
 #' dT <- 1/252
-#' nobs.sim <- 2000
-#' burn <- 500
-#' hest.sim <- sde.sim(model = hmod,
-#'                     x0 = X0,
-#'                     theta = theta,
-#'                     dt = dT,
-#'                     dt.sim = dT,
-#'                     nobs = nobs.sim,
-#'                     burn = burn)
+#' 
+#' sde.loglik(model = hmod,
+#'						x = X0,
+#' 						dt = dT,
+#'						theta = theta)
 #'
-#' # ll contains the log-likelihood of Heston model
-#' ll <- sde.loglik(model = hmod,
-#'                  x = hest.sim$data,
-#'                  dt = hest.sim$dt,
-#'                  theta = theta)
-#'
-#' # end of sde.loglik example.
+#' }
 #' @export
-sde.loglik <- function(model, x, dt, theta, ncores = 1, debug = FALSE) {
+sde.loglik <- function(model, x, dt, theta, ncores = 1) {
   if(class(model) != "sde.model") {
     stop("model must be an sde.model object.")
   }
@@ -70,7 +53,7 @@ sde.loglik <- function(model, x, dt, theta, ncores = 1, debug = FALSE) {
   ##   theta <- t(theta)
   ## }
   # FIXME: what is preferred format for x?
-  if(debug) browser()
+#  if(debug) browser()
   x <- .format.data(x, model$data.names, type = "array")
   theta <- .format.params(theta, model$param.names)
   # problem dimensions
@@ -141,38 +124,3 @@ sde.loglik <- function(model, x, dt, theta, ncores = 1, debug = FALSE) {
                singleTheta = as.logical(single.theta),
                nCores = as.integer(ncores))
 }
-#' @example
-#' # we assume the model's header file is created and it is call, hestModel.h
-#' library(msdeHeaders)
-#' 
-#' # We first initialize the names for data and parameters
-#' param.names <- c('alpha','gamma','beta','sigma','rho')
-#' data.names <- c("X","Z")
-#'
-#' # Initialize the model
-#' modfile <- "hestModel.h"
-#' hmod <- sde.make.model(ModelFile = modfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
-#'
-#' # randomly pick the starting point for the process and parameters
-#' nDim <- hmod$ndims
-#' nparams <- hmod$nparams
-#' X0 <- c(X = log(1000), Z = 0.1)
-#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' dT <- 1/252
-#' nobs.sim <- 2000
-#' burn <- 500
-#' hest.sim <- sde.sim(model = hmod,
-#'                     x0 = X0,
-#'                     theta = theta,
-#'                     dt = dT,
-#'                     dt.sim = dT,
-#'                     nobs = nobs.sim,
-#'                     burn = burn)
-#'
-#' # intialize argument for sde.init
-#' nobs.post <- 128 # observations for posterior
-#' nvar.obs <- c(nDim, sample(c(0:nDim),nobs.post-1,replace=TRUE))
-#' m <- sample(c(1:5),1) # this can be chosen at random
-#'

@@ -7,7 +7,7 @@
 #' @return A vector of log-prior densities evaluated at the inputs.
 #' @details The prior is constructed at the \code{C++} level by defining a function (i.e., public member) \code{double logPrior(double *theta, double *x)} within the \code{sdePrior} class (see Examples).  At the \code{R} level, the \code{prior.spec} argument of \code{sde.make.model} is a function with arguments \code{hyper}, \code{param.names}, \code{data.names} used to convert \code{hyper} into a list of \code{NULL} or double-vectors which get passed on to the \code{C++} code.  This function can also be used to throw \code{R}-level errors to protect the \code{C++} code from invalid inputs, as is done for the default prior in \code{\link{mvn.prior.spec}}.
 #' @export
-sde.prior <- function(model, theta, x, hyper, debug = FALSE) {
+sde.prior <- function(model, theta, x, hyper) {
   if(class(model) != "sde.model") {
     stop("model must be an sde.model object.")
   }

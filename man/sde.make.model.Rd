@@ -5,7 +5,7 @@
 \title{Create an SDE Model Object}
 \usage{
 sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
-  prior.spec, OpenMP = FALSE, ..., debug = FALSE)
+  prior.spec, OpenMP = FALSE, ...)
 }
 \arguments{
 \item{ModelFile}{Path to the header file where the sde model is defined.}
@@ -17,6 +17,8 @@ sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
 \item{param.names}{Optional vector of names for the parameters of the sde.  Defaults to \code{theta1,...,thetap}.}
 
 \item{prior.spec}{A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.prior.spec}} for details.}
+
+\item{OpenMP}{This sets whether the model is compiled for usage in OpenMP.}
 
 \item{...}{additional parameters that are passed to \code{Rcpp::sourceCpp} when compiling the C++ code.}
 }
@@ -39,4 +41,13 @@ Create an SDE Model Object
 The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.
 
 The code is compiled by copying the \code{ModelFile} to the \code{tmpdir} directory, along with a wrapper \code{.cpp} file to be compiled by \code{Rcpp::sourceCpp}.
+}
+\examples{
+\donttest{
+hex <- example.models("hest")
+sde.make.model(ModelFile = hex$ModelFile,
+							param.names = hex$param.names,
+							data.names = hex$data.names)
+
+}
 }

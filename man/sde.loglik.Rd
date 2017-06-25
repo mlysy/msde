@@ -4,7 +4,7 @@
 \alias{sde.loglik}
 \title{SDE Loglikelihood Function}
 \usage{
-sde.loglik(model, x, dt, theta, ncores = 1, debug = FALSE)
+sde.loglik(model, x, dt, theta, ncores = 1)
 }
 \arguments{
 \item{model}{An \code{sde.model} object.}
@@ -22,4 +22,25 @@ A vector of likelihood evaluations.  If input contains invalid data or parameter
 }
 \description{
 SDE Loglikelihood Function
+}
+\examples{
+\donttest{
+hex <- example.models("hest")
+hmod <- sde.make.model(ModelFile = hex$ModelFile,
+                       param.names = hex$param.names,
+                       data.names = hex$data.names)
+
+# Input param
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+x0 <- c(X = log(1000), Z = 0.1)
+nreps <- 10
+X0 <- apply(t(replicate(nreps,x0)), 2, jitter)
+dT <- 1/252
+
+sde.loglik(model = hmod,
+					x = X0,
+						dt = dT,
+					theta = theta)
+
+}
 }

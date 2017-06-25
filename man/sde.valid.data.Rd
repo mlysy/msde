@@ -6,6 +6,13 @@
 \usage{
 sde.valid.data(model, x, theta)
 }
+\arguments{
+\item{model}{An \code{sde.model} object.}
+
+\item{x}{A matrix of data.}
+
+\item{theta}{A length \code{nparams} vector of parameter values.}
+}
 \description{
 Data validator
 }

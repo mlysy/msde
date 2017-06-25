@@ -5,7 +5,7 @@
 \title{Simulation of Multivariate SDE Trajectories}
 \usage{
 sde.sim(model, x0, theta, dt, dt.sim, nobs, burn = 0, nreps = 1,
-  max.bad.draws = 5000, verbose = TRUE, debug = FALSE)
+  max.bad.draws = 5000, verbose = TRUE)
 }
 \arguments{
 \item{model}{An \code{sde.model} object.}
@@ -46,4 +46,29 @@ The simulation algorithm is a Markov process with \eqn{Y_0 = x_0} and
 Y_{t+1} \sim N(Y_t + dr(Y_t, \theta) dt_{sim}, df(Y_t, \theta)df(Y_t, \theta)' dt_{sim}).
 }
 At each step, a while-loop is used until a valid SDE draw is produced.  The simulation algorithm terminates after \code{nreps} trajectories or once a total of \code{max.bad.draws} are reached.
+}
+\examples{
+\donttest{
+# compile model
+hex <- example.models("hest")
+hmod <- sde.make.model(ModelFile = hex$ModelFile,
+                       param.names = hex$param.names,
+                       data.names = hex$data.names)
+
+# Input param
+x0 <- c(X = log(1000), Z = 0.1)
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+dT = 1/252
+nobs.sim <- 2000
+burn <- 500
+# sde.sim function
+sde.sim(model = hmod, 
+				x0 = X0,
+				theta = theta,
+				dt = dT,
+				dt.sim = dT,
+				nobs = nobs.sim,
+				burn = burn)
+
+}
 }

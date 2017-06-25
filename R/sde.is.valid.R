@@ -1,5 +1,7 @@
 #' Data validator
-#'
+#' @param model An \code{sde.model} object.
+#' @param x A matrix of data.
+#' @param theta A length \code{nparams} vector of parameter values.
 #' @export
 sde.valid.data <- function(model, x, theta) {
   if(class(model) != "sde.model")
@@ -23,7 +25,8 @@ sde.valid.data <- function(model, x, theta) {
 }
 
 #' Parameter validator
-#'
+#' @param model An \code{sde.model} object.
+#' @param theta A length \code{nparams} vector of parameter values.
 #' @export
 sde.valid.params <- function(model, theta) {
   if(class(model) != "sde.model")

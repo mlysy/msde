@@ -6,6 +6,11 @@
 \usage{
 sde.valid.params(model, theta)
 }
+\arguments{
+\item{model}{An \code{sde.model} object.}
+
+\item{theta}{A length \code{nparams} vector of parameter values.}
+}
 \description{
 Parameter validator
 }

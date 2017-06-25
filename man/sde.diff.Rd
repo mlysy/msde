@@ -4,7 +4,7 @@
 \alias{sde.diff}
 \title{SDE Diffusion Function}
 \usage{
-sde.diff(model, x, theta, debug = FALSE)
+sde.diff(model, x, theta)
 }
 \arguments{
 \item{model}{An \code{sde.model} object.}

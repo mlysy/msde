@@ -35,19 +35,14 @@
 #'   \item{last.miss}{If \code{last.miss.out == TRUE}, a \code{nsamples x nmissN} matrix of all posterior draws for the missing data in the final observation.  Useful for SDE forecasting at future timepoints.}
 #'   \item{accept}{A named list of acceptance rates for the various components of the MCMC sampler.}
 #' }
-#' @example
-#' # we assume the model's header file is created and it is call, hestModel.h
-#' library(msdeHeaders)
+#' @examples
+#' \donttest{
 #' 
-#' # We first initialize the names for data and parameters
-#' param.names <- c('alpha','gamma','beta','sigma','rho')
-#' data.names <- c("X","Z")
-#'
 #' # Initialize the model
-#' modfile <- "hestModel.h"
-#' hmod <- sde.make.model(ModelFile = modfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
+#' hex <- example.models("hest")
+#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
+#'                        param.names = hex$param.names,
+#'                        data.names = hex$data.names)
 #'
 #' # randomly pick the starting point for the process and parameters
 #' nDim <- hmod$ndims
@@ -55,8 +50,8 @@
 #' X0 <- c(X = log(1000), Z = 0.1)
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
 #' dT <- 1/252
-#' nobs.sim <- 2000
-#' burn <- 500
+#' nobs.sim <- 20
+#' burn <- 0
 #' hest.sim <- sde.sim(model = hmod,
 #'                     x0 = X0,
 #'                     theta = theta,
@@ -66,13 +61,13 @@
 #'                     burn = burn)
 #'
 #' # intialize argument for sde.init
-#' nobs.post <- 128 # observations for posterior
+#' nobs.post <- 20 # observations for posterior
 #' nvar.obs <- c(nDim, sample(c(0:nDim),nobs.post-1,replace=TRUE))
 #' m <- sample(c(1:5),1) # this can be chosen at random
 #'
 #' # We need to create a sde.init object for sde.post to work
 #' init.data <- sde.init(model = hmod,
-#'                       x = as.matrix(hest.sim$data)[1:nobs.post,],
+#'                       x = hest.sim$data,
 #'                       dt = hest.sim$dt,
 #'                       m = m,
 #'                       nvar.obs = nvar.obs,
@@ -91,14 +86,14 @@
 #'
 #' # plot the histogram for the sampled parameters
 #' hist(hest.post$params[,1],breaks=100)
-#' # end of sde.post example
+#' }
 #' @export
 sde.post <- function(model, init, hyper,
                      nsamples, burn, mwg.sd = NULL, adapt = TRUE,
                      loglik.out = FALSE, last.miss.out = FALSE,
                      update.data = TRUE, data.out,
                      update.params = TRUE, fixed.params,
-                     ncores = 1, verbose = TRUE, debug = FALSE) {
+                     ncores = 1, verbose = TRUE) {
   # model constants
   if(class(model) != "sde.model") {
     stop("model must be an sde.model object.")
@@ -160,7 +155,7 @@ sde.post <- function(model, init, hyper,
     if(update.data) message("data = ", round(ndata.out, 2))
     message("Running posterior sampler...")
   }
-  if(debug) browser()
+#  if(debug) browser()
   tm <- chrono()
   # compute
   ans <- model$post(initParams = as.double(init.params),
@@ -189,7 +184,7 @@ sde.post <- function(model, init, hyper,
   names(ans) <- c("paramsOut", "dataOut", "paramAccept", "gibbsAccept",
                   "logLikOut", "lastMissOut", "lastIter", "mwgSd")
   # acceptance rates
-  if(debug) browser()
+#  if(debug) browser()
   accept <- .set.accept(ans$gibbsAccept, ans$paramAccept,
                         nsamples+burn, par.index, fixed.params,
                         param.names, data.names,

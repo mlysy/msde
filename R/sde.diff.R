@@ -27,7 +27,7 @@
 #' sde.diff(model = hmod, x = x0, theta = Theta)
 #' }
 #' @export
-sde.diff <- function(model, x, theta, debug = FALSE) {
+sde.diff <- function(model, x, theta) {
   if(class(model) != "sde.model") {
     stop("model must be an sde.model object.")
   }
@@ -64,7 +64,7 @@ sde.diff <- function(model, x, theta, debug = FALSE) {
   ## if(!all(c(ncol(x), ncol(theta)) == nreps)) {
   ##   stop("x and theta have incompatible dimensions.")
   ## }
-  if(debug) browser()
+#  if(debug) browser()
   # validate
   if(!all(.is.valid.params(model, theta, single.theta, nreps))) {
     stop("theta contains invalid sde parameters.")

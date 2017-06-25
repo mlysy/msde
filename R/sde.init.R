@@ -42,7 +42,7 @@
 #' sde.init(model = hmod, x = X0, dt = dT, m = m, nvar.obs = 1)
 #' }
 #' @export
-sde.init <- function(model, x, dt, m = 1, nvar.obs, theta, debug = FALSE) {
+sde.init <- function(model, x, dt, m = 1, nvar.obs, theta) {
   if(class(model) != "sde.model") {
     stop("model must be an sde.model object.")
   }
@@ -64,7 +64,7 @@ sde.init <- function(model, x, dt, m = 1, nvar.obs, theta, debug = FALSE) {
   init.data <- matrix(NA, ncomp, ndims)
   colnames(init.data) <- model$data.names
   # interpolation to create missing data
-  if(debug) browser()
+#  if(debug) browser()
   if(length(dt) == 1) dt <- rep(dt, nobs-1)
   if(length(dt) != nobs-1) stop("x and dt have incompatible sizes.")
   if(length(nvar.obs) != nobs) stop("nvar.obs and x have incompatible sizes.")
