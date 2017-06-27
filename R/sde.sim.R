@@ -37,13 +37,13 @@
 #' nobs.sim <- 2000
 #' burn <- 500
 #' # sde.sim function
-#' sde.sim(model = hmod, 
-#'					x0 = X0,
-#'					theta = theta,
-#'					dt = dT,
-#'					dt.sim = dT,
-#'					nobs = nobs.sim,
-#'					burn = burn)
+#' sde.sim(model = hmod,
+#'         x0 = X0,
+#'         theta = theta,
+#'         dt = dT,
+#'         dt.sim = dT,
+#'         nobs = nobs.sim,
+#'         burn = burn)
 #'
 #' }
 #' @export
