@@ -38,9 +38,9 @@ X0 <- apply(t(replicate(nreps,x0)), 2, jitter)
 dT <- 1/252
 
 sde.loglik(model = hmod,
-					x = X0,
-						dt = dT,
-					theta = theta)
+           x = X0,
+           dt = dT,
+           theta = theta)
 
 }
 }

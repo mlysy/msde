@@ -16,3 +16,21 @@ sde.valid.data(model, x, theta)
 \description{
 Data validator
 }
+\examples{
+\donttest{
+hex <- example.models("hest")
+hmod <- sde.make.model(ModelFile = hex$ModelFile,
+                       param.names = hex$param.names,
+                       data.names = hex$data.names)
+
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+
+# example of not valid data
+x0 <- c(X = log(1000), Z = -0.1)
+sde.valid.data(model = hmod, x = x0, theta = theta)
+
+# example of valid data
+x0 <- c(X = log(1000), Z = 0.1)
+sde.valid.data(model = hmod, x = x0, theta = theta)
+}
+}

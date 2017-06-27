@@ -24,8 +24,8 @@
 #' \donttest{
 #' hex <- example.models("hest")
 #' sde.make.model(ModelFile = hex$ModelFile,
-#'								param.names = hex$param.names,
-#'								data.names = hex$data.names)
+#'                param.names = hex$param.names,
+#'                data.names = hex$data.names)
 #'
 #' }
 #'@export

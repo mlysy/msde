@@ -4,7 +4,7 @@
 \alias{example.models}
 \title{Example SDE models}
 \usage{
-example.models(model = c("hest", "pgnet"))
+example.models(model = c("hest", "pgnet", "mou"))
 }
 \arguments{
 \item{model}{Character string giving the name of a sample model.  Possible values are: \code{hest}, \code{pgnet}.  See Details.}

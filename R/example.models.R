@@ -16,7 +16,7 @@
 #'                        data.names = hex$data.names)
 #' }
 #' @export
-example.models <- function(model = c("hest", "pgnet")) {
+example.models <- function(model = c("hest", "pgnet","mou")) {
   model <- match.arg(model)
   if(model == "hest") {
     ModelFile <- file.path(.msdeCppPath, "hestModel.h")
@@ -26,6 +26,10 @@ example.models <- function(model = c("hest", "pgnet")) {
     ModelFile <- file.path(.msdeCppPath, "pgnetModel.h")
     param.names <- paste0("gamma", 1:8)
     data.names <- c("R", "P", "Q", "D")
+  } else if(model == "mou") {
+    ModelFile <- file.path(.msdeCppPath, "mOUModel2D.h")
+    param.names <- "theta"
+    data.names <- c("X1","X2")
   }
   list(ModelFile = ModelFile, param.names = param.names,
        data.names = data.names)

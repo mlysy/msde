@@ -46,8 +46,8 @@ The code is compiled by copying the \code{ModelFile} to the \code{tmpdir} direct
 \donttest{
 hex <- example.models("hest")
 sde.make.model(ModelFile = hex$ModelFile,
-							param.names = hex$param.names,
-							data.names = hex$data.names)
+               param.names = hex$param.names,
+               data.names = hex$data.names)
 
 }
 }
