@@ -21,9 +21,9 @@
 #' dT <- 1/252
 #' 
 #' sde.loglik(model = hmod,
-#'						x = X0,
-#' 						dt = dT,
-#'						theta = theta)
+#'            x = X0,
+#'            dt = dT,
+#'            theta = theta)
 #'
 #' }
 #' @export
