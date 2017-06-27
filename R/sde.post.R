@@ -15,7 +15,7 @@
 #' @param fixed.params Logical vector of length \code{nparams} indicating which parameters are to be held fixed in the MCMC sampler.
 #' @param ncores If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.
 #' @param verbose Logical, whether to periodically output MCMC status.
-#' @param details The MWG jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{nmiss0} and \code{fixed.params}.  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
+#' @details The MWG jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{nmiss0} and \code{fixed.params}.  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
 #'
 #' \code{adapt = TRUE} implements an adaptive MCMC by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
 #' \deqn{

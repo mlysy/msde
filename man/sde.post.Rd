@@ -38,16 +38,6 @@ sde.post(model, init, hyper, nsamples, burn, mwg.sd = NULL, adapt = TRUE,
 \item{ncores}{If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.}
 
 \item{verbose}{Logical, whether to periodically output MCMC status.}
-
-\item{details}{The MWG jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{nmiss0} and \code{fixed.params}.  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
-
-\code{adapt = TRUE} implements an adaptive MCMC by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
-\deqn{
-\log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, 1/n^{1/2}).
-}
-When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
-
-For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{isamples}, \code{icomp}, and \code{idims} determines which samples, time points, and SDE variables to return.  The first of these can be a scalar or vector with the same meaning as before.}
 }
 \value{
 A list with elements:
@@ -64,6 +54,17 @@ A list with elements:
 }
 \description{
 Gibbs sampler for Multivariate SDEs
+}
+\details{
+The MWG jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{nmiss0} and \code{fixed.params}.  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
+
+\code{adapt = TRUE} implements an adaptive MCMC by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
+\deqn{
+\log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, 1/n^{1/2}).
+}
+When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
+
+For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{isamples}, \code{icomp}, and \code{idims} determines which samples, time points, and SDE variables to return.  The first of these can be a scalar or vector with the same meaning as before.
 }
 \examples{
 \donttest{
