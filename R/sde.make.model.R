@@ -32,7 +32,7 @@
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, hyper.check,
-                           OpenMP = FALSE, ..., debug = FALSE) {
+                           OpenMP = FALSE, ...) {
   sde.model <- list()
   # prior specification
   if(PriorFile == "default") {
