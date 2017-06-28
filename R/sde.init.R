@@ -42,7 +42,7 @@
 #' sde.init(model = hmod, x = X0, dt = dT, m = m, nvar.obs = 1)
 #' }
 #' @export
-sde.init <- function(model, x, dt, m = 1, nvar.obs, theta, debug = FALSE) {
+sde.init <- function(model, x, dt, m = 1, nvar.obs, theta) {
   if(class(model) != "sde.model") {
     stop("model must be an sde.model object.")
   }
@@ -64,10 +64,16 @@ sde.init <- function(model, x, dt, m = 1, nvar.obs, theta, debug = FALSE) {
   init.data <- matrix(NA, ncomp, ndims)
   colnames(init.data) <- model$data.names
   # interpolation to create missing data
-  if(debug) browser()
+  #if(debug) browser()
   if(length(dt) == 1) dt <- rep(dt, nobs-1)
   if(length(dt) != nobs-1) stop("x and dt have incompatible sizes.")
+  if(missing(nvar.obs)) nvar.obs <- ndims
+  if(length(nvar.obs) == 1) nvar.obs <- rep(nvar.obs, nobs)
   if(length(nvar.obs) != nobs) stop("nvar.obs and x have incompatible sizes.")
+  if(!all(nvar.obs == round(nvar.obs)) ||
+     any(nvar.obs < 0) || any(nvar.obs > ndims)) {
+    stop("nvar.obs must be an integer scalar or vector with values between 0 and ndims.")
+  }
   dtnew <- rep(dt/mm, each = mm)
   told <- cumsum(c(0, dt))
   tnew <- cumsum(c(0, dtnew))

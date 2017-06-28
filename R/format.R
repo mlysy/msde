@@ -74,7 +74,9 @@ is.valid.nreps <- function(nreps) {
       stop("names of x do not match data.names.")
     }
     x <- aperm(x, c(2,1,3))
+
   }
+  if(is.null(dimnames(x))) dimnames(x) <- rep(list(NULL), length(dim(x)))
   dimnames(x)[[1]] <- data.names
   x
 }
@@ -96,6 +98,9 @@ is.valid.nreps <- function(nreps) {
   }
   if(!is.null(colnames(theta)) && !identical(colnames(theta), param.names)) {
     stop("names of theta do not match param.names.")
+  }
+  if(is.null(dimnames(theta))) {
+    dimnames(theta) <- rep(list(NULL), length(dim(theta)))
   }
   dimnames(theta)[[2]] <- param.names
   t(theta)

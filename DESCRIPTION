@@ -5,12 +5,8 @@ Date: 2016-11-17
 Authors@R: c(person("Martin", "Lysy", role = c("aut", "cre"),
                     email = "mlysy@uwaterloo.ca"),
              person("JunYong", "Tong", role = "aut"),
-	     person("Nigel", "Delaney", role = "ctb"),
-             person("Trevor", "Kitt", role = "ctb"))
-Description: MCMC sampling of the posterior distribution of the parameters of a
-    multivariate SDE model given discretely observed data. The user-defined models
-    in msde are compiled in C++ which results in considerably faster posterior
-    sampling than if the models were written in R.
+	     person("Nigel", "Delaney", role = "ctb"))
+Description: Implements an MCMC sampler for the posterior distribution of arbitrary time-homogeneous multivariate stochastic differential equation (SDE) models with possibly latent components.  The package provides a simple entry point to integrate user-defined models directly with the sampler's C++ code, and leverages multi-core functionality.
 Depends:
     R (>= 3.0.0)
 Imports:

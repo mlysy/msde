@@ -9,14 +9,6 @@ using namespace Rcpp;
 //
 // the function are: sde's drift, diffusion, log-likelihood, prior.
 
-// //[[Rcpp::export(".get.sde.consts")]]
-// List sde_getConsts() {
-//   return List::create(_["ndims"] = sdeModel::nDims,
-// 		      _["nparams"] = sdeModel::nParams,
-// 		      _["sd.diff"] = sdeModel::sdDiff,
-// 		      _["diag.diff"] = sdeModel::diagDiff);
-// }
-
 //[[Rcpp::export("ndims")]]
 int sde_getNDims() {
   return sdeModel::nDims;
@@ -157,11 +149,11 @@ NumericVector sde_Prior(NumericVector thetaIn, NumericVector xIn,
       phi[ii] = REAL(phiIn[ii]);
     }
   }
-  Prior prior(phi, nArgs, nEachArg);
+  sdePrior prior(phi, nArgs, nEachArg);
   NumericVector lpOut(nReps);
   double *lp = REAL(lpOut);
   // NOTE: this can't be parallelized because private storage is common
-  // to parallelize need array of Prior objects
+  // to parallelize need array of sdePrior objects
   for(ii=0; ii<nReps; ii++) {
     lp[ii] = prior.logPrior(&theta[ii*(!singleTheta)*nParams],
 			    &x[ii*(!singleX)*nDims]);

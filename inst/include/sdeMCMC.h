@@ -16,7 +16,7 @@ class sdeMCMC : public sdeLogLik {
   // inherited from sdeLogLik: nDims2, nCores
   int *missInd;
   int nMiss, nMiss0, nMissN;
-  Prior *prior;
+  sdePrior *prior;
   void mvEraker(double *mean, double *sd,
 		double *x0, double *x2,
 		double b, double b2, double *theta,
@@ -112,7 +112,7 @@ inline sdeMCMC::sdeMCMC(int n, double *dt,
   }
   // prior
   // any advantage to passing pointer?
-  prior = new Prior(phi, nArgs, nEachArg);
+  prior = new sdePrior(phi, nArgs, nEachArg);
 }
 
 inline sdeMCMC::~sdeMCMC() {

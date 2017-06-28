@@ -6,7 +6,7 @@
 // this is specific to mvnPrior
 #include "mvnUtils.h"
 
-class Prior {
+class sdePrior {
  private:
   static const int nDims = sdeModel::nDims;
   static const int nParams = sdeModel::nParams;
@@ -16,12 +16,12 @@ class Prior {
   double *tmpX, *tmpZ;
  public:
   double logPrior(double *theta, double *x);
-  Prior(double **phi, int nArgs, int *nEachArg);
-  ~Prior();
+  sdePrior(double **phi, int nArgs, int *nEachArg);
+  ~sdePrior();
 };
 
 // constructor
-inline Prior::Prior(double **phi, int nArgs, int *nEachArg) {
+inline sdePrior::sdePrior(double **phi, int nArgs, int *nEachArg) {
   int ii;
   nRV = nEachArg[0];
   nParamRV = nEachArg[2];
@@ -55,7 +55,7 @@ inline Prior::Prior(double **phi, int nArgs, int *nEachArg) {
 }
 
 // destructor
-inline Prior::~Prior() {
+inline sdePrior::~sdePrior() {
   if(nRV > 0) {
     delete [] mean;
     delete [] cholSd;
@@ -70,7 +70,7 @@ inline Prior::~Prior() {
   }
 }
 
-inline double Prior::logPrior(double *theta, double *x) {
+inline double sdePrior::logPrior(double *theta, double *x) {
   if(nRV == 0) return(0.0);
   double lp;
   int ii;

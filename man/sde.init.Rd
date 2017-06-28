@@ -4,7 +4,7 @@
 \alias{sde.init}
 \title{MCMC Initialization}
 \usage{
-sde.init(model, x, dt, m = 1, nvar.obs, theta, debug = FALSE)
+sde.init(model, x, dt, m = 1, nvar.obs, theta)
 }
 \arguments{
 \item{model}{An \code{sde.model} object.}
@@ -30,4 +30,32 @@ An \code{sde.init} object.  A list with elements:
 }
 \description{
 Specifies the observed SDE data, interobservation times, and initial parameter and missing data values for \code{\link{sde.post}}.
+}
+\examples{
+\donttest{
+# compile Heston's model
+hex <- example.models("hest")
+hmod <- sde.make.model(ModelFile = hex$ModelFile,
+                       param.names = hex$param.names,
+                       data.names = hex$data.names)
+
+# generate some observed data
+nObs <- 5
+x0 <- c(X = log(1000), Z = 0.1)
+X0 <- apply(t(replicate(nObs, x0)), 2, jitter)
+dT <- .6
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+
+# no missing data
+sde.init(model = hmod, x = X0, dt = dT, m = 1, nvar.obs = 2)
+
+# all but endpoint volatilities are missing
+sde.init(model = hmod, x = X0, dt = dT, m = 1,
+         nvar.obs = c(2, rep(1, nObs-2), 2))
+
+# all volatilities missing,
+# two completely missing SDE timepoints between observations
+m <- 3 # divide each observation interval into m equally spaced timepoints
+sde.init(model = hmod, x = X0, dt = dT, m = m, nvar.obs = 1)
+}
 }
