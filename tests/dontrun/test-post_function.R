@@ -29,8 +29,7 @@ test.post <- function(theta, Gamma, Lambda, Psi, init = 1,debug=FALSE){
 
 	moumod <- sde.make.model(ModelFile = "mOUModel.h",
 													 data.names = data.names,
-													 param.names = param.names,
-													 rebuild=TRUE)
+													 param.names = param.names)
 	
 	message("Model initialization complete.")
 	message(".")
