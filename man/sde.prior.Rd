@@ -4,7 +4,7 @@
 \alias{sde.prior}
 \title{SDE Prior Function}
 \usage{
-sde.prior(model, theta, x, hyper, debug = FALSE)
+sde.prior(model, theta, x, hyper)
 }
 \arguments{
 \item{model}{An \code{sde.model} object.}
@@ -23,4 +23,30 @@ SDE Prior Function
 }
 \details{
 The prior is constructed at the \code{C++} level by defining a function (i.e., public member) \code{double logPrior(double *theta, double *x)} within the \code{sdePrior} class (see Examples).  At the \code{R} level, the \code{hyper.check} argument of \code{sde.make.model} is a function with arguments \code{hyper}, \code{param.names}, \code{data.names} used to convert \code{hyper} into a list of \code{NULL} or double-vectors which get passed on to the \code{C++} code.  This function can also be used to throw \code{R}-level errors to protect the \code{C++} code from invalid inputs, as is done for the default prior in \code{\link{mvn.hyper.check}}.
+}
+\examples{
+\donttest{
+hex <- example.models("hest")
+hmod <- sde.make.model(ModelFile = hex$ModelFile,
+                       param.names = hex$param.names,
+                       data.names = hex$data.names)
+
+# setting prior for 3 parameters
+rv.names <- c("alpha","gamma","rho")
+mu <- rnorm(3)
+Sigma <- crossprod(matrix(rnorm(9),3,3))
+names(mu) <- rv.names
+colnames(Sigma) <- rv.names
+rownames(Sigma) <- rv.names
+prior.args <- list(mu = mu, Sigma = Sigma)
+
+# Simulate data
+nreps-10
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+x0 <- c(X = log(1000), Z = 0.1)
+Theta <- apply(t(replicate(nReps,theta)),2,jitter)
+X0 <- apply(t(replicate(nReps,x)),2,jitter)
+
+sde.prior(model = hmod, x = X0, theta = Theta, hyper = prior.args)
+}
 }

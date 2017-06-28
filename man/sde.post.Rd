@@ -6,8 +6,7 @@
 \usage{
 sde.post(model, init, hyper, nsamples, burn, mwg.sd = NULL, adapt = TRUE,
   loglik.out = FALSE, last.miss.out = FALSE, update.data = TRUE, data.out,
-  update.params = TRUE, fixed.params, ncores = 1, verbose = TRUE,
-  debug = FALSE)
+  update.params = TRUE, fixed.params, ncores = 1, verbose = TRUE)
 }
 \arguments{
 \item{model}{An \code{sde.model} object constructed with \code{\link{sde.make.model}}.}
@@ -66,4 +65,57 @@ The MWG jump sizes can be specified as a scalar, a vector or length \code{nparam
 When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
 
 For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{isamples}, \code{icomp}, and \code{idims} determines which samples, time points, and SDE variables to return.  The first of these can be a scalar or vector with the same meaning as before.
+}
+\examples{
+\donttest{
+
+# Initialize the model
+hex <- example.models("hest")
+hmod <- sde.make.model(ModelFile = hex$ModelFile,
+                       param.names = hex$param.names,
+                       data.names = hex$data.names)
+
+# randomly pick the starting point for the process and parameters
+nDim <- hmod$ndims
+nparams <- hmod$nparams
+X0 <- c(X = log(1000), Z = 0.1)
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+dT <- 1/252
+nobs.sim <- 20
+burn <- 0
+hest.sim <- sde.sim(model = hmod,
+                    x0 = X0,
+                    theta = theta,
+                    dt = dT,
+                    dt.sim = dT,
+                    nobs = nobs.sim,
+                    burn = burn)
+
+# intialize argument for sde.init
+nobs.post <- 20 # observations for posterior
+nvar.obs <- c(nDim, sample(c(0:nDim),nobs.post-1,replace=TRUE))
+m <- sample(c(1:5),1) # this can be chosen at random
+
+# We need to create a sde.init object for sde.post to work
+init.data <- sde.init(model = hmod,
+                      x = hest.sim$data,
+                      dt = hest.sim$dt,
+                      m = m,
+                      nvar.obs = nvar.obs,
+                      theta = theta)
+
+# Initialize posterior sampling argument
+nsamples <- 5000
+hyper.param <- NULL
+adapt <- TRUE
+hest.post <- sde.post(model = hmod,
+                      init = init.data,
+                      hyper = hyper.param,
+                      adapt = adapt,
+                      nsamples = nsamples,
+                      burn = burn)
+
+# plot the histogram for the sampled parameters
+hist(hest.post$params[,1],breaks=100)
+}
 }

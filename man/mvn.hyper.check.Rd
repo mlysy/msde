@@ -4,7 +4,7 @@
 \alias{mvn.hyper.check}
 \title{Argument checking for the default multivariate normal prior}
 \usage{
-mvn.hyper.check(hyper, param.names, data.names, debug = FALSE)
+mvn.hyper.check(hyper, param.names, data.names)
 }
 \arguments{
 \item{hyper}{The normal prior's hyperparameters: a list with elements \code{mu} and \code{Sigma}, corresponding to a named mean vector and variance matrix (see Details).}

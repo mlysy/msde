@@ -6,6 +6,27 @@
 \usage{
 sde.valid.params(model, theta)
 }
+\arguments{
+\item{model}{An \code{sde.model} object.}
+
+\item{theta}{A length \code{nparams} vector of parameter values.}
+}
 \description{
 Parameter validator
+}
+\examples{
+\donttest{
+hex <- example.models("hest")
+hmod <- sde.make.model(ModelFile = hex$ModelFile,
+                       param.names = hex$param.names,
+                       data.names = hex$data.names)
+
+# example of not valid param
+theta <- c(alpha = 0.1, gamma = -4, beta = 0.8, sigma = 0.6, rho = -0.8)
+sde.valid.param(model = hmod, theta = theta)
+
+# example of valid param
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+sde.valid.param(model = hmod, theta = theta)
+}
 }

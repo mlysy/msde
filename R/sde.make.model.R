@@ -5,6 +5,7 @@
 #' @param data.names Optional vector of names for the components of the sde.  Defaults to \code{X1,...,Xd}.
 #' @param param.names Optional vector of names for the parameters of the sde.  Defaults to \code{theta1,...,thetap}.
 #' @param hyper.check A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.hyper.check}} for details.
+#' @param OpenMP This sets whether the model is compiled for usage in \code{OpenMP}.
 #' @param ... additional parameters that are passed to \code{Rcpp::sourceCpp} when compiling the C++ code.
 #'@return An \code{sde.model} object, which is a list containing the following elements:
 #' \itemize{
@@ -15,21 +16,19 @@
 #' \item \code{logprior}: the custom log prior.
 #' \item \code{sim}: function for simulating data.
 #' \item \code{post}: MCMC sampler for posterior distribution.
+#' \item \code{omp}: a logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.
 #' }
 #' @details The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.
 #'
 #' The code is compiled by copying the \code{ModelFile} to the \code{tmpdir} directory, along with a wrapper \code{.cpp} file to be compiled by \code{Rcpp::sourceCpp}.
-#' @example
-#' modfile <- "hestModel.h"
-#' param.names <- c("alpha","beta","gamma","sigma","rho")
-#' data.names <- c("X","Z")
+#' @examples
+#' \donttest{
+#' hex <- example.models("hest")
+#' sde.make.model(ModelFile = hex$ModelFile,
+#'                param.names = hex$param.names,
+#'                data.names = hex$data.names)
 #'
-#' # Initialize Heston model in C++ using sde.make.model
-#' hmod <- sde.make.model(ModelFile = modfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
-#'
-#' # end of sde.make.model example
+#' }
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, hyper.check,
@@ -72,7 +71,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
                      env = environment()), cpp.args)
   # OpenMP support
   if(OpenMP) old.env <- .omp.set()
-  if(debug) browser()
+#  if(debug) browser()
   do.call(sourceCpp, cpp.args)
   ## sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
   ##           env = environment(), ...)

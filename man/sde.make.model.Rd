@@ -18,6 +18,8 @@ sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
 
 \item{hyper.check}{A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.hyper.check}} for details.}
 
+\item{OpenMP}{This sets whether the model is compiled for usage in \code{OpenMP}.}
+
 \item{...}{additional parameters that are passed to \code{Rcpp::sourceCpp} when compiling the C++ code.}
 }
 \value{
@@ -30,6 +32,7 @@ An \code{sde.model} object, which is a list containing the following elements:
 \item \code{logprior}: the custom log prior.
 \item \code{sim}: function for simulating data.
 \item \code{post}: MCMC sampler for posterior distribution.
+\item \code{omp}: a logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.
 }
 }
 \description{
@@ -39,4 +42,13 @@ Create an SDE Model Object
 The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.
 
 The code is compiled by copying the \code{ModelFile} to the \code{tmpdir} directory, along with a wrapper \code{.cpp} file to be compiled by \code{Rcpp::sourceCpp}.
+}
+\examples{
+\donttest{
+hex <- example.models("hest")
+sde.make.model(ModelFile = hex$ModelFile,
+               param.names = hex$param.names,
+               data.names = hex$data.names)
+
+}
 }
