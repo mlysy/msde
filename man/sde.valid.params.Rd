@@ -23,10 +23,10 @@ hmod <- sde.make.model(ModelFile = hex$ModelFile,
 
 # example of not valid param
 theta <- c(alpha = 0.1, gamma = -4, beta = 0.8, sigma = 0.6, rho = -0.8)
-sde.valid.param(model = hmod, theta = theta)
+sde.valid.params(model = hmod, theta = theta)
 
 # example of valid param
 theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-sde.valid.param(model = hmod, theta = theta)
+sde.valid.params(model = hmod, theta = theta)
 }
 }

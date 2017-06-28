@@ -32,7 +32,7 @@
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, hyper.check,
-                           OpenMP = FALSE, ..., debug = FALSE) {
+                           OpenMP = FALSE, ...) {
   sde.model <- list()
   # prior specification
   if(PriorFile == "default") {
@@ -45,24 +45,13 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
     if(missing(hyper.check)) {
       stop("Must provide hyper.check for custom prior.")
     }
+    if(!identical(formalArgs(hyper.check),
+                  c("hyper", "param.names", "data.names"))) {
+      stop("hyper.check must have formal arguments: hyper, param.names, data.names.")
+    }
   }
   # compile C++ code
   rebuild <- .copy.cpp.files(ModelFile, PriorFile)
-  ## flag <- file.copy(from = PriorFile,
-  ##           to = file.path(tempdir(), "sdePrior.h"),
-  ##           overwrite = TRUE, copy.date = TRUE)
-  ## if(!flag) {
-  ##   stop("PriorFile \"", PriorFile, "\" not found.")
-  ## }
-  ## flag <- file.copy(from = ModelFile,
-  ##           to = file.path(tempdir(), "sdeModel.h"),
-  ##           overwrite = TRUE, copy.date = TRUE)
-  ## if(!flag) {
-  ##   stop("ModelFile \"", ModelFile, "\" not found.")
-  ## }
-  ## file.copy(from = file.path(.msdeCppPath, "sdeUtils.cpp"),
-  ##           to = file.path(tempdir(), "sdeUtils.cpp"),
-  ##           overwrite = TRUE, copy.date = TRUE)
   cpp.args <- list(...)
   if(is.null(cpp.args$rebuild) || !cpp.args$rebuild) {
     cpp.args$rebuild <- rebuild
@@ -71,10 +60,8 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
                      env = environment()), cpp.args)
   # OpenMP support
   if(OpenMP) old.env <- .omp.set()
-#  if(debug) browser()
+  # if(debug) browser()
   do.call(sourceCpp, cpp.args)
-  ## sourceCpp(file = file.path(tempdir(), "sdeUtils.cpp"),
-  ##           env = environment(), ...)
   if(OpenMP) .omp.unset(env = old.env)
   environment(sde.model$sim) <- globalenv()
   environment(sde.model$post) <- globalenv()

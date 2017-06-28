@@ -10,7 +10,7 @@
 #'                        data.names = hex$data.names)
 #'
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' 
+#'
 #' # example of not valid data
 #' x0 <- c(X = log(1000), Z = -0.1)
 #' sde.valid.data(model = hmod, x = x0, theta = theta)
@@ -53,11 +53,11 @@ sde.valid.data <- function(model, x, theta) {
 #'
 #' # example of not valid param
 #' theta <- c(alpha = 0.1, gamma = -4, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' sde.valid.param(model = hmod, theta = theta)
+#' sde.valid.params(model = hmod, theta = theta)
 #'
 #' # example of valid param
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' sde.valid.param(model = hmod, theta = theta)
+#' sde.valid.params(model = hmod, theta = theta)
 #' }
 #' @export
 sde.valid.params <- function(model, theta) {

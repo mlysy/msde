@@ -47,15 +47,16 @@ dT <- .6
 theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
 
 # no missing data
-sde.init(model = hmod, x = X0, dt = dT, m = 1, nvar.obs = 2)
+sde.init(model = hmod, x = X0, dt = dT, theta = theta)
 
 # all but endpoint volatilities are missing
 sde.init(model = hmod, x = X0, dt = dT, m = 1,
-         nvar.obs = c(2, rep(1, nObs-2), 2))
+         nvar.obs = c(2, rep(1, nObs-2), 2), theta = theta)
 
 # all volatilities missing,
 # two completely missing SDE timepoints between observations
 m <- 3 # divide each observation interval into m equally spaced timepoints
-sde.init(model = hmod, x = X0, dt = dT, m = m, nvar.obs = 1)
+sde.init(model = hmod, x = X0, dt = dT,
+         m = m, nvar.obs = 1, theta = theta)
 }
 }

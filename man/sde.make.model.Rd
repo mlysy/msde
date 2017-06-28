@@ -5,7 +5,7 @@
 \title{Create an SDE Model Object}
 \usage{
 sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
-  hyper.check, OpenMP = FALSE, ..., debug = FALSE)
+  hyper.check, OpenMP = FALSE, ...)
 }
 \arguments{
 \item{ModelFile}{Path to the header file where the sde model is defined.}

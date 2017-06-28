@@ -30,21 +30,23 @@
 #'                        param.names = hex$param.names,
 #'                        data.names = hex$data.names)
 #'
-#' # Input param
+#' # initial values
 #' x0 <- c(X = log(1000), Z = 0.1)
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' dT = 1/252
-#' nobs.sim <- 2000
-#' burn <- 500
-#' # sde.sim function
-#' sde.sim(model = hmod,
-#'         x0 = X0,
-#'         theta = theta,
-#'         dt = dT,
-#'         dt.sim = dT,
-#'         nobs = nobs.sim,
-#'         burn = burn)
 #'
+#' # simulate data
+#' dT <- 1/252
+#' nobs <- 2000
+#' burn <- 500
+#' hsim <- sde.sim(model = hmod, x0 = x0, theta = theta,
+#'                 dt = dT, dt.sim = dT/10,
+#'                 nobs = nobs, burn = burn)
+#'
+#' par(mfrow = c(1,2))
+#' plot(hsim$data[,"X"], type = "l", xlab = "Time", ylab = "",
+#'      main = expression(X[t]))
+#' plot(hsim$data[,"Z"], type = "l", xlab = "Time", ylab = "",
+#'      main = expression(Z[t]))
 #' }
 #' @export
 sde.sim <- function(model, x0, theta, dt, dt.sim,

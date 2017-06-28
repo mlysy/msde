@@ -76,7 +76,7 @@ hmod <- sde.make.model(ModelFile = hex$ModelFile,
                        data.names = hex$data.names)
 
 # randomly pick the starting point for the process and parameters
-nDim <- hmod$ndims
+ndims <- hmod$ndims
 nparams <- hmod$nparams
 X0 <- c(X = log(1000), Z = 0.1)
 theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
@@ -93,7 +93,7 @@ hest.sim <- sde.sim(model = hmod,
 
 # intialize argument for sde.init
 nobs.post <- 20 # observations for posterior
-nvar.obs <- c(nDim, sample(c(0:nDim),nobs.post-1,replace=TRUE))
+nvar.obs <- c(ndims, sample(c(0:ndims),nobs.post-1,replace=TRUE))
 m <- sample(c(1:5),1) # this can be chosen at random
 
 # We need to create a sde.init object for sde.post to work
@@ -116,6 +116,10 @@ hest.post <- sde.post(model = hmod,
                       burn = burn)
 
 # plot the histogram for the sampled parameters
-hist(hest.post$params[,1],breaks=100)
+par(mfrow = c(2,3))
+for(ii in 1:nparams) {
+  hist(hest.post$params[,ii],breaks=100, freq = FALSE,
+       main = parse(text = hmod$param.names[ii]), xlab = "")
+}
 }
 }
