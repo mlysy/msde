@@ -1,10 +1,12 @@
 #ifndef sdeUtils_h
 #define sdeUtils_h 1
 
+//[[Rcpp::depends("msdeHeaders")]]
+
 // utilities for sde's
 
-#include "LinAlgUtils.h"
-#include "mvnUtils.h"
+#include <LinAlgUtils.h>
+#include <mvnUtils.h>
 #include "sdeModel.h"
 
 // xmvn, zmvn, llmvn

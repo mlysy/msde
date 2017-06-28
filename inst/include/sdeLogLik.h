@@ -20,10 +20,12 @@ public members:
 * loglik(x, theta)
 */
 
-#include "LinAlgUtils.h"
-#include "mvnUtils.h"
+//[[Rcpp::depends("msdeHeaders")]]
+
+#include <LinAlgUtils.h>
+#include <mvnUtils.h>
 #include "sdeModel.h"
-#include "sdeUtils.h"
+#include <sdeUtils.h>
 
 // parallel implementation
 #ifdef _OPENMP

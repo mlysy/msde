@@ -1,6 +1,8 @@
 #ifndef sdeMCMC_h
 #define sdeMCMC_h 1
 
+//[[Rcpp::depends("msdeHeaders")]]
+
 // posterior inference for msde's
 
 // for speed considerations, and since it is unlikely that users will
@@ -8,8 +10,8 @@
 // of the same object.
 // the object will inherit from sdeLogLik.
 
-#include "mvnUtils.h"
-#include "sdeLogLik.h"
+#include <mvnUtils.h>
+#include <sdeLogLik.h>
 #include "sdePrior.h"
 
 class sdeMCMC : public sdeLogLik {

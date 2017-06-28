@@ -14,21 +14,21 @@ hmod <- sde.make.model(ModelFile = "hestModel.h",
 ndims <- hmod$ndims
 nparams <- hmod$nparams
 
-nrv <- 1
+nrv <- 2
 rv.names <- sample(c(param.names, data.names), nrv, replace = FALSE)
 mu <- rnorm(nrv)
 Sigma <- crossprod(matrix(rnorm(nrv^2),nrv,nrv))
 names(mu) <- rv.names
 colnames(Sigma) <- rv.names
 rownames(Sigma) <- rv.names
-prior.args <- list(mu = mu, Sigma = Sigma)
+hyper <- list(mu = mu, Sigma = Sigma)
 
 # check parser
-mvn.prior.spec(prior.args = prior.args, debug = FALSE,
-               param.names = param.names, data.names = data.names)
+mvn.hyper.check(hyper = hyper,
+                param.names = param.names, data.names = data.names)
 
 # check evaluator
-nrv <- 0
+nrv <- 3
 if(nrv > 0) {
   rv.names <- sample(c(param.names, data.names), nrv, replace = FALSE)
   mu <- rnorm(nrv)
@@ -36,8 +36,8 @@ if(nrv > 0) {
   names(mu) <- rv.names
   colnames(Sigma) <- rv.names
   rownames(Sigma) <- rv.names
-  prior.args <- list(mu = mu, Sigma = Sigma)
-} else prior.args <- NULL
+  hyper <- list(mu = mu, Sigma = Sigma)
+} else hyper <- NULL
 
 # generate data
 nReps <- 10
@@ -55,8 +55,77 @@ lpR <- dmvnorm(x = cbind(X0, Theta)[,rv.names,drop=FALSE],
 } else lpR <- rep(0, nReps)
 # C++
 lpC <- sde.prior(model = hmod, x = X0, theta = Theta,
-                 phi = prior.args)
+                 hyper = hyper)
 range(diff(lpR-lpC))
+
+#--- custom prior --------------------------------------------------------------
+
+# random matrix of size nreps x length(x) from vector x
+jit.vec <- function(x, nreps) {
+  apply(t(replicate(n = nreps, expr = x, simplify = "matrix")), 2, jitter)
+}
+# maximum absolute and relative error between two arrays
+max.diff <- function(x1, x2) {
+  c(abs = max(abs(x1-x2)), rel = max(abs(x1-x2)/max(abs(x1), 1e-8)))
+}
+# input check
+lvcheck <- function(hyper, param.names, data.names) {
+  if(is.null(names(hyper)) ||
+     !identical(sort(names(hyper)), c("mu", "sigma"))) {
+    stop("hyper must be a list with elements mu and sigma.")
+  }
+  mu <- hyper$mu
+  if(length(mu) == 1) mu <- rep(mu, 4)
+  if(!is.numeric(mu) || length(mu) != 4) {
+    stop("mu must be a numeric scalar or vector of length four.")
+  }
+  sig <- hyper$sigma
+  if(length(sig) == 1) sig <- rep(sig, 4)
+  if(!is.numeric(sig) || length(sig) != 4 || !all(sig > 0)) {
+    stop("sigma must be a positive scalar or vector of length four.")
+  }
+  list(mu, sig)
+}
+
+data.names <- c("H", "L")
+param.names <- c("alpha", "beta", "gamma")
+lvmod <- sde.make.model(ModelFile = "lotvolModel.h",
+                        PriorFile = "lotvolPrior.h", # prior specification
+                        hyper.check = lvcheck, # prior input checking
+                        data.names = data.names,
+                        param.names = param.names)
+
+
+# generate some test values
+nreta <- 12
+x0 <- c(H = 71, L = 79)
+theta0 <- c(alpha = .5, beta = .0025, gamma = .3)
+X <- jit.vec(x0, nreta)
+Theta <- jit.vec(theta0, nreta)
+Eta <- cbind(Theta, L = X[,"L"])
+nrphi <- 5
+Phi <- lapply(1:nrphi, function(ii) list(mu = rnorm(4), sigma = rexp(4)))
+
+# prior check
+
+# R version
+lpi.R <- matrix(NA, nreta, nrphi)
+for(ii in 1:nrphi) {
+  lpi.R[,ii] <- colSums(dlnorm(x =  t(Eta),
+                               meanlog = Phi[[ii]]$mu,
+                               sdlog = Phi[[ii]]$sigma, log = TRUE))
+}
+
+# C++ version
+lpi.cpp <- matrix(NA, nreta, nrphi)
+for(ii in 1:nrphi) {
+  lpi.cpp[,ii] <- sde.prior(model = lvmod, theta = Theta, x = X,
+                            hyper = Phi[[ii]])
+}
+
+# compare
+max.diff(lpi.R, lpi.cpp)
+
 
 #--- old prior -----------------------------------------------------------------
 

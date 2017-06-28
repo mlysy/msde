@@ -17,6 +17,7 @@ class sdePrior {
 
 // constructor
 inline sdePrior::sdePrior(double **phi, int nArgs, int *nEachArg) {
+  /* Rprintf("made it to constructor\n"); */
   // allocate memory for hyperparameters
   mean = new double[nHyper];
   sd = new double[nHyper];
@@ -25,6 +26,7 @@ inline sdePrior::sdePrior(double **phi, int nArgs, int *nEachArg) {
     mean[ii] = phi[0][ii];
     sd[ii] = phi[1][ii];
   }
+  /* Rprintf("made it through constructor\n"); */
 }
 
 // destructor
@@ -40,11 +42,25 @@ inline double sdePrior::logPrior(double *theta, double *x) {
   double lpi = 0.0;
   // alpha,beta,gamma
   for(int ii=0; ii < 3; ii++) {
+    /* Rprintf("ii = %i, tms = (%f, %f, %f)\n", ii, */
+    /* 	    theta[ii], mean[ii], sd[ii]); */
     lpi += R::dlnorm(theta[ii], mean[ii], sd[ii], 1);
+    /* Rprintf("lpi[%i] = %f\n", ii, lpi); */
   }
   // L
+  /* Rprintf("ii = %i, tms = (%f, %f, %f)\n", 3, */
+  /* 	  x[1], mean[3], sd[3]); */
   lpi += R::dlnorm(x[1], mean[3], sd[3], 1);
+  /* Rprintf("lpi[3] = %f\n", lpi); */
   return(lpi);
 }
+
+/*
+inline sdePrior::sdePrior(double **phi, int nArgs, int *nEachArg) {}
+
+inline double sdePrior::logPrior(double *theta, double *x) {
+  return(0.0);
+}
+*/
 
 #endif

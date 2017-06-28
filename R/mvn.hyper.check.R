@@ -12,7 +12,7 @@
 #' }
 #' @details This function is not meant to be called directly by the user, but rather to parse the hyper-parameters of a "default" multivariate normal prior distribution to be passed to the C++ code in \code{\link{sde.prior}} and \code{\link{sde.post}}.  This default prior is multivariate normal on the elements of \code{(theta, x0)} specified by each of \code{names(mu)}, \code{rownames(Sigma)}, and \code{colnames(Sigma)}.  The remaining components are given Lebesgue priors.  If the names of \code{mu} and \code{Sigma} are inconsistent an error is thrown.
 #' @export
-mvn.prior.spec <- function(hyper, param.names, data.names, debug = FALSE) {
+mvn.hyper.check <- function(hyper, param.names, data.names, debug = FALSE) {
   nparams <- length(param.names)
   ndims <- length(data.names)
   var.names <- c(param.names, data.names)

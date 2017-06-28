@@ -1,7 +1,8 @@
 #ifndef ParamVanillaUpdate_h
 #define ParamVanillaUpdate_h 1
 
-#include "sdeMCMC.h"
+//[[Rcpp::depends("msdeHeaders")]]
+#include <sdeMCMC.h>
 
 // componentwise vanilla MH parameter updates
 inline void sdeMCMC::paramVanillaUpdate(double *jumpSd, int *paramAccept) {

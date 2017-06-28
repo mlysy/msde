@@ -4,7 +4,7 @@
 #' @param PriorFile Path to the header file where the prior is defined.  See \code{\link{sde.prior}} for details.
 #' @param data.names Optional vector of names for the components of the sde.  Defaults to \code{X1,...,Xd}.
 #' @param param.names Optional vector of names for the parameters of the sde.  Defaults to \code{theta1,...,thetap}.
-#' @param prior.spec A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.prior.spec}} for details.
+#' @param hyper.check A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.hyper.check}} for details.
 #' @param ... additional parameters that are passed to \code{Rcpp::sourceCpp} when compiling the C++ code.
 #'@return An \code{sde.model} object, which is a list containing the following elements:
 #' \itemize{
@@ -32,19 +32,19 @@
 #' # end of sde.make.model example
 #'@export
 sde.make.model <- function(ModelFile, PriorFile = "default",
-                           data.names, param.names, prior.spec,
+                           data.names, param.names, hyper.check,
                            OpenMP = FALSE, ..., debug = FALSE) {
   sde.model <- list()
   # prior specification
   if(PriorFile == "default") {
     PriorFile <- file.path(.msdeCppPath, "mvnPrior.h")
-    if(!missing(prior.spec)) {
-      warning("Custom prior.spec ignored for default prior.")
+    if(!missing(hyper.check)) {
+      warning("Custom hyper.check ignored for default prior.")
     }
-    prior.spec <- mvn.prior.spec
+    hyper.check <- mvn.hyper.check
   } else {
-    if(missing(prior.spec)) {
-      stop("Must provide prior.spec for custom prior.")
+    if(missing(hyper.check)) {
+      stop("Must provide hyper.check for custom prior.")
     }
   }
   # compile C++ code
@@ -98,7 +98,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   sde.model <- c(sde.model,
                  list(ndims = ndims, nparams = nparams,
                       data.names = data.names, param.names = param.names,
-                      prior.spec = prior.spec, omp = OpenMP))
+                      hyper.check = hyper.check, omp = OpenMP))
   # output
   class(sde.model) <- "sde.model"
   sde.model
@@ -126,7 +126,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   if(file.exists(fname)) {
     fold <- readLines(con = fname)
     fnew <- readLines(con = ModelFile)
-    rebuild <- !identical(fold, fnew)
+    rebuild <- rebuild || !identical(fold, fnew)
   }
   flag <- file.copy(from = ModelFile,
                     to = fname,

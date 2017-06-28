@@ -5,7 +5,7 @@
 \title{Create an SDE Model Object}
 \usage{
 sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
-  prior.spec, OpenMP = FALSE, ..., debug = FALSE)
+  hyper.check, OpenMP = FALSE, ..., debug = FALSE)
 }
 \arguments{
 \item{ModelFile}{Path to the header file where the sde model is defined.}
@@ -16,7 +16,7 @@ sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
 
 \item{param.names}{Optional vector of names for the parameters of the sde.  Defaults to \code{theta1,...,thetap}.}
 
-\item{prior.spec}{A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.prior.spec}} for details.}
+\item{hyper.check}{A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.hyper.check}} for details.}
 
 \item{...}{additional parameters that are passed to \code{Rcpp::sourceCpp} when compiling the C++ code.}
 }

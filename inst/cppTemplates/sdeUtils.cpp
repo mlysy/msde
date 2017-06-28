@@ -79,29 +79,20 @@ NumericVector sde_Diff(NumericVector xIn, NumericVector thetaIn,
   sdeModel sde;
   int ii,jj;
   for(ii=0; ii<nReps; ii++) {
-    //Rprintf("ii = %i\n", ii);
     sde.sdeDf(&df[ii*nDims2],
 	      &x[ii*(!singleX)*nDims], &theta[ii*(!singleTheta)*nParams]);
-    // for(jj=0; jj<nDims2; jj++) {
-    //   Rprintf("df[%i] = %f\n", jj, df[ii*nDims2+jj]);
-    // }
     if(sdeModel::diagDiff) {
-      //Rprintf("diag scale\n");
       if(sdeModel::sdDiff) {
-	//Rprintf("sd scale\n");
 	for(jj=1; jj<nDims; jj++) {
 	  df[ii*nDims2 + jj*nDims + jj] = df[ii*nDims2+jj];
 	}
       } else {
-	//Rprintf("var scale");
 	for(jj=1; jj<nDims; jj++) {
 	  df[ii*nDims2 + jj*nDims + jj] = sqrt(df[ii*nDims2+jj]);
 	}
       }
     } else {
-      //Rprintf("matrix\n");
       if(!sdeModel::sdDiff) {
-	//Rprintf("var\n");
 	chol_decomp(&df[ii*nDims2], &df[ii*nDims2], nDims);
       }
     }

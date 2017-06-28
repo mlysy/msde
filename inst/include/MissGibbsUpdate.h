@@ -1,8 +1,9 @@
 #ifndef MissGibbsUpdate_h
 #define MissGibbsUpdate_h 1
 
-#include "mvnUtils.h"
-#include "sdeMCMC.h"
+//[[Rcpp::depends("msdeHeaders")]]
+#include <mvnUtils.h>
+#include <sdeMCMC.h>
 
 // eraker proposal mean and standard deviatiation
 // NOTE: sde = upper triangular cholesky factor
