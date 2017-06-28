@@ -4,5 +4,4 @@
 *.o
 *.dll
 *.pdf
-*.html
-inst/doc
+vignettes/.build.timestamp
