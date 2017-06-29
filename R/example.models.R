@@ -1,6 +1,6 @@
 #' Example SDE models
 #'
-#' @param model Character string giving the name of a sample model.  Possible values are: \code{hest}, \code{pgnet}.  See Details.
+#' @param model Character string giving the name of a sample model.  Possible values are: \code{hest}, \code{pgnet}, \code{mou}.  See Details.
 #' @return A list with elements
 #' \describe{
 #' \item{\code{ModelFile}}{The full path to the example's header file}
