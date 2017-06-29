@@ -4,7 +4,7 @@ require(Rcpp)
 #require(devtools)
 
 devtools::document()
-devtools::install(build_vignettes=TRUE)
+devtools::install()
 
 devtools::build()
 
