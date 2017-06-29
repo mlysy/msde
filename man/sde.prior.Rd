@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.prior.R
 \name{sde.prior}
 \alias{sde.prior}
-\title{SDE Prior Function}
+\title{SDE prior function.}
 \usage{
 sde.prior(model, theta, x, hyper)
 }
@@ -19,10 +19,10 @@ sde.prior(model, theta, x, hyper)
 A vector of log-prior densities evaluated at the inputs.
 }
 \description{
-SDE Prior Function
+Evaluates the prior given data and parameter for SDE model; and hyperparameters for the SDE prior.
 }
 \details{
-The prior is constructed at the \code{C++} level by defining a function (i.e., public member) \code{double logPrior(double *theta, double *x)} within the \code{sdePrior} class (see Examples).  At the \code{R} level, the \code{hyper.check} argument of \code{sde.make.model} is a function with arguments \code{hyper}, \code{param.names}, \code{data.names} used to convert \code{hyper} into a list of \code{NULL} or double-vectors which get passed on to the \code{C++} code.  This function can also be used to throw \code{R}-level errors to protect the \code{C++} code from invalid inputs, as is done for the default prior in \code{\link{mvn.hyper.check}}.
+The prior is constructed at the \code{C++} level by defining a function (i.e., public member) \cr \code{double logPrior(double *theta, double *x)} within the \code{sdePrior} class (see Examples).  At the \code{R} level, the \code{hyper.check} argument of \code{sde.make.model} is a function with arguments \code{hyper}, \code{param.names}, \code{data.names} used to convert \code{hyper} into a list of \code{NULL} or double-vectors which get passed on to the \code{C++} code.  This function can also be used to throw \code{R}-level errors to protect the \code{C++} code from invalid inputs, as is done for the default prior in \code{\link{mvn.hyper.check}}.
 }
 \examples{
 \donttest{

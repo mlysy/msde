@@ -1,4 +1,4 @@
-#' Data validator
+#' Data validator.
 #' @param model An \code{sde.model} object.
 #' @param x A matrix of data.
 #' @param theta A length \code{nparams} vector of parameter values.
@@ -41,7 +41,7 @@ sde.valid.data <- function(model, x, theta) {
                 nReps = as.integer(nreps))
 }
 
-#' Parameter validator
+#' Parameter validator.
 #' @param model An \code{sde.model} object.
 #' @param theta A length \code{nparams} vector of parameter values.
 #' @examples

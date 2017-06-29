@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.sim.R
 \name{sde.sim}
 \alias{sde.sim}
-\title{Simulation of Multivariate SDE Trajectories}
+\title{Simulation of multivariate SDE trajectories.}
 \usage{
 sde.sim(model, x0, theta, dt, dt.sim, nobs, burn = 0, nreps = 1,
   max.bad.draws = 5000, verbose = TRUE)
@@ -38,7 +38,7 @@ A list with elements:
 }
 }
 \description{
-Simulation of Multivariate SDE Trajectories
+Simulation of multivariate SDE trajectories.
 }
 \details{
 The simulation algorithm is a Markov process with \eqn{Y_0 = x_0} and

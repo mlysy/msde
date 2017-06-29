@@ -1,4 +1,4 @@
-#' Gibbs sampler for Multivariate SDEs
+#' Gibbs sampler for multivariate SDE.
 #'
 #' @param model An \code{sde.model} object constructed with \code{\link{sde.make.model}}.
 #' @param init An \code{sde.init} object constructed with \code{\link{sde.init}}.
@@ -21,7 +21,7 @@
 #' \deqn{
 #' \log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, 1/n^{1/2}).
 #' }
-#' When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
+#' When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that, \cr \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
 #'
 #' For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{isamples}, \code{icomp}, and \code{idims} determines which samples, time points, and SDE variables to return.  The first of these can be a scalar or vector with the same meaning as before.
 #' @return A list with elements:

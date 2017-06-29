@@ -2,7 +2,7 @@
 % Please edit documentation in R/mvn.hyper.check.R
 \name{mvn.hyper.check}
 \alias{mvn.hyper.check}
-\title{Argument checking for the default multivariate normal prior}
+\title{Argument checking for the default multivariate normal prior.}
 \usage{
 mvn.hyper.check(hyper, param.names, data.names)
 }
@@ -16,14 +16,14 @@ mvn.hyper.check(hyper, param.names, data.names)
 \value{
 A list with the following elements:
 \describe{
-  \item{\code{mean}}{the mean vector}
-  \item{\code{cholSd}}{the upper upper Cholesky factor of the variance matrix}
-  \item{\code{thetaId}}{the index of the corresponding variables in \code{theta}}
-  \item{\code{xId}}{the index of the corresponding variables in \code{x0}}
+  \item{mean}{the mean vector}
+  \item{cholSd}{the upper upper Cholesky factor of the variance matrix}
+  \item{thetaId}{the index of the corresponding variables in \code{theta}}
+  \item{xId}{the index of the corresponding variables in \code{x0}}
 }
 }
 \description{
-Argument checking for the default multivariate normal prior
+Argument checking for the default multivariate normal prior.
 }
 \details{
 This function is not meant to be called directly by the user, but rather to parse the hyper-parameters of a "default" multivariate normal prior distribution to be passed to the C++ code in \code{\link{sde.prior}} and \code{\link{sde.post}}.  This default prior is multivariate normal on the elements of \code{(theta, x0)} specified by each of \code{names(mu)}, \code{rownames(Sigma)}, and \code{colnames(Sigma)}.  The remaining components are given Lebesgue priors.  If the names of \code{mu} and \code{Sigma} are inconsistent an error is thrown.

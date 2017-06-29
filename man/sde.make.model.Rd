@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.make.model.R
 \name{sde.make.model}
 \alias{sde.make.model}
-\title{Create an SDE Model Object}
+\title{Create an SDE model object.}
 \usage{
 sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
   hyper.check, OpenMP = FALSE, ...)
@@ -25,18 +25,18 @@ sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
 \value{
 An \code{sde.model} object, which is a list containing the following elements:
 \itemize{
-\item \code{ndims}, \code{nparams}: the number of sde components and parameters.
-\item \code{data.names}, \code{param.names}: the names of the sde components and parameters.
-\item \code{drift}, \code{diff}: functions to evaluate the drift and diffusion.
-\item \code{loglik}: the loglikelihood.
-\item \code{logprior}: the custom log prior.
-\item \code{sim}: function for simulating data.
-\item \code{post}: MCMC sampler for posterior distribution.
-\item \code{omp}: a logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.
+\item ndims, nparams: the number of sde components and parameters.
+\item data.names, param.names: the names of the sde components and parameters.
+\item drift, diff: functions to evaluate the drift and diffusion.
+\item loglik: the loglikelihood.
+\item logprior: the custom log prior.
+\item sim: function for simulating data.
+\item post: MCMC sampler for posterior distribution.
+\item omp: a logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.
 }
 }
 \description{
-Create an SDE Model Object
+Create an SDE model object.
 }
 \details{
 The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.is.valid.R
 \name{sde.valid.params}
 \alias{sde.valid.params}
-\title{Parameter validator}
+\title{Parameter validator.}
 \usage{
 sde.valid.params(model, theta)
 }
@@ -12,7 +12,7 @@ sde.valid.params(model, theta)
 \item{theta}{A length \code{nparams} vector of parameter values.}
 }
 \description{
-Parameter validator
+Parameter validator.
 }
 \examples{
 \donttest{

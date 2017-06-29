@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.post.R
 \name{sde.post}
 \alias{sde.post}
-\title{Gibbs sampler for Multivariate SDEs}
+\title{Gibbs sampler for multivariate SDE.}
 \usage{
 sde.post(model, init, hyper, nsamples, burn, mwg.sd = NULL, adapt = TRUE,
   loglik.out = FALSE, last.miss.out = FALSE, update.data = TRUE, data.out,
@@ -53,7 +53,7 @@ A list with elements:
 }
 }
 \description{
-Gibbs sampler for Multivariate SDEs
+Gibbs sampler for multivariate SDE.
 }
 \details{
 The MWG jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{nmiss0} and \code{fixed.params}.  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
@@ -62,7 +62,7 @@ The MWG jump sizes can be specified as a scalar, a vector or length \code{nparam
 \deqn{
 \log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, 1/n^{1/2}).
 }
-When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
+When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that, \cr \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
 
 For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{isamples}, \code{icomp}, and \code{idims} determines which samples, time points, and SDE variables to return.  The first of these can be a scalar or vector with the same meaning as before.
 }

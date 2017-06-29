@@ -1,9 +1,10 @@
-#' SDE Drift Function
+#' SDE drift function.
 #'
+#' Computes the SDE model's drift function given data and parameter.
 #' @param model An \code{sde.model} object.
 #' @param x A vector or matrix of data with \code{ndims} columns.
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
-#' @return A matrix with \code{ndims} columns containing the drift funtion evaluated at \code{x} and \code{theta}.  If either input contains invalid sde data or parameters an error is thrown.
+#' @return A matrix with \code{ndims} columns containing the drift function evaluated at \code{x} and \code{theta}.  If either input contains invalid sde data or parameters an error is thrown.
 #' @examples
 #' \donttest{
 #' # compile model

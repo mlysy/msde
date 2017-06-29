@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.drift.R
 \name{sde.drift}
 \alias{sde.drift}
-\title{SDE Drift Function}
+\title{SDE drift function.}
 \usage{
 sde.drift(model, x, theta)
 }
@@ -14,10 +14,10 @@ sde.drift(model, x, theta)
 \item{theta}{A vector or matrix of parameters with \code{nparams} columns.}
 }
 \value{
-A matrix with \code{ndims} columns containing the drift funtion evaluated at \code{x} and \code{theta}.  If either input contains invalid sde data or parameters an error is thrown.
+A matrix with \code{ndims} columns containing the drift function evaluated at \code{x} and \code{theta}.  If either input contains invalid sde data or parameters an error is thrown.
 }
 \description{
-SDE Drift Function
+Computes the SDE model's drift function given data and parameter.
 }
 \examples{
 \donttest{

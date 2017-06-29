@@ -1,4 +1,4 @@
-#' Simulation of Multivariate SDE Trajectories
+#' Simulation of multivariate SDE trajectories.
 #'
 #' @param model An \code{sde.model} object.
 #' @param x0 A vector or a matrix of size \code{nreps x ndims} of the SDE values at time 0.
