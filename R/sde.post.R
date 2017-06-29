@@ -270,34 +270,6 @@ sde.post <- function(model, init, hyper,
   list(icomp = sort(icomp), idims = sort(idims), isamples = sort(isamples))
 }
 
-## .set.data.out <- function(data.out, nsamples, ncomp, update.data) {
-##   if(missing(data.out)) data.out <- 2e3
-##   if(!is.list(data.out)) {
-##     # keep all observations
-##     data.out.row <- data.out
-##     data.out.col <- 1:ncomp
-##   } else {
-##     # which samples and time points
-##     if(!identical(sort(names(data.out)), sort(c("row", "col")))) {
-##       stop("data.out must be scalar, vector, or list with elements row and col.")
-##     }
-##     data.out.row <- data.out$row
-##     data.out.col <- data.out$col
-##   }
-##   if(length(data.out.row) == 1) {
-##     # evenly space returned samples
-##     data.out.row <- unique(floor(seq(1, nsamples, len = data.out.row)))
-##   }
-##   if(!update.data) {
-##     # return the data once
-##     data.out.row <- 1:nsamples
-##     data.out.col <- 1:ncomp
-##   }
-##   if(is.logical(data.out.row)) data.out.row <- which(data.out.row)
-##   if(is.logical(data.out.col)) data.out.col <- which(data.out.col)
-##   list(row = data.out.row, col = data.out.col)
-## }
-
 # jump sizes
 .set.jump <- function(mwg.sd, adapt, param.names, data.names) {
   nparams <- length(param.names)
@@ -355,32 +327,6 @@ sde.post <- function(model, init, hyper,
        rate = as.double(arate), adapt = as.logical(amax > 0))
 }
 
-## # name and dim check for data and params, length check for dt
-## .check.init <- function(init) {
-##   nparams <- length(param.names)
-##   ndims <- length(data.names)
-##   if(class(init) != "sde.init") {
-##     stop("init must be an sde.init object.")
-##   }
-##   if(!identical(colnames(init$data), data.names)) {
-##     stop("colnames(init$data) does not match data.names.")
-##   }
-##   if(!identical(names(init$params), param.names)) {
-##     stop("names(init$params) does not match param.names.")
-##   }
-##   # these should never happen if constructed with sde.init...
-##   if(length(init$dt.m) != nrow(init$data)-1) {
-##     stop("init$data and init$dt.m have incompatible sizes.")
-##   }
-##   if(length(init$nvar.obs.m) != nrow(init$data)) {
-##     stop("init$data and init$nvar.obs.m have incompatible sizes.")
-##   }
-##   if(!all(init$nvar.obs.m %in% 0:ndims)) {
-##     stop("init$nvar.obs.m must have elements between 0 and ndims.")
-##   }
-##   TRUE
-## }
-
 # parse acceptance rates
 .set.accept <- function(bb.accept, vnl.accept, nsamples,
                         par.index, fixed.params,
@@ -390,8 +336,8 @@ sde.post <- function(model, init, hyper,
   nparams <- length(param.names)
   accept <- NULL
   if(update.data) {
-    accept <- c(accept, list(data = bb.accept/nsamples))
-    bb.acc <- accept$data[par.index < ndims]*100
+    accept <- c(accept, list(data = bb.accept[-1]/nsamples))
+    bb.acc <- accept$data[par.index[-1] < ndims]*100
     bb.acc <- signif(c(min(bb.acc), mean(bb.acc)), 3)
     if(verbose) {
       message("Bridge accept: min = ", bb.acc[1],
