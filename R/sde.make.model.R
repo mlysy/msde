@@ -8,15 +8,15 @@
 #' @param OpenMP This sets whether the model is compiled for usage in \code{OpenMP}.
 #' @param ... additional parameters that are passed to \code{Rcpp::sourceCpp} when compiling the C++ code.
 #'@return An \code{sde.model} object, which is a list containing the following elements:
-#' \itemize{
-#' \item ndims, nparams: the number of sde components and parameters.
-#' \item data.names, param.names: the names of the sde components and parameters.
-#' \item drift, diff: functions to evaluate the drift and diffusion.
-#' \item loglik: the loglikelihood.
-#' \item logprior: the custom log prior.
-#' \item sim: function for simulating data.
-#' \item post: MCMC sampler for posterior distribution.
-#' \item omp: a logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.
+#' \describe{
+#' \item{ndims, nparams}{The number of sde components and parameters.}
+#' \item{data.names, param.names}{The names of the sde components and parameters.}
+#' \item{drift, diff}{Functions to evaluate the drift and diffusion.}
+#' \item{loglik}{The loglikelihood.}
+#' \item{logprior}{The custom log prior.}
+#' \item{sim}{Function for simulating data.}
+#' \item{post}{MCMC sampler for posterior distribution.}
+#' \item{omp}{a logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
 #' }
 #' @details The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.
 #'
