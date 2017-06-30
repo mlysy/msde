@@ -1,4 +1,4 @@
-#' Simulation and Inference for Multivariate Stochastic Differential Equations.
+#' Simulation and inference for multivariate stochastic differential equations.
 #'
 #' @docType package
 #' @name msdeHeaders
