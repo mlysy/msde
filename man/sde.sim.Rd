@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.sim.R
 \name{sde.sim}
 \alias{sde.sim}
-\title{Simulation of Multivariate SDE Trajectories}
+\title{Simulation of multivariate SDE trajectories.}
 \usage{
 sde.sim(model, x0, theta, dt, dt.sim, nobs, burn = 0, nreps = 1,
   max.bad.draws = 5000, verbose = TRUE)
@@ -33,17 +33,19 @@ A list with elements:
 \describe{
   \item{data}{An array of size \code{nobs x ndims x nreps} containing the simulated SDE trajectories.}
   \item{params}{The vector or matrix of parameter values used to generate the data.}
-  \item{dt,dt.sim}{The actual and internal interobservation times.}
+  \item{dt, dt.sim}{The actual and internal interobservation times.}
   \item{nbad}{The total number of bad draws.}
 }
 }
 \description{
-Simulation of Multivariate SDE Trajectories
+Simulation of multivariate SDE trajectories.
 }
 \details{
 The simulation algorithm is a Markov process with \eqn{Y_0 = x_0} and
 \deqn{
 Y_{t+1} \sim N(Y_t + dr(Y_t, \theta) dt_{sim}, df(Y_t, \theta)df(Y_t, \theta)' dt_{sim}).
+}{
+Y_(t+1) ~ N(Y_t + dr(Y_t, theta) dt_(sim), df(Y_t, theta)df(Y_t, theta)' dt_(sim)).
 }
 At each step, a while-loop is used until a valid SDE draw is produced.  The simulation algorithm terminates after \code{nreps} trajectories or once a total of \code{max.bad.draws} are reached.
 }

@@ -1,6 +1,6 @@
-#' MCMC Initialization
+#' MCMC initialization.
 #'
-#' Specifies the observed SDE data, interobservation times, and initial parameter and missing data values for \code{\link{sde.post}}.
+#' Specifies the observed SDE data, interobservation times, initial parameter and missing data values for \code{\link{sde.post}}.
 #' @param model An \code{sde.model} object.
 #' @param x An \code{nobs x ndims} matrix of data.
 #' @param dt A scalar or length \code{nobs-1} vector of interobservations times.

@@ -4,7 +4,7 @@
 \name{msdeHeaders}
 \alias{msdeHeaders}
 \alias{msdeHeaders-package}
-\title{Simulation and Inference for Multivariate Stochastic Differential Equations.}
+\title{Simulation and inference for multivariate stochastic differential equations.}
 \description{
-Simulation and Inference for Multivariate Stochastic Differential Equations.
+Simulation and inference for multivariate stochastic differential equations.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.loglik.R
 \name{sde.loglik}
 \alias{sde.loglik}
-\title{SDE Loglikelihood Function}
+\title{SDE log-likelihood function.}
 \usage{
 sde.loglik(model, x, dt, theta, ncores = 1)
 }
@@ -18,10 +18,10 @@ sde.loglik(model, x, dt, theta, ncores = 1)
 \item{ncores}{If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.}
 }
 \value{
-A vector of likelihood evaluations.  If input contains invalid data or parameters an error is thrown.
+A vector of log-likelihood evaluations.  If input contains invalid data or parameters an error is thrown.
 }
 \description{
-SDE Loglikelihood Function
+Evaluates the log-likelihood function given SDE data and parameter.
 }
 \examples{
 \donttest{

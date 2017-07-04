@@ -1,11 +1,12 @@
-#' SDE Loglikelihood Function
+#' SDE log-likelihood function.
 #'
+#' Evaluates the log-likelihood function given SDE data and parameter. 
 #' @param model An \code{sde.model} object.
 #' @param x A matrix or 3-d array of data with \code{dim(x)[1]} observations and \code{dim(x)[2] == ndims}.
 #' @param dt A scalar or vector of length \code{dim(x)[1]-1} of time intervals between observations.
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
 #' @param ncores If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.
-#' @return A vector of likelihood evaluations.  If input contains invalid data or parameters an error is thrown.
+#' @return A vector of log-likelihood evaluations.  If input contains invalid data or parameters an error is thrown.
 #' @examples
 #' \donttest{
 #' hex <- example.models("hest")

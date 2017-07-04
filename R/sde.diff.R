@@ -1,9 +1,10 @@
-#' SDE Diffusion Function
+#' SDE diffusion function.
 #'
+#' Computes the SDE model's diffusion function given data and parameter. 
 #' @param model An \code{sde.model} object.
 #' @param x A vector or matrix of data with \code{ndims} columns.
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
-#' @return A matrix with \code{ndims^2} columns containing the diffusion funtion evaluated at \code{x} and \code{theta}.  Each row corresponds to the upper triangular cholesky factor of the diffusion matrix.  If either input contains invalid sde data or parameters an error is thrown.
+#' @return A matrix with \code{ndims^2} columns containing the diffusion function evaluated at \code{x} and \code{theta}. Each row corresponds to the upper triangular cholesky factor of the diffusion matrix.  If either input contains invalid sde data or parameters an error is thrown.
 #' @examples
 #' \donttest{
 #' # compile model

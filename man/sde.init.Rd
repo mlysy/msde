@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.init.R
 \name{sde.init}
 \alias{sde.init}
-\title{MCMC Initialization}
+\title{MCMC initialization.}
 \usage{
 sde.init(model, x, dt, m = 1, nvar.obs, theta)
 }
@@ -29,7 +29,7 @@ An \code{sde.init} object.  A list with elements:
 }
 }
 \description{
-Specifies the observed SDE data, interobservation times, and initial parameter and missing data values for \code{\link{sde.post}}.
+Specifies the observed SDE data, interobservation times, initial parameter and missing data values for \code{\link{sde.post}}.
 }
 \examples{
 \donttest{

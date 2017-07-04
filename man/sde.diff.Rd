@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.diff.R
 \name{sde.diff}
 \alias{sde.diff}
-\title{SDE Diffusion Function}
+\title{SDE diffusion function.}
 \usage{
 sde.diff(model, x, theta)
 }
@@ -14,10 +14,10 @@ sde.diff(model, x, theta)
 \item{theta}{A vector or matrix of parameters with \code{nparams} columns.}
 }
 \value{
-A matrix with \code{ndims^2} columns containing the diffusion funtion evaluated at \code{x} and \code{theta}.  Each row corresponds to the upper triangular cholesky factor of the diffusion matrix.  If either input contains invalid sde data or parameters an error is thrown.
+A matrix with \code{ndims^2} columns containing the diffusion function evaluated at \code{x} and \code{theta}. Each row corresponds to the upper triangular cholesky factor of the diffusion matrix.  If either input contains invalid sde data or parameters an error is thrown.
 }
 \description{
-SDE Diffusion Function
+Computes the SDE model's diffusion function given data and parameter.
 }
 \examples{
 \donttest{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.is.valid.R
 \name{sde.valid.data}
 \alias{sde.valid.data}
-\title{Data validator}
+\title{Data validator.}
 \usage{
 sde.valid.data(model, x, theta)
 }
@@ -14,7 +14,7 @@ sde.valid.data(model, x, theta)
 \item{theta}{A length \code{nparams} vector of parameter values.}
 }
 \description{
-Data validator
+Data validator.
 }
 \examples{
 \donttest{
