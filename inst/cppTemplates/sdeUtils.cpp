@@ -1,7 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//[[Rcpp::depends("msdeHeaders")]]
+//[[Rcpp::depends("msde")]]
 #include <sdeMCMC.h>
 #include <mcmcUtils.h>
 

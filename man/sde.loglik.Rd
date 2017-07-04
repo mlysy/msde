@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.loglik.R
 \name{sde.loglik}
 \alias{sde.loglik}
-\title{SDE log-likelihood function.}
+\title{SDE loglikelihood function.}
 \usage{
 sde.loglik(model, x, dt, theta, ncores = 1)
 }
@@ -18,29 +18,35 @@ sde.loglik(model, x, dt, theta, ncores = 1)
 \item{ncores}{If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.}
 }
 \value{
-A vector of log-likelihood evaluations.  If input contains invalid data or parameters an error is thrown.
+A vector of loglikelihood evaluations, of the same length as the  third dimension of \code{x} and/or first dimension of \code{theta}.  If input contains invalid data or parameters an error is thrown.
 }
 \description{
-Evaluates the log-likelihood function given SDE data and parameter.
+Evaluates the loglikelihood function given SDE data and parameter values.
 }
 \examples{
 \donttest{
+# Compile Heston's model
 hex <- example.models("hest")
 hmod <- sde.make.model(ModelFile = hex$ModelFile,
                        param.names = hex$param.names,
                        data.names = hex$data.names)
 
-# Input param
-theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-x0 <- c(X = log(1000), Z = 0.1)
+# Simulate data
 nreps <- 10
+nobs <- 100
+theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+Theta <- apply(t(replicate(nreps, theta)), 2, jitter)
+x0 <- c(X = log(1000), Z = 0.1)
 X0 <- apply(t(replicate(nreps,x0)), 2, jitter)
 dT <- 1/252
+hsim <- sde.sim(model = hmod, x0 = X0, theta = Theta,
+                dt = dT, dt.sim = dT/10, nobs = nobs, nreps = nreps)
 
-sde.loglik(model = hmod,
-           x = X0,
-           dt = dT,
-           theta = theta)
-
+# single parameter, single data
+sde.loglik(model = hmod, x = hsim$data[,,1], dt = dT, theta = theta)
+# multiple parameters, single data
+sde.loglik(model = hmod, x = hsim$data[,,1], dt = dT, theta = Theta)
+# multiple parameters, multiple data
+sde.loglik(model = hmod, x = hsim$data, dt = dT, theta = Theta)
 }
 }

@@ -3,7 +3,7 @@
 devtools::document()
 devtools::install()
 
-require(msdeHeaders)
+require(msde)
 require(mvtnorm)
 
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")

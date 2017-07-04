@@ -1,18 +1,18 @@
 #' MCMC initialization.
 #'
-#' Specifies the observed SDE data, interobservation times, initial parameter and missing data values for \code{\link{sde.post}}.
+#' Specifies the observed SDE data, interobservation times, initial parameter and missing data values to be supplied to \code{\link{sde.post}}.
 #' @param model An \code{sde.model} object.
 #' @param x An \code{nobs x ndims} matrix of data.
 #' @param dt A scalar or length \code{nobs-1} vector of interobservations times.
 #' @param theta A length \code{nparams} vector of parameter values.
-#' @param nvar.obs A scalar or length \code{nobs} vector of integers between 0 and \code{ndims} denoting the number of observed SDE variables in each row of \code{data}.  See Details.
+#' @param nvar.obs A scalar or length \code{nobs} vector of integers between 0 and \code{ndims} denoting the number of observed SDE variables in each row of \code{data}.  Defaults to \code{ndims}.  See Details.
 #' @param m Positive integer, such that \code{m-1} evenly-spaced missing data time points are placed between observations.  See Details.
-#' @return An \code{sde.init} object.  A list with elements:
+#' @return An \code{sde.init} object, corresponding to a list with elements:
 #' \describe{
-#'   \item{data}{An \code{ncomp x ndims} matrix of complete data, where \code{ncomp = N_m = m * (nobs-1)+1}.}
-#'   \item{dt.m}{The complete data interobservation time, \code{dt_m = dt/m}.}
-#'   \item{nvar.obs.m}{The number of variables observed per row of \code{data}.  Note that \code{nvar.obs.m[(i-1)*m+1] == nvar.obs[ii]}, and that \code{nvar.obs.m[i-1] == 0} if \code{i} is not a multiple of \code{m}.}
-#'   \item{params}{Parameter initial values.}
+#'   \item{\code{data}}{An \code{ncomp x ndims} matrix of complete data, where \code{ncomp = N_m = m * (nobs-1)+1}.}
+#'   \item{\code{dt.m}}{The complete data interobservation time, \code{dt_m = dt/m}.}
+#'   \item{\code{nvar.obs.m}}{The number of variables observed per row of \code{data}.  Note that \code{nvar.obs.m[(i-1)*m+1] == nvar.obs[ii]}, and that \code{nvar.obs.m[i-1] == 0} if \code{i} is not a multiple of \code{m}.}
+#'   \item{\code{params}}{Parameter initial values.}
 #' }
 #' @examples
 #' \donttest{

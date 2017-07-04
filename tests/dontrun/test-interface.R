@@ -14,7 +14,7 @@
 #    similarly, data.out should be scalar, vector, or list of length 3.
 
 
-require(msdeHeaders)
+require(msde)
 max.diff <- function(x1, x2) {
   c(abs = max(abs(x1-x2)), rel = max(abs(x1-x2)/max(abs(x1), 1e-8)))
 }

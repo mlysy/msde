@@ -1,7 +1,7 @@
 #ifndef sdeUtils_h
 #define sdeUtils_h 1
 
-//[[Rcpp::depends("msdeHeaders")]]
+//[[Rcpp::depends("msde")]]
 
 // utilities for sde's
 

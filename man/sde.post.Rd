@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.post.R
 \name{sde.post}
 \alias{sde.post}
-\title{Gibbs sampler for multivariate SDE.}
+\title{MCMC sampler for the SDE posterior.}
 \usage{
 sde.post(model, init, hyper, nsamples, burn, mwg.sd = NULL, adapt = TRUE,
   loglik.out = FALSE, last.miss.out = FALSE, update.data = TRUE, data.out,
@@ -15,11 +15,11 @@ sde.post(model, init, hyper, nsamples, burn, mwg.sd = NULL, adapt = TRUE,
 
 \item{hyper}{The hyperparameters of the SDE prior.  See \code{\link{sde.prior}}.}
 
-\item{nsamples}{Number of iterations.}
+\item{nsamples}{Number of MCMC iterations.}
 
-\item{burn}{Integer number of burnin samples, or fraction of \code{nsamples} to prepend as burnin.}
+\item{burn}{Integer number of burn-in samples, or fraction of \code{nsamples} to prepend as burn-in.}
 
-\item{mwg.sd}{standard deviation jump size for Metropolis-within-Gibbs steps (see Details).}
+\item{mwg.sd}{Standard deviation jump size for Metropolis-within-Gibbs on parameters and missing components of first SDE observation (see Details).}
 
 \item{adapt}{Logical or list to specify adaptive Metropolis-within-Gibbs sampling (see Details).}
 
@@ -29,7 +29,7 @@ sde.post(model, init, hyper, nsamples, burn, mwg.sd = NULL, adapt = TRUE,
 
 \item{update.data}{Logical, whether to update the missing data.}
 
-\item{data.out}{A scalar, integer vector, or list of three integer vectors determines the subset of data to be returned (see Details).}
+\item{data.out}{A scalar, integer vector, or list of three integer vectors determining the subset of data to be returned (see Details).}
 
 \item{update.params}{Logical, whether to update the model parameters.}
 
@@ -42,84 +42,63 @@ sde.post(model, init, hyper, nsamples, burn, mwg.sd = NULL, adapt = TRUE,
 \value{
 A list with elements:
 \describe{
-  \item{params}{An \code{nsamples x nparams} matrix of posterior parameter draws.}
-  \item{data}{A 3-d array of posterior missing data draws, for which the output dimensions are specified by \code{data.out}.}
-  \item{data.out}{A list of three integer vectors specifying which timepoints, variables, and MCMC iterations correspond to the values in the \code{data} output.}
-  \item{init}{The \code{sde.init} object which initialized the sampler.}
-  \item{loglik}{If \code{loglik.out == TRUE}, the vector of \code{nsamples} complete data loglikelihoods calculated at each posterior sample.}
-  \item{last.iter}{A list with elements \code{data} and \code{params} giving the last MCMC sample.  Useful for resuming the MCMC from that point.}
-  \item{last.miss}{If \code{last.miss.out == TRUE}, a \code{nsamples x nmissN} matrix of all posterior draws for the missing data in the final observation.  Useful for SDE forecasting at future timepoints.}
-  \item{accept}{A named list of acceptance rates for the various components of the MCMC sampler.}
+  \item{\code{params}}{An \code{nsamples x nparams} matrix of posterior parameter draws.}
+  \item{\code{data}}{A 3-d array of posterior missing data draws, for which the output dimensions are specified by \code{data.out}.}
+  \item{\code{data.out}}{A list of three integer vectors specifying which timepoints, variables, and MCMC iterations correspond to the values in the \code{data} output.}
+  \item{\code{init}}{The \code{sde.init} object which initialized the sampler.}
+  \item{\code{loglik}}{If \code{loglik.out == TRUE}, the vector of \code{nsamples} complete data loglikelihoods calculated at each posterior sample.}
+  \item{\code{last.iter}}{A list with elements \code{data} and \code{params} giving the last MCMC sample.  Useful for resuming the MCMC from that point.}
+  \item{\code{last.miss}}{If \code{last.miss.out == TRUE}, an \code{nsamples x nmissN} matrix of all posterior draws for the missing data in the final observation.  Useful for SDE forecasting at future timepoints.}
+  \item{\code{accept}}{A named list of acceptance rates for the various components of the MCMC sampler.}
 }
 }
 \description{
-Gibbs sampler for multivariate SDE.
+A Metropolis-within-Gibbs sampler for the Euler-Maruyama approximation to the true posterior density.
 }
 \details{
-The MWG jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{nmiss0} and \code{fixed.params}.  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
+The Metropolis-within-Gibbs (MWG) jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{sde.init$nvar.obs.m[1]} (the missing variables in the first SDE observation) and \code{fixed.params} (the SDE parameters which are not held fixed).  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
 
-\code{adapt = TRUE} implements an adaptive MCMC by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
+\code{adapt == TRUE} implements an adaptive MCMC proposal by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
 \deqn{
 \log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, 1/n^{1/2}).
 }{
 log(sigma_(n+1)) = log(sigma_n) \pm delta(n), where delta(n) = min(.01, 1/n^(1/2)).
 }
-When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that, \cr \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
+When \code{adapt} is not logical, it is a list with elements \code{max} and \code{rate}, such that \code{delta(n) = min(max, 1/n^rate)}.  These elements can be scalars or vectors in the same manner as \code{mwg.sd}.
 
 For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{isamples}, \code{icomp}, and \code{idims} determines which samples, time points, and SDE variables to return.  The first of these can be a scalar or vector with the same meaning as before.
 }
 \examples{
 \donttest{
-
-# Initialize the model
+# Posterior inference for Heston's model
 hex <- example.models("hest")
 hmod <- sde.make.model(ModelFile = hex$ModelFile,
                        param.names = hex$param.names,
                        data.names = hex$data.names)
 
-# randomly pick the starting point for the process and parameters
-ndims <- hmod$ndims
-nparams <- hmod$nparams
+# Simulate data
 X0 <- c(X = log(1000), Z = 0.1)
 theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
 dT <- 1/252
-nobs.sim <- 20
-burn <- 0
-hest.sim <- sde.sim(model = hmod,
-                    x0 = X0,
-                    theta = theta,
-                    dt = dT,
-                    dt.sim = dT,
-                    nobs = nobs.sim,
-                    burn = burn)
+nobs <- 1000
+hest.sim <- sde.sim(model = hmod, x0 = X0, theta = theta,
+                    dt = dT, dt.sim = dT/10, nobs = nobs)
 
-# intialize argument for sde.init
-nobs.post <- 20 # observations for posterior
-nvar.obs <- c(ndims, sample(c(0:ndims),nobs.post-1,replace=TRUE))
-m <- sample(c(1:5),1) # this can be chosen at random
-
-# We need to create a sde.init object for sde.post to work
-init.data <- sde.init(model = hmod,
-                      x = hest.sim$data,
-                      dt = hest.sim$dt,
-                      m = m,
-                      nvar.obs = nvar.obs,
-                      theta = theta)
+# initialize MCMC sampler
+# both components observed, no missing data between observations
+init <- sde.init(model = hmod, x = hest.sim$data,
+                 dt = hest.sim$dt, theta = theta)
 
 # Initialize posterior sampling argument
-nsamples <- 5000
-hyper.param <- NULL
-adapt <- TRUE
-hest.post <- sde.post(model = hmod,
-                      init = init.data,
-                      hyper = hyper.param,
-                      adapt = adapt,
-                      nsamples = nsamples,
-                      burn = burn)
+nsamples <- 1e4
+burn <- 1e3
+hyper <- NULL # flat prior
+hest.post <- sde.post(model = hmod, init = init, hyper = hyper,
+                      nsamples = nsamples, burn = burn)
 
 # plot the histogram for the sampled parameters
 par(mfrow = c(2,3))
-for(ii in 1:nparams) {
+for(ii in 1:length(hmod$param.names)) {
   hist(hest.post$params[,ii],breaks=100, freq = FALSE,
        main = parse(text = hmod$param.names[ii]), xlab = "")
 }

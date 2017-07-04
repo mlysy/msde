@@ -12,8 +12,6 @@
 
 // sde model object
 class sdeModel {
-  // put private storage variables here
-  // end private storage
  public:
   static const int nParams = 5;
   static const int nDims = 2;
@@ -23,15 +21,7 @@ class sdeModel {
   void sdeDf(double *df, double *x, double *theta);
   bool isValidData(double *x, double *theta);
   bool isValidParams(double *theta);
-  sdeModel();
-  ~sdeModel();
 };
-
-// constructor
-inline sdeModel::sdeModel() {} // do nothing
-
-// destructor
-inline sdeModel::~sdeModel() {} // do nothing
 
 // drift function
 inline void sdeModel::sdeDr(double *dr, double *x, double *theta) {

@@ -1,4 +1,4 @@
-library(msdeHeaders)
+library(msde)
 
 context("lotka-volterra model -- custom prior")
 

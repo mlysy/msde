@@ -1,4 +1,4 @@
-library(msdeHeaders)
+library(msde)
 source("mOU-Kalman-revised.R")
 require("mvtnorm")
 source("test-post_function.R")

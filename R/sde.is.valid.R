@@ -1,9 +1,16 @@
-#' Data validator.
+#' SDE data and parameter validators.
+#'
+#' Checks whether input SDE data and parameters are valid.
 #' @param model An \code{sde.model} object.
-#' @param x A matrix of data.
-#' @param theta A length \code{nparams} vector of parameter values.
+#' @param x A length-\code{ndims} vector or \code{ndims}-column matrix of SDE data.
+#' @param theta A length-\code{nparams} vector or \code{nparams}-column of SDE parameter values.
+#' @return A logical scalar or vector indicating whether the given data/parameter pair is valid.
+#' @name sde.valid
 #' @examples
 #' \donttest{
+#' # Heston's model
+#' # valid data is: Z > 0
+#' # valid parameters are: gamma, sigma > 0, |rho| < 1, beta > .5 * sigma^2
 #' hex <- example.models("hest")
 #' hmod <- sde.make.model(ModelFile = hex$ModelFile,
 #'                        param.names = hex$param.names,
@@ -11,13 +18,21 @@
 #'
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
 #'
-#' # example of not valid data
+#' # valid data
+#' x0 <- c(X = log(1000), Z = 0.1)
+#' sde.valid.data(model = hmod, x = x0, theta = theta)
+#'
+#' # invalid data
 #' x0 <- c(X = log(1000), Z = -0.1)
 #' sde.valid.data(model = hmod, x = x0, theta = theta)
 #'
-#' # example of valid data
-#' x0 <- c(X = log(1000), Z = 0.1)
-#' sde.valid.data(model = hmod, x = x0, theta = theta)
+#' # valid parameters
+#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+#' sde.valid.params(model = hmod, theta = theta)
+#'
+#' # invalid parameters
+#' theta <- c(alpha = 0.1, gamma = -4, beta = 0.8, sigma = 0.6, rho = -0.8)
+#' sde.valid.params(model = hmod, theta = theta)
 #' }
 #' @export
 sde.valid.data <- function(model, x, theta) {
@@ -41,24 +56,7 @@ sde.valid.data <- function(model, x, theta) {
                 nReps = as.integer(nreps))
 }
 
-#' Parameter validator.
-#' @param model An \code{sde.model} object.
-#' @param theta A length \code{nparams} vector of parameter values.
-#' @examples
-#' \donttest{
-#' hex <- example.models("hest")
-#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
-#'                        param.names = hex$param.names,
-#'                        data.names = hex$data.names)
-#'
-#' # example of not valid param
-#' theta <- c(alpha = 0.1, gamma = -4, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' sde.valid.params(model = hmod, theta = theta)
-#'
-#' # example of valid param
-#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' sde.valid.params(model = hmod, theta = theta)
-#' }
+#' @rdname sde.valid
 #' @export
 sde.valid.params <- function(model, theta) {
   if(class(model) != "sde.model")
@@ -71,9 +69,10 @@ sde.valid.params <- function(model, theta) {
                   nReps = as.integer(nreps))
 }
 
-#--- internal versions: no argument checking/formatting ------------------------
+#--- internal versions: no argument checking/formatting -------------------
 
-.is.valid.data <- function(model, x, theta, single.x, single.theta, nreps) {
+.is.valid.data <- function(model, x, theta, single.x, single.theta,
+                           nreps) {
   model$is.data(xIn = as.double(x),
                 thetaIn = as.double(theta),
                 singleX = as.logical(single.x),

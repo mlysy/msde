@@ -1,5 +1,5 @@
 ---
-title: "Inference for multivariate Stochastic Differential Equations with **`msde`**"
+title: "Inference for Multivariate Stochastic Differential Equations with **`msde`**"
 author: "Martin Lysy, JunYong Tong, Nigel Delaney"
 date: "`r Sys.Date()`"
 output:
@@ -219,7 +219,7 @@ The additions to the previous code sections are:
 
 One the `sdeModel` class is created as the **C++** level, it is compiled in **R** using the following commands:
 ```{r}
-require(msdeHeaders)
+require(msde)
 
 # put lotvolModel.h in the working directory
 data.names <- c("H", "L")

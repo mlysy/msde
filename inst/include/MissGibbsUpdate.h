@@ -1,7 +1,7 @@
 #ifndef MissGibbsUpdate_h
 #define MissGibbsUpdate_h 1
 
-//[[Rcpp::depends("msdeHeaders")]]
+//[[Rcpp::depends("msde")]]
 #include <mvnUtils.h>
 #include <sdeMCMC.h>
 

@@ -1,60 +1,43 @@
-#' SDE log-likelihood function.
+#' SDE loglikelihood function.
 #'
-#' Evaluates the log-likelihood function given SDE data and parameter. 
+#' Evaluates the loglikelihood function given SDE data and parameter values.
 #' @param model An \code{sde.model} object.
 #' @param x A matrix or 3-d array of data with \code{dim(x)[1]} observations and \code{dim(x)[2] == ndims}.
 #' @param dt A scalar or vector of length \code{dim(x)[1]-1} of time intervals between observations.
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
 #' @param ncores If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.
-#' @return A vector of log-likelihood evaluations.  If input contains invalid data or parameters an error is thrown.
+#' @return A vector of loglikelihood evaluations, of the same length as the  third dimension of \code{x} and/or first dimension of \code{theta}.  If input contains invalid data or parameters an error is thrown.
 #' @examples
 #' \donttest{
+#' # Compile Heston's model
 #' hex <- example.models("hest")
 #' hmod <- sde.make.model(ModelFile = hex$ModelFile,
 #'                        param.names = hex$param.names,
 #'                        data.names = hex$data.names)
 #'
-#' # Input param
-#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' x0 <- c(X = log(1000), Z = 0.1)
+#' # Simulate data
 #' nreps <- 10
+#' nobs <- 100
+#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+#' Theta <- apply(t(replicate(nreps, theta)), 2, jitter)
+#' x0 <- c(X = log(1000), Z = 0.1)
 #' X0 <- apply(t(replicate(nreps,x0)), 2, jitter)
 #' dT <- 1/252
-#' 
-#' sde.loglik(model = hmod,
-#'            x = X0,
-#'            dt = dT,
-#'            theta = theta)
+#' hsim <- sde.sim(model = hmod, x0 = X0, theta = Theta,
+#'                 dt = dT, dt.sim = dT/10, nobs = nobs, nreps = nreps)
 #'
+#' # single parameter, single data
+#' sde.loglik(model = hmod, x = hsim$data[,,1], dt = dT, theta = theta)
+#' # multiple parameters, single data
+#' sde.loglik(model = hmod, x = hsim$data[,,1], dt = dT, theta = Theta)
+#' # multiple parameters, multiple data
+#' sde.loglik(model = hmod, x = hsim$data, dt = dT, theta = Theta)
 #' }
 #' @export
 sde.loglik <- function(model, x, dt, theta, ncores = 1) {
   if(class(model) != "sde.model") {
     stop("model must be an sde.model object.")
   }
-  ## # model constants
-  ## ndims <- model$ndims
-  ## data.names <- model$data.names
-  ## nparams <- model$nparams
-  ## param.names <- model$param.names
-  ## # initialize
-  ## if(is.matrix(x)) {
-  ##   ncomp <- nrow(x)
-  ##   x <- array(t(x), dim = c(ndims,ncomp,1))
-  ## } else {
-  ##   ncomp <- dim(x)[2]
-  ##   x <- aperm(x, perm = 3:1)
-  ## }
-  ## # fixme: what if ndims = 1?
-  ## # probably good to full error check on all of x and theta
-  ## # fixme: validate theta's before or in C++ code
-  ## if(!is.matrix(theta)) {
-  ##   theta <- matrix(theta, ncol = 1)
-  ## } else {
-  ##   theta <- t(theta)
-  ## }
-  # FIXME: what is preferred format for x?
-#  if(debug) browser()
   x <- .format.data(x, model$data.names, type = "array")
   theta <- .format.params(theta, model$param.names)
   # problem dimensions
@@ -73,13 +56,6 @@ sde.loglik <- function(model, x, dt, theta, ncores = 1) {
     stop("x and theta have incompatible dimensions.")
   }
   nreps <- max(nreps)
-  ## if(dim(x)[3] == 1) x <- array(x, dim = c(ndims,ncomp,nreps))
-  ## if(ncol(theta) == 1) theta <- matrix(theta, nparams, nreps)
-  ## if(!dim(x)[3] == ncol(theta)) {
-  ##   stop("x and theta must have the same number of samples.")
-  ## }
-  ## if(length(dt) == 1) dt <- rep(dt, ncomp-1)
-  ## if(length(dt) != ncomp-1) stop("Incorrectly specified dt.")
   # multicore functionality
   if(ncores < 1) stop("ncores must be a positive integer.")
   if(!model$omp && ncores > 1) {
@@ -99,23 +75,6 @@ sde.loglik <- function(model, x, dt, theta, ncores = 1) {
                          single.x, single.theta, nreps*ncomp))) {
     stop("x contains invalid sde data.")
   }
-  ## if(!all(model$is.params(thetaIn = as.double(theta),
-  ##                         nReps = as.integer(ifelse(single.theta, 1
-  ##                                                 , nreps))))) {
-  ##   stop("theta contains invalid sde parameters.")
-  ## }
-  ## if(!single.theta) {
-  ##   theta.ind <- rep(1:nreps, each = ncomp)
-  ## } else {
-  ##   theta.ind <- 1
-  ## }
-  ## if(!all(model$is.data(xIn = as.double(x),
-  ##                       thetaIn = as.double(theta[,theta.ind]),
-  ##                       singleX = as.logical(single.x),
-  ##                       singleTheta = as.logical(single.theta),
-  ##                       nReps = as.integer(nreps)))) {
-  ##   stop("x contains invalid sde data.")
-  ## }
   # compute
   model$loglik(xIn = as.double(x), dTIn = as.double(dt),
                thetaIn = as.double(theta),

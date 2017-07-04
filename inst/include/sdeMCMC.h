@@ -1,7 +1,7 @@
 #ifndef sdeMCMC_h
 #define sdeMCMC_h 1
 
-//[[Rcpp::depends("msdeHeaders")]]
+//[[Rcpp::depends("msde")]]
 
 // posterior inference for msde's
 

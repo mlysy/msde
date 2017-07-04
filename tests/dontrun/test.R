@@ -1,6 +1,6 @@
 #--- basic tests of the msde header-only library ---------------------------
 
-require(msdeHeaders)
+require(msde)
 
 # does the package work?
 

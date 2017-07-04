@@ -1,7 +1,7 @@
 #ifndef sdePrior_h
 #define sdePrior_h 1
 
-//[[Rcpp::depends("msdeHeaders")]]
+//[[Rcpp::depends("msde")]]
 
 #include "sdeModel.h"
 

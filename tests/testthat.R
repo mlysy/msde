@@ -1,5 +1,5 @@
 library(testthat)
-library(msdeHeaders)
+library(msde)
 
 Sys.unsetenv("R_TESTS")
-test_check("msdeHeaders")
+test_check("msde")

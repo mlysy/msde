@@ -5,30 +5,21 @@
 
 /////////////////////////////////////////
 
-// Prokaryotic Autoregulatory Gene Network model of Golightly-Wilkinson 2005
+// Prokaryotic Autoregulatory Gene Network model
+// of Golightly-Wilkinson 2005
 
 // sde model object
 class sdeModel {
-  // put private storage variables here
-  // end private storage
  public:
   static const int nParams = 8;
   static const int nDims = 4;
-  // TODO: indicate whether the information is on the var or sd scale
-  // also whether to use a diagonal var/sd.
+  static const bool sdDiff = true;
+  static const bool diagDiff = false;
   void sdeDr(double *dr, double *x, double *theta);
   void sdeDf(double *df, double *x, double *theta);
   bool isValidData(double *x, double *theta);
   bool isValidParams(double *theta);
-  sdeModel();
-  ~sdeModel();
 };
-
-// constructor
-inline sdeModel::sdeModel() {} // do nothing
-
-// destructor
-inline sdeModel::~sdeModel() {} // do nothing
 
 // drift function
 inline void sdeModel::sdeDr(double *dr, double *x, double *theta) {

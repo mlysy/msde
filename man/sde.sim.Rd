@@ -16,13 +16,13 @@ sde.sim(model, x0, theta, dt, dt.sim, nobs, burn = 0, nreps = 1,
 
 \item{dt}{Scalar interobservation time.}
 
-\item{dt.sim}{Scalar, interobservation time for simulation.  That is, interally the interobservation time is \code{dt.sim} but only one out of every \code{dt/dt.sim} simulation steps is kept in the output.}
+\item{dt.sim}{Scalar interobservation time for simulation.  That is, interally the interobservation time is \code{dt.sim} but only one out of every \code{dt/dt.sim} simulation steps is kept in the output.}
 
 \item{nobs}{The number of SDE observations per trajectory to generate.}
 
-\item{burn}{Scalar burnin value.  Either an integer giving the number of burn-in steps, or a value between 0 and 1 giving the fraction of burn-in relative to \code{nobs}.}
+\item{burn}{Scalar burn-in value.  Either an integer giving the number of burn-in steps, or a value between 0 and 1 giving the fraction of burn-in relative to \code{nobs}.}
 
-\item{nreps}{The number of trajectories to generate.}
+\item{nreps}{The number of SDE trajectories to generate.}
 
 \item{max.bad.draws}{The maximum number of times that invalid forward steps are proposed.  See Details.}
 
@@ -31,23 +31,23 @@ sde.sim(model, x0, theta, dt, dt.sim, nobs, burn = 0, nreps = 1,
 \value{
 A list with elements:
 \describe{
-  \item{data}{An array of size \code{nobs x ndims x nreps} containing the simulated SDE trajectories.}
-  \item{params}{The vector or matrix of parameter values used to generate the data.}
-  \item{dt, dt.sim}{The actual and internal interobservation times.}
-  \item{nbad}{The total number of bad draws.}
+  \item{\code{data}}{An array of size \code{nobs x ndims x nreps} containing the simulated SDE trajectories.}
+  \item{\code{params}}{The vector or matrix of parameter values used to generate the data.}
+  \item{\code{dt, dt.sim}}{The actual and internal interobservation times.}
+  \item{\code{nbad}}{The total number of bad draws.}
 }
 }
 \description{
-Simulation of multivariate SDE trajectories.
+Simulates a discretized Euler-Maruyama approximation to the true SDE trajectory.
 }
 \details{
 The simulation algorithm is a Markov process with \eqn{Y_0 = x_0} and
 \deqn{
-Y_{t+1} \sim N(Y_t + dr(Y_t, \theta) dt_{sim}, df(Y_t, \theta)df(Y_t, \theta)' dt_{sim}).
+Y_{t+1} \sim \mathcal{N}(Y_t + \mathrm{dr}(Y_t, \theta) dt_{\mathrm{sim}}, \mathrm{df}(Y_t, \theta) dt_{\mathrm{sim}}),
 }{
-Y_(t+1) ~ N(Y_t + dr(Y_t, theta) dt_(sim), df(Y_t, theta)df(Y_t, theta)' dt_(sim)).
+Y_(t+1) ~ N(Y_t + dr(Y_t, \theta) dt_(sim), df(Y_t, \theta) dt_(sim)),
 }
-At each step, a while-loop is used until a valid SDE draw is produced.  The simulation algorithm terminates after \code{nreps} trajectories or once a total of \code{max.bad.draws} are reached.
+where \eqn{\mathrm{dr}(y, \theta)}{dr(y, \theta)} is the SDE drift function and \eqn{\mathrm{df}(y, \theta)}{df(y, \theta)} is the diffusion function on the \strong{variance} scale.  At each step, a while-loop is used until a valid SDE draw is produced.  The simulation algorithm terminates after \code{nreps} trajectories are drawn or once a total of \code{max.bad.draws} are reached.
 }
 \examples{
 \donttest{

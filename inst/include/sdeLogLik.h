@@ -20,7 +20,7 @@ public members:
 * loglik(x, theta)
 */
 
-//[[Rcpp::depends("msdeHeaders")]]
+//[[Rcpp::depends("msde")]]
 
 #include <LinAlgUtils.h>
 #include <mvnUtils.h>

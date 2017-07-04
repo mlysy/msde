@@ -21,6 +21,6 @@ Notes on documentation:
 #' }
 ```
 
-To see the different outputs, compile the PDF doc (this can be done from the terminal using `R CMD check msdeHeaders_XYZ.tar.gz`), and also look at output in Rstudio (which is a bit nicer than vim/emacs, but still very basic and it's what most people will be using)
+To see the different outputs, compile the PDF doc (this can be done from the terminal using `R CMD check msde_XYZ.tar.gz`), and also look at output in Rstudio (which is a bit nicer than vim/emacs, but still very basic and it's what most people will be using)
 
 4.  `@description`.  These can sometimes be made more informative, if the `@title` is not enough.

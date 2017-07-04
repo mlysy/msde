@@ -1,26 +1,29 @@
 #' Create an SDE model object.
 #'
-#' @param ModelFile Path to the header file where the sde model is defined.
-#' @param PriorFile Path to the header file where the prior is defined.  See \code{\link{sde.prior}} for details.
-#' @param data.names Optional vector of names for the components of the sde.  Defaults to \code{X1,...,Xd}.
-#' @param param.names Optional vector of names for the parameters of the sde.  Defaults to \code{theta1,...,thetap}.
-#' @param hyper.check A function with arguments \code{prior.args}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.hyper.check}} for details.
-#' @param OpenMP This sets whether the model is compiled for usage in \code{OpenMP}.
-#' @param ... additional parameters that are passed to \code{Rcpp::sourceCpp} when compiling the C++ code.
-#'@return An \code{sde.model} object, which is a list containing the following elements:
+#' Compiles the C++ code for various SDE-related algorithms and makes the routines available within R.
+#' @param ModelFile Path to the header file where the SDE model is defined.
+#' @param PriorFile Path to the header file where the SDE prior is defined.  See \code{\link{sde.prior}} for details.
+#' @param data.names Vector of names for the SDE components.  Defaults to \code{X1,...,Xd}.
+#' @param param.names Vector of names for the SDE parameters.  Defaults to \code{theta1,...,thetap}.
+#' @param hyper.check A function with arguments \code{hyper}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.hyper.check}} for details.
+#' @param OpenMP Logical; whether the model is compiled with \code{OpenMP} for C++ level parallelization.
+#' @param ... additional arguments to \code{Rcpp::sourceCpp} for compiling the C++ code.
+#'@return An \code{sde.model} object, consisting of a list with the following elements:
 #' \describe{
-#' \item{ndims, nparams}{The number of sde components and parameters.}
-#' \item{data.names, param.names}{The names of the sde components and parameters.}
-#' \item{drift, diff}{Functions to evaluate the drift and diffusion.}
-#' \item{loglik}{The loglikelihood.}
-#' \item{logprior}{The custom log prior.}
-#' \item{sim}{Function for simulating data.}
-#' \item{post}{MCMC sampler for posterior distribution.}
-#' \item{omp}{a logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
+#' \item{\code{ndims, nparams}}{The number of SDE components and parameters.}
+#' \item{\code{data.names, param.names}}{The names of the SDE components and parameters.}
+#' \item{\code{drift, diff}}{SDE drift and diffusion functions.}
+#' \item{\code{loglik}}{Loglikelihood function.}
+#' \item{\code{logprior}}{SDE prior function.}
+#' \item{\code{sim}}{Function for simulating SDE data.}
+#' \item{\code{post}}{MCMC sampler for the posterior distribution.}
+#' \item{\code{omp}}{A logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
 #' }
 #' @details The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.
 #'
 #' The code is compiled by copying the \code{ModelFile} to the \code{tmpdir} directory, along with a wrapper \code{.cpp} file to be compiled by \code{Rcpp::sourceCpp}.
+#'
+#' One way to crash the R session is by compiling the same model with and without OpenMP, as \code{Rcpp} will overwrite the shared object of one with the other.  For direct speed comparisons between the two versions, make a copy of the \code{sdeModel.h} header file with a different name.
 #' @examples
 #' \donttest{
 #' hex <- example.models("hest")

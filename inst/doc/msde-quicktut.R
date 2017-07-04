@@ -16,7 +16,7 @@
 #  }
 
 ## ------------------------------------------------------------------------
-require(msdeHeaders)
+require(msde)
 
 # put lotvolModel.h in the working directory
 data.names <- c("H", "L")

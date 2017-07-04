@@ -10,7 +10,7 @@ devtools::build()
 
 #--- compile test ----------------------------------------------------------
 
-require(msdeHeaders)
+require(msde)
 
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")

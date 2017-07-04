@@ -4,26 +4,32 @@
 \alias{example.models}
 \title{Example SDE models.}
 \usage{
-example.models(model = c("hest", "pgnet", "mou"))
+example.models(model = c("hest", "pgnet", "lotvol", "biou"))
 }
 \arguments{
-\item{model}{Character string giving the name of a sample model.  Possible values are: \code{hest}, \code{pgnet}, \code{mou}.  See Details.}
+\item{model}{Character string giving the name of a sample model.  Possible values are: \code{hest}, \code{pgnet}, \code{lotvol}, \code{biou}.  See Details.}
 }
 \value{
 A list with elements:
 \describe{
-  \item{ModelFile}{The full path to the example's header file}
-  \item{param.names}{The names of the model parameters}
-  \item{data.names}{The names of the SDE model components}
+  \item{\code{ModelFile}}{The full path to the example's header file}
+  \item{\code{param.names}}{The names of the model parameters}
+  \item{\code{data.names}}{The names of the SDE model components}
 }
 }
 \description{
-This provides three examples of SDE models.
+Provides sample \code{C++} code for several SDE models.
+}
+\details{
+A full description of the sample models can be found in the package vignette; to view it run \code{vignette("msde-exmodels")}.
 }
 \examples{
 \donttest{
-# compile Heston's model
+# Heston's model
 hex <- example.models("hest")
+cat(readLines(hex$ModelFile), sep = "\\n") # view model's C++ code
+
+# compile the model
 hmod <- sde.make.model(ModelFile = hex$ModelFile,
                        param.names = hex$param.names,
                        data.names = hex$data.names)
