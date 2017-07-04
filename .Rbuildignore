@@ -2,4 +2,5 @@ setup.R
 changelog.txt
 TODO.md
 README.md
-inst/cppTemplates/old
+inst/old
+tests/dontrun

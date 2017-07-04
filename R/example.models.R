@@ -24,21 +24,21 @@
 example.models <- function(model = c("hest", "pgnet", "lotvol", "biou")) {
   model <- match.arg(model)
   if(model == "hest") {
-    ModelFile <- file.path(.msdeCppPath, "hestModel.h")
+    ModelFile <- file.path(.msde_examples_path, "hestModel.h")
     param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
     data.names <- c("X", "Z")
   } else if(model == "pgnet") {
-    ModelFile <- file.path(.msdeCppPath, "pgnetModel.h")
-    param.names <- paste0("gamma", 1:8)
+    ModelFile <- file.path(.msde_examples_path, "pgnetModel.h")
+    param.names <- paste0("theta", 1:8)
     data.names <- c("R", "P", "Q", "D")
   } else if(model == "biou") {
-    ModelFile <- file.path(.msdeCppPath, "biouModel.h")
+    ModelFile <- file.path(.msde_examples_path, "biouModel.h")
     param.names <- c("Gamma11", "Gamma21", "Gamma12", "Gamma22",
                      "Lambda1", "Lambda2",
                      "Psi11", "Psi12", "Psi22")
-    data.names <- c("Y1","Y2")
+    data.names <- c("X1","X2")
   } else if(model == "lotvol") {
-    ModelFile <- file.path(.msdeCppPath, "lotvolModel.h")
+    ModelFile <- file.path(.msde_examples_path, "lotvolModel.h")
     param.names <- c("alpha", "beta", "gamma")
     data.names <- c("H", "L")
   }

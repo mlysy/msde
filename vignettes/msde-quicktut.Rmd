@@ -6,6 +6,7 @@ output:
   html_vignette:
     toc: true
 bibliography: references.bib
+csl: taylor-and-francis-harvard-x.csl
 link-citations: true
 vignette: >
   %\VignetteIndexEntry{msde-quicktut}
@@ -51,7 +52,7 @@ and $\B_t = (\rv [1t] B {dt})$ is $d$-dimensional Brownian motion.  The **`msde`
 
 The SDE model used throughout this vignette is the so-called Lotka-Volterra predator-prey model.  Let $H_t$ and $L_t$ denote the number of Hare and Lynx at time $t$ coexisting in a given habitat.  The Lotka-Volterra SDE describing the interactions between these two animal populations is given by [@golightly-wilkinson10]:
 $$
-\begin{pmatrix} \mathrm{d} H_t \\ \mathrm{d} L_t \end{pmatrix} = \begin{pmatrix} \a H_t - \b H_tL_t \\ \b H_tL_t - \g L_t \end{pmatrix}\, \mathrm{d} t + \begin{pmatrix} \a H_t + \b H_tL_t & -\b H_tL_t \\ -\b H_tL_t & \b H_tL_t + \g L_t\end{pmatrix}^{1/2} \begin{pmatrix} \mathrm{d} B_{1t} \\ \mathrm{d} B_{2t} \end{pmatrix}.
+\begin{bmatrix} \mathrm{d} H_t \\ \mathrm{d} L_t \end{bmatrix} = \begin{bmatrix} \a H_t - \b H_tL_t \\ \b H_tL_t - \g L_t \end{bmatrix}\, \mathrm{d} t + \begin{bmatrix} \a H_t + \b H_tL_t & -\b H_tL_t \\ -\b H_tL_t & \b H_tL_t + \g L_t\end{bmatrix}^{1/2} \begin{bmatrix} \mathrm{d} B_{1t} \\ \mathrm{d} B_{2t} \end{bmatrix}.
 $$
 Thus we have $d = 2$, $\Y_t = (H_t, L_t)$, and $\tth = (\a, \b, \g)$.
 
@@ -116,7 +117,7 @@ void sdeDf(double *df, double *x, double *theta) {
 
 	**`msde`** internally computes the Cholesky decomposition of the diffusion function when it is specified on the variance scale.  For small problems such as this one, it is more efficient to specify the Cholesky decomposition directly, i.e., specify the diffusion on the standard deviation scale.  In this case, the Cholesky decomposition of the diffusion function is
 $$
-\begin{pmatrix} \a H_t + \b H_tL_t & -\b H_tL_t \\ -\b H_tL_t & \b H_tL_t + \g L_t\end{pmatrix}^{1/2} = \begin{pmatrix} \sqrt{\a H_t + \b H_tL_t} & -\frac{\b H_tL_t}{\sqrt{\a H_t + \b H_tL_t}} \\ 0 & \sqrt{\b H_tL_t + \g L_t - \frac{(\b H_tL_t)^2}{\a H_t + \b H_tL_t}} \end{pmatrix},
+\begin{bmatrix} \a H_t + \b H_tL_t & -\b H_tL_t \\ -\b H_tL_t & \b H_tL_t + \g L_t\end{bmatrix}^{1/2} = \begin{bmatrix} \sqrt{\a H_t + \b H_tL_t} & -\frac{\b H_tL_t}{\sqrt{\a H_t + \b H_tL_t}} \\ 0 & \sqrt{\b H_tL_t + \g L_t - \frac{(\b H_tL_t)^2}{\a H_t + \b H_tL_t}} \end{bmatrix},
 $$
 which is passed to **`msde`** by setting `sdDiff = true` and
     ```{Rcpp, eval = FALSE}
@@ -130,7 +131,7 @@ void sdeDf(double *df, double *x, double *theta) {
 ```
 * `diagDiff`: A logical specifying whether or not the diffusion matrix $\df_\tth(\y)$ is diagonal.  For the Lotka-Volterra SDE model above, we set `diagDiff = false`.  However, if the diffusion function were of the form
 $$
-\df_\tth(\Y_t) = \begin{pmatrix} \a H_t + \b H_tL_t & 0 \\ 0 & \b H_tL_t + \g L_t\end{pmatrix},
+\df_\tth(\Y_t) = \begin{bmatrix} \a H_t + \b H_tL_t & 0 \\ 0 & \b H_tL_t + \g L_t\end{bmatrix},
 $$
 then we would set `diagDiff = true`, **and importantly**, treat the `df` argument of `sdeDf` directly as the diagonal elements of the diffusion matrix.  That is, the diffusion (on the variance scale) is encoded as
     ```{Rcpp, eval = FALSE}

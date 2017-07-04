@@ -39,7 +39,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   sde.model <- list()
   # prior specification
   if(PriorFile == "default") {
-    PriorFile <- file.path(.msdeCppPath, "mvnPrior.h")
+    PriorFile <- file.path(.msde_src_path, "mvnPrior.h")
     if(!missing(hyper.check)) {
       warning("Custom hyper.check ignored for default prior.")
     }
@@ -124,14 +124,14 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
     stop("ModelFile \"", ModelFile, "\" not found.")
   }
   # export file
-  if(!file.exists(file.path(.msdeCppPath, "msdeExports.cpp"))) {
-    msdeExports <- c(readLines(file.path(.msdeCppPath, "sdeUtils.cpp")),
-                     readLines(file.path(.msdeCppPath, "sdeSim.cpp")),
-                     readLines(file.path(.msdeCppPath, "sdePost.cpp")))
+  if(!file.exists(file.path(.msde_src_path, "msdeExports.cpp"))) {
+    msdeExports <- c(readLines(file.path(.msde_src_path, "sdeUtils.cpp")),
+                     readLines(file.path(.msde_src_path, "sdeSim.cpp")),
+                     readLines(file.path(.msde_src_path, "sdePost.cpp")))
     cat(msdeExports, sep = "\n",
-        file = file.path(.msdeCppPath, "msdeExports.cpp"))
+        file = file.path(.msde_src_path, "msdeExports.cpp"))
   }
-  file.copy(from = file.path(.msdeCppPath, "msdeExports.cpp"),
+  file.copy(from = file.path(.msde_src_path, "msdeExports.cpp"),
             to = file.path(tempdir(), "msdeExports.cpp"),
             overwrite = TRUE, copy.date = TRUE)
   rebuild

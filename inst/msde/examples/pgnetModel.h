@@ -60,10 +60,10 @@ inline bool sdeModel::isValidData(double *x, double *theta) {
   bool isValid;
   double K = 10.0;
   double eps = 0.05;
-  isValid = x[0] > 0.0+eps;
+  isValid = x[0] > 1.0+eps;
   isValid = isValid && x[1] > 1.0+eps;
-  isValid = isValid && x[2] > 0.0+eps;
-  isValid = isValid && ((x[3] > 0.0+eps) && (x[3] < K-eps));
+  isValid = isValid && x[2] > 1.0+eps;
+  isValid = isValid && ((x[3] > 1.0+eps) && (x[3] < K-eps));
   return(isValid);
 }
 
