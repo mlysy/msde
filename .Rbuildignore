@@ -4,3 +4,4 @@ TODO.md
 README.md
 inst/old
 tests/dontrun
+.Rinstignore

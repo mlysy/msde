@@ -56,7 +56,7 @@ A list with elements:
 A Metropolis-within-Gibbs sampler for the Euler-Maruyama approximation to the true posterior density.
 }
 \details{
-The Metropolis-within-Gibbs (MWG) jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{sde.init$nvar.obs.m[1]} (the missing variables in the first SDE observation) and \code{fixed.params} (the SDE parameters which are not held fixed).  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
+The Metropolis-within-Gibbs (MWG) jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{sde.init$nvar.obs.m[1]} (the missing variables in the first SDE observation) and \code{fixed.params} (the SDE parameters which are not held fixed).  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|} when \code{|initial_value| > 0}, and 1 otherwise.
 
 \code{adapt == TRUE} implements an adaptive MCMC proposal by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
 \deqn{

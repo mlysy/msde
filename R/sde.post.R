@@ -16,7 +16,7 @@
 #' @param fixed.params Logical vector of length \code{nparams} indicating which parameters are to be held fixed in the MCMC sampler.
 #' @param ncores If \code{model} is compiled with \code{OpenMP}, the number of cores to use for parallel processing.  Otherwise, uses \code{ncores = 1} and gives a warning.
 #' @param verbose Logical, whether to periodically output MCMC status.
-#' @details The Metropolis-within-Gibbs (MWG) jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{sde.init$nvar.obs.m[1]} (the missing variables in the first SDE observation) and \code{fixed.params} (the SDE parameters which are not held fixed).  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|}.
+#' @details The Metropolis-within-Gibbs (MWG) jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{sde.init$nvar.obs.m[1]} (the missing variables in the first SDE observation) and \code{fixed.params} (the SDE parameters which are not held fixed).  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|} when \code{|initial_value| > 0}, and 1 otherwise.
 #'
 #' \code{adapt == TRUE} implements an adaptive MCMC proposal by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
 #' \deqn{
@@ -127,7 +127,10 @@ sde.post <- function(model, init, hyper,
     stop("model$hyper.check must convert hyper to a list with NULL or vector-numeric elements.")
   }
   # random walk jump size
-  if(is.null(mwg.sd)) mwg.sd <- .25 * abs(c(init.params, init.data[1,]))
+  if(is.null(mwg.sd)) {
+    mwg.sd <- .25 * abs(c(init.params, init.data[1,]))
+    mwg.sd[mwg.sd == 0] <- 1
+  }
   tune.par <- .set.jump(mwg.sd, adapt, param.names, data.names)
   # multicore functionality
   if(ncores < 1) stop("ncores must be a positive integer.")

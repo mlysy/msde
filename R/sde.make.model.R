@@ -127,7 +127,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   if(!file.exists(file.path(.msde_src_path, "msdeExports.cpp"))) {
     msdeExports <- c(readLines(file.path(.msde_src_path, "sdeUtils.cpp")),
                      readLines(file.path(.msde_src_path, "sdeSim.cpp")),
-                     readLines(file.path(.msde_src_path, "sdePost.cpp")))
+                     readLines(file.path(.msde_src_path, "sdePost.cpp")), "")
     cat(msdeExports, sep = "\n",
         file = file.path(.msde_src_path, "msdeExports.cpp"))
   }

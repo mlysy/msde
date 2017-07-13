@@ -9,7 +9,7 @@ bibliography: references.bib
 csl: taylor-and-francis-harvard-x.csl
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{msde-quicktut}
+  %\VignetteIndexEntry{Example models provided by msde}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
