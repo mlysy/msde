@@ -17,21 +17,14 @@ class sdeModel {
  public:
   static const int nParams = 6;
   static const int nDims = 2;
-  // TODO: indicate whether the information is on the var or sd scale
-  // also whether to use a diagonal var/sd.
+  static const bool sdDiff = true;
+  static const bool diagDiff = false;
   void sdeDr(double *dr, double *x, double *theta);
   void sdeDf(double *df, double *x, double *theta);
   bool isValidData(double *x, double *theta);
   bool isValidParams(double *theta);
-  sdeModel();
-  ~sdeModel();
 };
 
-// constructor
-inline sdeModel::sdeModel() {} // do nothing
-
-// destructor
-inline sdeModel::~sdeModel() {} // do nothing
 
 // drift function
 inline void sdeModel::sdeDr(double *dr, double *x, double *theta) {
