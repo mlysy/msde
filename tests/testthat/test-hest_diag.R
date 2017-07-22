@@ -1,6 +1,6 @@
 #--- heston model on diag/sd scale ---------------------------------------------
 
-library(msde)
+#library(msde)
 
 context("heston model -- diag/sd scale")
 

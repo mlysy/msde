@@ -2,9 +2,7 @@
 #'
 #' @docType package
 #' @name msde
-#' @importFrom methods formalArgs
-#' @importFrom Rcpp sourceCpp
-#' @importFrom stats approx
+#' @useDynLib msde2, .registration = TRUE
 #' @details See package vignettes; \code{vignette("msde-quicktut")} for a tutorial and \code{vignette("msde-exmodels")} for several example models.
 #' @examples
 #' \donttest{

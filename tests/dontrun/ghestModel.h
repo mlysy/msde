@@ -12,8 +12,6 @@
 
 // sde model object
 class sdeModel {
-  // put private storage variables here
-  // end private storage
  public:
   static const int nParams = 6;
   static const int nDims = 2;

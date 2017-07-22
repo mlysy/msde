@@ -1,5 +1,35 @@
 #--- msde interface ------------------------------------------------------------
 
+devtools::document()
+devtools::install()
+
+require(msde)
+
+hmod <- sde.make.model(ModelFile = "hestModel.h")
+gmod <- sde.make.model(ModelFile = "ghestModel.h")
+hmod2 <- sde.make.model(ModelFile = "hestModel.h")
+
+sde.size(hmod)
+sde.size(gmod)
+sde.size(hmod2)
+
+# construct
+DerA <- Robj.make(type = "A")
+DerA2 <- Robj.make(type = "A")
+DerB <- Robj.make(type = "B")
+DerA3 <- Robj.make(type = "A")
+
+y <- rnorm(1)
+x <- rnorm(1)
+Robj.set.x(DerA2, x = x)
+c(Robj.eval(DerA, y), 3.5 + y)
+c(Robj.eval(DerA2, y), x + y)
+c(Robj.eval(DerA3, y), 3.5 + y)
+c(Robj.eval(DerB, y), 19.1 - 2.3 * y)
+
+
+#--- msde interface ------------------------------------------------------------
+
 # TODO:
 # 1. Shouldn't need to rebuild = TRUE
 
@@ -41,7 +71,8 @@ param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
 hmod <- sde.make.model(ModelFile = "hestModel.h",
                        param.names = param.names,
-                       data.names = data.names)
+                       data.names = data.names, debug = TRUE)
+
 ndims <- hmod$ndims
 nparams <- hmod$nparams
 

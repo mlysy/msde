@@ -5,7 +5,7 @@
 \title{Create an SDE model object.}
 \usage{
 sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
-  hyper.check, OpenMP = FALSE, ...)
+  hyper.check, OpenMP = FALSE, ..., debug = FALSE)
 }
 \arguments{
 \item{ModelFile}{Path to the header file where the SDE model is defined.}
@@ -25,32 +25,15 @@ sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
 \value{
 An \code{sde.model} object, consisting of a list with the following elements:
 \describe{
+\item{\code{model.ptr}}{Pointer to C++ sde object (\code{sdeCobj}) implementing the member functions: drift/diffusion, data/parameter validators, loglikelihood, prior distribution, forward simulation, MCMC algorithm for Bayesian inference.}
 \item{\code{ndims, nparams}}{The number of SDE components and parameters.}
 \item{\code{data.names, param.names}}{The names of the SDE components and parameters.}
-\item{\code{drift, diff}}{SDE drift and diffusion functions.}
-\item{\code{loglik}}{Loglikelihood function.}
-\item{\code{logprior}}{SDE prior function.}
-\item{\code{sim}}{Function for simulating SDE data.}
-\item{\code{post}}{MCMC sampler for the posterior distribution.}
 \item{\code{omp}}{A logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
 }
 }
 \description{
 Compiles the C++ code for various SDE-related algorithms and makes the routines available within R.
 }
-\details{
-The functions \code{sim}, \code{post}, \code{drift}, \code{diff}, \code{logpior}, and \code{loglik} should never be called directly. Instead use \code{sde.sim}, \code{sde.post} \code{sde.diff}, \code{sde.drift} and \code{sde.loglik}.
-
-The code is compiled by copying the \code{ModelFile} to the \code{tmpdir} directory, along with a wrapper \code{.cpp} file to be compiled by \code{Rcpp::sourceCpp}.
-
-One way to crash the R session is by compiling the same model with and without OpenMP, as \code{Rcpp} will overwrite the shared object of one with the other.  For direct speed comparisons between the two versions, make a copy of the \code{sdeModel.h} header file with a different name.
-}
-\examples{
-\donttest{
-hex <- example.models("hest")
-sde.make.model(ModelFile = hex$ModelFile,
-               param.names = hex$param.names,
-               data.names = hex$data.names)
-
-}
+\seealso{
+\link{\code{sde.drift}}, \link{\code{sde.diff}}, \link{\code{sde.is.valid}}, \link{\code{sde.loglik}}, \link{\code{sde.prior}}, \link{\code{sde.sim}}, \link{\code{sde.post}}
 }

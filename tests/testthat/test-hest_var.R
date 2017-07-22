@@ -1,6 +1,6 @@
 #--- heston model on sd scale --------------------------------------------------
 
-library(msde)
+#library(msde)
 context("heston model -- var scale")
 
 # setup heston model

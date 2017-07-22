@@ -2,11 +2,9 @@
 #define sdePrior_h 1
 
 //[[Rcpp::depends("msde")]]
-
+#include <mvnUtils.h> // this is specific to mvnPrior
 #include "sdeModel.h"
 
-// this is specific to mvnPrior
-#include <mvnUtils.h>
 
 class sdePrior {
  private:

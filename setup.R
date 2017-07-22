@@ -3,8 +3,9 @@
 require(Rcpp)
 #require(devtools)
 
+Rcpp::compileAttributes()
 devtools::document()
-devtools::install()
+devtools::install(args = "--clean")
 
 devtools::build()
 

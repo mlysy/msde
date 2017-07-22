@@ -14,6 +14,7 @@
 #'   \item{\code{nvar.obs.m}}{The number of variables observed per row of \code{data}.  Note that \code{nvar.obs.m[(i-1)*m+1] == nvar.obs[ii]}, and that \code{nvar.obs.m[i-1] == 0} if \code{i} is not a multiple of \code{m}.}
 #'   \item{\code{params}}{Parameter initial values.}
 #' }
+#' @importFrom stats approx
 #' @examples
 #' \donttest{
 #' # compile Heston's model
