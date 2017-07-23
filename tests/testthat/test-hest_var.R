@@ -7,6 +7,10 @@ context("heston model -- var scale")
 ModelFile <- "hestModel_var.h"
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
+model <- sde.make.model(ModelFile = ModelFile,
+                        param.names = param.names,
+                        data.names = data.names)
+
 # heston model drift and diffusion
 drift.fun <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)

@@ -3,12 +3,8 @@
 
 # inherits: param.names, data.names
 # drift.fun, diff.fun
-# ModelFile
-# PriorFile: mvnPrior
+# model (sde.model with default prior)
 
-model <- sde.make.model(ModelFile = ModelFile,
-                        param.names = param.names,
-                        data.names = data.names)
 ndims <- model$ndims
 nparams <- model$nparams
 

@@ -5,43 +5,49 @@
 
 using namespace Rcpp;
 
-// Cobj_eval
-double Cobj_eval(SEXP Cobj_ptr, double y);
-RcppExport SEXP _msde2_Cobj_eval(SEXP Cobj_ptrSEXP, SEXP ySEXP) {
+// hestMakeModel
+SEXP hestMakeModel();
+RcppExport SEXP _msde_hestMakeModel() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type Cobj_ptr(Cobj_ptrSEXP);
-    Rcpp::traits::input_parameter< double >::type y(ySEXP);
-    rcpp_result_gen = Rcpp::wrap(Cobj_eval(Cobj_ptr, y));
+    rcpp_result_gen = Rcpp::wrap(hestMakeModel());
     return rcpp_result_gen;
 END_RCPP
 }
-// Cobj_setx
-void Cobj_setx(SEXP Cobj_ptr, double x);
-RcppExport SEXP _msde2_Cobj_setx(SEXP Cobj_ptrSEXP, SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type Cobj_ptr(Cobj_ptrSEXP);
-    Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    Cobj_setx(Cobj_ptr, x);
-    return R_NilValue;
-END_RCPP
-}
-// Cobj_getx
-double Cobj_getx(SEXP Cobj_ptr);
-RcppExport SEXP _msde2_Cobj_getx(SEXP Cobj_ptrSEXP) {
+// biouMakeModel
+SEXP biouMakeModel();
+RcppExport SEXP _msde_biouMakeModel() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type Cobj_ptr(Cobj_ptrSEXP);
-    rcpp_result_gen = Rcpp::wrap(Cobj_getx(Cobj_ptr));
+    rcpp_result_gen = Rcpp::wrap(biouMakeModel());
+    return rcpp_result_gen;
+END_RCPP
+}
+// pgnetMakeModel
+SEXP pgnetMakeModel();
+RcppExport SEXP _msde_pgnetMakeModel() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(pgnetMakeModel());
+    return rcpp_result_gen;
+END_RCPP
+}
+// lotvolMakeModel
+SEXP lotvolMakeModel();
+RcppExport SEXP _msde_lotvolMakeModel() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(lotvolMakeModel());
     return rcpp_result_gen;
 END_RCPP
 }
 // sde_nParams
 double sde_nParams(SEXP sdeptr);
-RcppExport SEXP _msde2_sde_nParams(SEXP sdeptrSEXP) {
+RcppExport SEXP _msde_sde_nParams(SEXP sdeptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -52,7 +58,7 @@ END_RCPP
 }
 // sde_nDims
 double sde_nDims(SEXP sdeptr);
-RcppExport SEXP _msde2_sde_nDims(SEXP sdeptrSEXP) {
+RcppExport SEXP _msde_sde_nDims(SEXP sdeptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -63,7 +69,7 @@ END_RCPP
 }
 // isData
 LogicalVector isData(SEXP sdeptr, NumericVector xIn, NumericVector thetaIn, bool singleX, bool singleTheta, int nReps);
-RcppExport SEXP _msde2_isData(SEXP sdeptrSEXP, SEXP xInSEXP, SEXP thetaInSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP, SEXP nRepsSEXP) {
+RcppExport SEXP _msde_isData(SEXP sdeptrSEXP, SEXP xInSEXP, SEXP thetaInSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP, SEXP nRepsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -79,7 +85,7 @@ END_RCPP
 }
 // isParams
 LogicalVector isParams(SEXP sdeptr, NumericVector thetaIn, int nReps);
-RcppExport SEXP _msde2_isParams(SEXP sdeptrSEXP, SEXP thetaInSEXP, SEXP nRepsSEXP) {
+RcppExport SEXP _msde_isParams(SEXP sdeptrSEXP, SEXP thetaInSEXP, SEXP nRepsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -92,7 +98,7 @@ END_RCPP
 }
 // Drift
 NumericVector Drift(SEXP sdeptr, NumericVector xIn, NumericVector thetaIn, bool singleX, bool singleTheta, int nReps);
-RcppExport SEXP _msde2_Drift(SEXP sdeptrSEXP, SEXP xInSEXP, SEXP thetaInSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP, SEXP nRepsSEXP) {
+RcppExport SEXP _msde_Drift(SEXP sdeptrSEXP, SEXP xInSEXP, SEXP thetaInSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP, SEXP nRepsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -108,7 +114,7 @@ END_RCPP
 }
 // Diff
 NumericVector Diff(SEXP sdeptr, NumericVector xIn, NumericVector thetaIn, bool singleX, bool singleTheta, int nReps);
-RcppExport SEXP _msde2_Diff(SEXP sdeptrSEXP, SEXP xInSEXP, SEXP thetaInSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP, SEXP nRepsSEXP) {
+RcppExport SEXP _msde_Diff(SEXP sdeptrSEXP, SEXP xInSEXP, SEXP thetaInSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP, SEXP nRepsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -124,7 +130,7 @@ END_RCPP
 }
 // LogLik
 NumericVector LogLik(SEXP sdeptr, NumericVector xIn, NumericVector dTIn, NumericVector thetaIn, int nComp, int nReps, bool singleX, bool singleTheta, int nCores);
-RcppExport SEXP _msde2_LogLik(SEXP sdeptrSEXP, SEXP xInSEXP, SEXP dTInSEXP, SEXP thetaInSEXP, SEXP nCompSEXP, SEXP nRepsSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP, SEXP nCoresSEXP) {
+RcppExport SEXP _msde_LogLik(SEXP sdeptrSEXP, SEXP xInSEXP, SEXP dTInSEXP, SEXP thetaInSEXP, SEXP nCompSEXP, SEXP nRepsSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP, SEXP nCoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -143,7 +149,7 @@ END_RCPP
 }
 // Prior
 NumericVector Prior(SEXP sdeptr, NumericVector thetaIn, NumericVector xIn, bool singleTheta, bool singleX, int nReps, List phiIn);
-RcppExport SEXP _msde2_Prior(SEXP sdeptrSEXP, SEXP thetaInSEXP, SEXP xInSEXP, SEXP singleThetaSEXP, SEXP singleXSEXP, SEXP nRepsSEXP, SEXP phiInSEXP) {
+RcppExport SEXP _msde_Prior(SEXP sdeptrSEXP, SEXP thetaInSEXP, SEXP xInSEXP, SEXP singleThetaSEXP, SEXP singleXSEXP, SEXP nRepsSEXP, SEXP phiInSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -160,7 +166,7 @@ END_RCPP
 }
 // Sim
 List Sim(SEXP sdeptr, int nDataOut, int N, int burn, int reps, int r, double dT, int MAXBAD, NumericVector initData, NumericVector params, bool singleX, bool singleTheta);
-RcppExport SEXP _msde2_Sim(SEXP sdeptrSEXP, SEXP nDataOutSEXP, SEXP NSEXP, SEXP burnSEXP, SEXP repsSEXP, SEXP rSEXP, SEXP dTSEXP, SEXP MAXBADSEXP, SEXP initDataSEXP, SEXP paramsSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP) {
+RcppExport SEXP _msde_Sim(SEXP sdeptrSEXP, SEXP nDataOutSEXP, SEXP NSEXP, SEXP burnSEXP, SEXP repsSEXP, SEXP rSEXP, SEXP dTSEXP, SEXP MAXBADSEXP, SEXP initDataSEXP, SEXP paramsSEXP, SEXP singleXSEXP, SEXP singleThetaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -182,7 +188,7 @@ END_RCPP
 }
 // Post
 List Post(SEXP sdeptr, NumericVector initParams, NumericVector initData, NumericVector dT, IntegerVector nDimsPerObs, LogicalVector fixedParams, int nSamples, int burn, int nParamsOut, int nDataOut, IntegerVector dataOutSmp, IntegerVector dataOutComp, IntegerVector dataOutDims, double updateParams, double updateData, List priorArgs, List tunePar, int updateLogLik, int nLogLikOut, int updateLastMiss, int nLastMissOut, int nCores);
-RcppExport SEXP _msde2_Post(SEXP sdeptrSEXP, SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP fixedParamsSEXP, SEXP nSamplesSEXP, SEXP burnSEXP, SEXP nParamsOutSEXP, SEXP nDataOutSEXP, SEXP dataOutSmpSEXP, SEXP dataOutCompSEXP, SEXP dataOutDimsSEXP, SEXP updateParamsSEXP, SEXP updateDataSEXP, SEXP priorArgsSEXP, SEXP tuneParSEXP, SEXP updateLogLikSEXP, SEXP nLogLikOutSEXP, SEXP updateLastMissSEXP, SEXP nLastMissOutSEXP, SEXP nCoresSEXP) {
+RcppExport SEXP _msde_Post(SEXP sdeptrSEXP, SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP fixedParamsSEXP, SEXP nSamplesSEXP, SEXP burnSEXP, SEXP nParamsOutSEXP, SEXP nDataOutSEXP, SEXP dataOutSmpSEXP, SEXP dataOutCompSEXP, SEXP dataOutDimsSEXP, SEXP updateParamsSEXP, SEXP updateDataSEXP, SEXP priorArgsSEXP, SEXP tuneParSEXP, SEXP updateLogLikSEXP, SEXP nLogLikOutSEXP, SEXP updateLastMissSEXP, SEXP nLastMissOutSEXP, SEXP nCoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -214,23 +220,24 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_msde2_Cobj_eval", (DL_FUNC) &_msde2_Cobj_eval, 2},
-    {"_msde2_Cobj_setx", (DL_FUNC) &_msde2_Cobj_setx, 2},
-    {"_msde2_Cobj_getx", (DL_FUNC) &_msde2_Cobj_getx, 1},
-    {"_msde2_sde_nParams", (DL_FUNC) &_msde2_sde_nParams, 1},
-    {"_msde2_sde_nDims", (DL_FUNC) &_msde2_sde_nDims, 1},
-    {"_msde2_isData", (DL_FUNC) &_msde2_isData, 6},
-    {"_msde2_isParams", (DL_FUNC) &_msde2_isParams, 3},
-    {"_msde2_Drift", (DL_FUNC) &_msde2_Drift, 6},
-    {"_msde2_Diff", (DL_FUNC) &_msde2_Diff, 6},
-    {"_msde2_LogLik", (DL_FUNC) &_msde2_LogLik, 9},
-    {"_msde2_Prior", (DL_FUNC) &_msde2_Prior, 7},
-    {"_msde2_Sim", (DL_FUNC) &_msde2_Sim, 12},
-    {"_msde2_Post", (DL_FUNC) &_msde2_Post, 22},
+    {"_msde_hestMakeModel", (DL_FUNC) &_msde_hestMakeModel, 0},
+    {"_msde_biouMakeModel", (DL_FUNC) &_msde_biouMakeModel, 0},
+    {"_msde_pgnetMakeModel", (DL_FUNC) &_msde_pgnetMakeModel, 0},
+    {"_msde_lotvolMakeModel", (DL_FUNC) &_msde_lotvolMakeModel, 0},
+    {"_msde_sde_nParams", (DL_FUNC) &_msde_sde_nParams, 1},
+    {"_msde_sde_nDims", (DL_FUNC) &_msde_sde_nDims, 1},
+    {"_msde_isData", (DL_FUNC) &_msde_isData, 6},
+    {"_msde_isParams", (DL_FUNC) &_msde_isParams, 3},
+    {"_msde_Drift", (DL_FUNC) &_msde_Drift, 6},
+    {"_msde_Diff", (DL_FUNC) &_msde_Diff, 6},
+    {"_msde_LogLik", (DL_FUNC) &_msde_LogLik, 9},
+    {"_msde_Prior", (DL_FUNC) &_msde_Prior, 7},
+    {"_msde_Sim", (DL_FUNC) &_msde_Sim, 12},
+    {"_msde_Post", (DL_FUNC) &_msde_Post, 22},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_msde2(DllInfo *dll) {
+RcppExport void R_init_msde(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

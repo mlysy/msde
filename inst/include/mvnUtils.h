@@ -94,7 +94,7 @@ inline double lmvn_diag(double *x, double *z,
 
 // --- fast normal draws -------------------------------------------------------
 
-double fast_norm_rand(void) {
+inline double fast_norm_rand(void) {
   static bool doCalc = true;
   static double y1, y2;
   double x1, x2, w, retval;

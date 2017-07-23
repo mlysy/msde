@@ -5,7 +5,7 @@ require(Rcpp)
 
 Rcpp::compileAttributes()
 devtools::document()
-devtools::install(args = "--clean")
+devtools::install(args = "--install-tests")
 
 devtools::build()
 

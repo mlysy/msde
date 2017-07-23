@@ -2,7 +2,7 @@
 #'
 #' @docType package
 #' @name msde
-#' @useDynLib msde2, .registration = TRUE
+#' @useDynLib msde, .registration = TRUE
 #' @details See package vignettes; \code{vignette("msde-quicktut")} for a tutorial and \code{vignette("msde-exmodels")} for several example models.
 #' @examples
 #' \donttest{

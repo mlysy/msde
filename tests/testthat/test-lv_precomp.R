@@ -1,7 +1,7 @@
-#--- heston model on sd scale --------------------------------------------------
+#--- lotka-volterra model --------------------------------------------------
 
 #library(msde)
-context("heston model -- sd scale (precompiled)")
+context("lotka-volterra model -- sd scale (precompiled)")
 
 # setup heston model
 ## ModelFile <- "hestModel.h"
@@ -10,32 +10,36 @@ context("heston model -- sd scale (precompiled)")
 ## model <- sde.make.model(ModelFile = ModelFile,
 ##                         param.names = param.names,
 ##                         data.names = data.names)
-model <- sde.examples(model = "hest")
+model <- sde.examples(model = "lotvol")
 
-# heston model drift and diffusion
+# lotka-volterra model drift and diffusion
 drift.fun <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)
   if(!is.matrix(theta)) theta <- t(theta)
-  cbind(theta[,1] - .125 * x[,2]^2, theta[,3]/x[,2] - .5*theta[,2]*x[,2])
+  dr <- cbind(theta[,1]*x[,1] - theta[,2]*x[,1]*x[,2], # alpha * H - beta * H*L
+              theta[,2]*x[,1]*x[,2] - theta[,3]*x[,2]) # beta * H*L - gamma * L
+  dr
 }
 diff.fun <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)
   if(!is.matrix(theta)) theta <- t(theta)
-  cv <- .5*theta[,5]*theta[,4]*x[,2]
-  ans <- cbind(.25 * x[,2]^2, cv, cv, theta[,4]^2)
-  t(apply(ans, 1, function(x) chol(matrix(x,2,2))))
+  df <- matrix(NA, nrow(x), 4)
+  df[,1] <- theta[,1]*x[,1] + theta[,2]*x[,1]*x[,2] # alpha * H + beta * H*L
+  df[,2] <- -theta[,2]*x[,1]*x[,2] # -beta * H*L
+  df[,3] <- df[,2] # -beta * H*L
+  df[,4] <- theta[,2]*x[,1]*x[,2] + theta[,3]*x[,2] # beta * H*L + gamma * L
+  t(apply(df, 1, function(x) chol(matrix(x,2,2)))) # always use sd scale in R
 }
 # generate heston data/parameters
 randx <- function(nreps) {
-  X0 <- c(X = log(1000), Z = 0.1)
+  X0 <- c(H = 71, L = 79)
   if(nreps > 1) X0 <- apply(t(replicate(nreps, X0)), 2, jitter)
   X0
 }
 randt <- function(nreps) {
-  Theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
+  Theta <- c(alpha = .5, beta = .0025, gamma = .3)
   if(nreps > 1) Theta <- apply(t(replicate(nreps, Theta)), 2, jitter)
   Theta
 }
 
 source("msde-test_debug.R", local = TRUE)
-

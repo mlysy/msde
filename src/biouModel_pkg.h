@@ -1,7 +1,7 @@
 /////////////////////////////////////////
 
-#ifndef sdeModel_h
-#define sdeModel_h 1
+#ifndef biouModel_h
+#define biouModel_h 1
 
 /////////////////////////////////////////
 
@@ -16,7 +16,8 @@
 // the parameter vector is theta = (Gamma, Lambda, lowertri(Psi)).
 
 // sde model object
-class sdeModel {
+class biouModel {
+ public:
   static const int nParams = 9; // Gamma = 4, Lambda = 2, Psi = 3
   static const int nDims = 2;
   static const bool sdDiff = true;
@@ -28,14 +29,14 @@ class sdeModel {
 };
 
 // drift function
-inline void sdeModel::sdeDr(double *dr, double *x, double *theta) {
+inline void biouModel::sdeDr(double *dr, double *x, double *theta) {
   dr[0] = theta[0]*x[0] + theta[2]*x[1] + theta[4];
   dr[1] = theta[1]*x[0] + theta[3]*x[1] + theta[5];
   return;
 }
 
 // diffusion function
-inline void sdeModel::sdeDf(double *df, double *x, double *theta) {
+inline void biouModel::sdeDf(double *df, double *x, double *theta) {
   df[0] = theta[6];
   df[1] = 0.0;
   df[2] = theta[7];
@@ -44,12 +45,12 @@ inline void sdeModel::sdeDf(double *df, double *x, double *theta) {
 }
 
 // data validator
-inline bool sdeModel::isValidData(double *x, double *theta) {
+inline bool biouModel::isValidData(double *x, double *theta) {
   return true;
 }
 
 // parameter validator
-inline bool sdeModel::isValidParams(double *theta) {
+inline bool biouModel::isValidParams(double *theta) {
   return (theta[6] > 0.0) && (theta[8] > 0.0);
 }
 

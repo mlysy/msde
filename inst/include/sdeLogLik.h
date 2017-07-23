@@ -20,18 +20,15 @@ public members:
 * loglik(x, theta)
 */
 
-//[[Rcpp::depends("msde")]]
-
-#include <LinAlgUtils.h>
-#include <mvnUtils.h>
-//#include "sdeModel.h"
-#include <sdeUtils.h>
+#include "LinAlgUtils.h"
+#include "mvnUtils.h"
+#include "sdeUtils.h"
 
 // parallel implementation
 #ifdef _OPENMP
 #include <omp.h>
 #else
-int omp_get_thread_num(void) {return 0;}
+inline int omp_get_thread_num(void) {return 0;}
 #endif
 
 template <class sMod>

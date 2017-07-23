@@ -49,7 +49,7 @@ sde.valid.data <- function(model, x, theta) {
     stop("x and theta have incompatible dimensions.")
   }
   nreps <- max(nreps)
-  .sde_isData(sdexptr = model$ptr, xIn = as.double(x),
+  .sde_isData(sdeptr = model$ptr, xIn = as.double(x),
               thetaIn = as.double(theta),
               singleX = as.logical(single.x),
               singleTheta = as.logical(single.theta),

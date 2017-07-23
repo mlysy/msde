@@ -8,6 +8,10 @@ context("heston model -- diag/sd scale")
 ModelFile <- "hestModel_diag.h"
 param.names <- c("alpha", "gamma", "beta", "sigma")
 data.names <- c("X", "Z")
+model <- sde.make.model(ModelFile = ModelFile,
+                        param.names = param.names,
+                        data.names = data.names)
+
 # heston model drift and diffusion
 drift.fun <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)

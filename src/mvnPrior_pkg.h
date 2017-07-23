@@ -1,27 +1,24 @@
-#ifndef sdePrior_h
-#define sdePrior_h 1
+#ifndef mvnPrior_h
+#define mvnPrior_h 1
 
-//[[Rcpp::depends("msde")]]
-#include <mvnUtils.h> // this is specific to mvnPrior
-#include "sdeModel.h"
+#include "mvnUtils.h"
 
-
-class sdePrior {
+class mvnPrior {
  private:
-  static const int nDims = sdeModel::nDims;
-  static const int nParams = sdeModel::nParams;
+  //static const int nDims = sdeModel::nDims;
+  //static const int nParams = sdeModel::nParams;
   int nRV, nParamRV, nDataRV; // number of active variables of each type
   int *paramId, *dataId; // index vectors
   double *mean, *cholSd;
   double *tmpX, *tmpZ;
  public:
   double logPrior(double *theta, double *x);
-  sdePrior(double **phi, int nArgs, int *nEachArg);
-  ~sdePrior();
+  mvnPrior(double **phi, int nArgs, int *nEachArg);
+  ~mvnPrior();
 };
 
 // constructor
-inline sdePrior::sdePrior(double **phi, int nArgs, int *nEachArg) {
+inline mvnPrior::mvnPrior(double **phi, int nArgs, int *nEachArg) {
   int ii;
   nRV = nEachArg[0];
   nParamRV = nEachArg[2];
@@ -55,7 +52,7 @@ inline sdePrior::sdePrior(double **phi, int nArgs, int *nEachArg) {
 }
 
 // destructor
-inline sdePrior::~sdePrior() {
+inline mvnPrior::~mvnPrior() {
   if(nRV > 0) {
     delete [] mean;
     delete [] cholSd;
@@ -70,7 +67,7 @@ inline sdePrior::~sdePrior() {
   }
 }
 
-inline double sdePrior::logPrior(double *theta, double *x) {
+inline double mvnPrior::logPrior(double *theta, double *x) {
   if(nRV == 0) return(0.0);
   double lp;
   int ii;
