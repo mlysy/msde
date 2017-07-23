@@ -35,5 +35,5 @@ An \code{sde.model} object, consisting of a list with the following elements:
 Compiles the C++ code for various SDE-related algorithms and makes the routines available within R.
 }
 \seealso{
-\link{\code{sde.drift}}, \link{\code{sde.diff}}, \link{\code{sde.is.valid}}, \link{\code{sde.loglik}}, \link{\code{sde.prior}}, \link{\code{sde.sim}}, \link{\code{sde.post}}
+\code{\link{sde.drift}}, \code{\link{sde.diff}}, \code{\link{sde.is.valid}}, \code{\link{sde.loglik}}, \code{\link{sde.prior}}, \code{\link{sde.sim}}, \code{\link{sde.post}}.
 }

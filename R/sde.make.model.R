@@ -15,7 +15,7 @@
 #' \item{\code{data.names, param.names}}{The names of the SDE components and parameters.}
 #' \item{\code{omp}}{A logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
 #' }
-#' @seealso \link{\code{sde.drift}}, \link{\code{sde.diff}}, \link{\code{sde.is.valid}}, \link{\code{sde.loglik}}, \link{\code{sde.prior}}, \link{\code{sde.sim}}, \link{\code{sde.post}}
+#' @seealso \code{\link{sde.drift}}, \code{\link{sde.diff}}, \code{\link{sde.is.valid}}, \code{\link{sde.loglik}}, \code{\link{sde.prior}}, \code{\link{sde.sim}}, \code{\link{sde.post}}.
 #' @importFrom Rcpp sourceCpp
 #' @importFrom methods formalArgs
 #' @importFrom tools md5sum
@@ -25,7 +25,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
                            OpenMP = FALSE, ..., debug = FALSE) {
   # prior specification
   if(PriorFile == "default") {
-    PriorFile <- file.path(.msde_src_path, "mvnPrior.h")
+    PriorFile <- file.path(.msde_include_path, "mvnPrior.h")
     if(!missing(hyper.check)) {
       warning("Custom hyper.check ignored for default prior.")
     }
@@ -40,7 +40,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
     }
   }
   # compile C++ code
-  cppFile <- .copy.cpp.files(ModelFile, PriorFile)
+  cppFile <- .copy.cpp.files(ModelFile, PriorFile, OpenMP)
   if(debug) browser()
   if(OpenMP) old.env <- .omp.set()
   sourceCpp(cppFile, env = environment(), ...)
@@ -72,14 +72,17 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
 .msdeglobalenv <- new.env(parent=emptyenv())
 
 # outputs the file "id"
-.cpp.model.id <- function(ModelFile, PriorFile) {
+.cpp.model.id <- function(ModelFile, PriorFile, OpenMP) {
   mod <- data.frame(id = tempfile(pattern = "msde-"),
                     sde = md5sum(ModelFile)[1],
                     prior = md5sum(PriorFile)[1],
+                    omp = OpenMP,
                     stringsAsFactors = FALSE)
   models <- .msdeglobalenv$models
   if(is.null(models)) models <- mod
-  same <- (mod$sde == models$sde) & (mod$prior == models$prior)
+  same <- (mod$sde == models$sde)
+  same <- same & (mod$prior == models$prior)
+  same <- same & (mod$omp == models$omp)
   if(any(same)) {
     mod$id <- models$id[which(same)[1]]
   } else {
@@ -90,7 +93,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   mod$id
 }
 
-.copy.cpp.files <- function(ModelFile, PriorFile) {
+.copy.cpp.files <- function(ModelFile, PriorFile, OpenMP) {
   # prior file
   fname <- file.path(tempdir(), "sdePrior.h")
   flag <- file.copy(from = PriorFile,
@@ -108,8 +111,8 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
     stop("ModelFile \"", ModelFile, "\" not found.")
   }
   # export file
-  fname <- paste0(.cpp.model.id(ModelFile, PriorFile), "_Exports.cpp")
-  file.copy(from = file.path(.msde_src_path, "sdeMakeModel.cpp"),
+  fname <- paste0(.cpp.model.id(ModelFile, PriorFile, OpenMP), "_Exports.cpp")
+  file.copy(from = file.path(.msde_tools_path, "sdeMakeModel.cpp"),
             to = fname,
             overwrite = TRUE, copy.date = TRUE)
   fname

@@ -21,24 +21,24 @@ sde.examples <- function(model = c("hest", "pgnet", "lotvol", "biou"),
                          ModelFile.only = FALSE) {
   model <- match.arg(model)
   if(model == "hest") {
-    ModelFile <- file.path(.msde_examples_path, "hestModel.h")
+    ModelFile <- file.path(.msde_include_path, "hestModel.h")
     param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
     data.names <- c("X", "Z")
     sptr <- .hest_MakeModel()
   } else if(model == "pgnet") {
-    ModelFile <- file.path(.msde_examples_path, "pgnetModel.h")
+    ModelFile <- file.path(.msde_include_path, "pgnetModel.h")
     param.names <- paste0("theta", 1:8)
     data.names <- c("R", "P", "Q", "D")
     sptr <- .pgnet_MakeModel()
   } else if(model == "biou") {
-    ModelFile <- file.path(.msde_examples_path, "biouModel.h")
+    ModelFile <- file.path(.msde_include_path, "biouModel.h")
     param.names <- c("Gamma11", "Gamma21", "Gamma12", "Gamma22",
                      "Lambda1", "Lambda2",
                      "Psi11", "Psi12", "Psi22")
     data.names <- c("X1","X2")
     sptr <- .biou_MakeModel()
   } else if(model == "lotvol") {
-    ModelFile <- file.path(.msde_examples_path, "lotvolModel.h")
+    ModelFile <- file.path(.msde_include_path, "lotvolModel.h")
     param.names <- c("alpha", "beta", "gamma")
     data.names <- c("H", "L")
     sptr <- .lotvol_MakeModel()
