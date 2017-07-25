@@ -36,6 +36,7 @@ randt <- function(nreps) {
   if(nreps > 1) Theta <- apply(t(replicate(nreps, Theta)), 2, jitter)
   Theta
 }
+validx <- function(x, theta) x[2] > 0
 
 source("msde-test_debug.R", local = TRUE)
 

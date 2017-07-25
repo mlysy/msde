@@ -17,11 +17,8 @@
 #' @importFrom stats approx
 #' @examples
 #' \donttest{
-#' # compile Heston's model
-#' hex <- example.models("hest")
-#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
-#'                        param.names = hex$param.names,
-#'                        data.names = hex$data.names)
+#' # load Heston's model
+#' hmod <- sde.examples("hest")
 #'
 #' # generate some observed data
 #' nObs <- 5

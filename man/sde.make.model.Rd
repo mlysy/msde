@@ -34,6 +34,20 @@ An \code{sde.model} object, consisting of a list with the following elements:
 \description{
 Compiles the C++ code for various SDE-related algorithms and makes the routines available within R.
 }
+\examples{
+# header (C++) file for Heston's model
+hfile <- example.models("hest")
+cat(readLines(hfile), sep = "\\n")
+
+# compile the model
+params.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+data.names <- c("X", "Z")
+hmod <- sde.make.model(ModelFile = hfile,
+                       param.names = param.names,
+                       data.names = data.names)
+
+hmod
+}
 \seealso{
 \code{\link{sde.drift}}, \code{\link{sde.diff}}, \code{\link{sde.is.valid}}, \code{\link{sde.loglik}}, \code{\link{sde.prior}}, \code{\link{sde.sim}}, \code{\link{sde.post}}.
 }

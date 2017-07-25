@@ -11,10 +11,7 @@
 #' # Heston's model
 #' # valid data is: Z > 0
 #' # valid parameters are: gamma, sigma > 0, |rho| < 1, beta > .5 * sigma^2
-#' hex <- example.models("hest")
-#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
-#'                        param.names = hex$param.names,
-#'                        data.names = hex$data.names)
+#' hmod <- sde.examples("hest") # load model
 #'
 #' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
 #'

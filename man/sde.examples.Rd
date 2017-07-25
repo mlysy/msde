@@ -24,12 +24,17 @@ A full description of the sample models can be found in the package vignette; to
 \examples{
 \donttest{
 # Heston's model
-hex <- example.models("hest")
-cat(readLines(hex$ModelFile), sep = "\\n") # view model's C++ code
+hmod <- sde.examples("hest") # load pre-compiled model
 
-# compile the model
-hmod <- sde.make.model(ModelFile = hex$ModelFile,
-                       param.names = hex$param.names,
-                       data.names = hex$data.names)
+# inspect model's C++ code
+hfile <- example.models("hest")
+cat(readLines(hfile), sep = "\\n")
+
+# compile it from scratch
+params.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+data.names <- c("X", "Z")
+hmod <- sde.make.model(ModelFile = hfile,
+                       param.names = param.names,
+                       data.names = data.names)
 }
 }

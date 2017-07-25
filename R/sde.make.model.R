@@ -19,6 +19,19 @@
 #' @importFrom Rcpp sourceCpp
 #' @importFrom methods formalArgs
 #' @importFrom tools md5sum
+#' @examples
+#' # header (C++) file for Heston's model
+#' hfile <- example.models("hest")
+#' cat(readLines(hfile), sep = "\n")
+#'
+#' # compile the model
+#' params.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+#' data.names <- c("X", "Z")
+#' hmod <- sde.make.model(ModelFile = hfile,
+#'                        param.names = param.names,
+#'                        data.names = data.names)
+#'
+#' hmod
 #' @export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, hyper.check,

@@ -3,20 +3,16 @@
 #' @docType package
 #' @name msde
 #' @useDynLib msde, .registration = TRUE
+#' @useDynLib msde user_unif_rand
+#' @useDynLib msde user_norm_rand
 #' @details See package vignettes; \code{vignette("msde-quicktut")} for a tutorial and \code{vignette("msde-exmodels")} for several example models.
 #' @examples
 #' \donttest{
 #' # Posterior inference for Heston's model
-#'
-#' # compile model
-#' hfile <- sde.examples("hest", ModelFile.only = TRUE)
-#' params.names <- c("alpha", "gamma", "beta", "sigma", "rho")
-#' data.names <- c("X", "Z")
-#' hmod <- sde.make.model(ModelFile = hfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
-#' # or simply load pre-compiled version
-#' hmod <- sde.examples("hest")
+#' hex <- example.models("hest")
+#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
+#'                        param.names = hex$param.names,
+#'                        data.names = hex$data.names)
 #'
 #' # Simulate data
 #' X0 <- c(X = log(1000), Z = 0.1)

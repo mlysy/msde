@@ -26,10 +26,7 @@ The prior is constructed at the \code{C++} level by defining a function (i.e., p
 }
 \examples{
 \donttest{
-hex <- example.models("hest")
-hmod <- sde.make.model(ModelFile = hex$ModelFile,
-                       param.names = hex$param.names,
-                       data.names = hex$data.names)
+hmod <- sde.examples("hest") # load Heston's model
 
 # setting prior for 3 parameters
 rv.names <- c("alpha","gamma","rho")

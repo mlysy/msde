@@ -71,7 +71,8 @@ test_that("sim.R == sim.cpp", {
       sim.R[,,jj] <- sim.fun(nobs = nobs+burn, dt = dT, rr = rr,
                              x0 = init$X.R[jj,],
                              theta = init$Theta.R[jj,],
-                             dr = drift.fun, df = diff.fun)[burn+1:nobs,]
+                             dr = drift.fun, df = diff.fun,
+                             validx = validx)[burn+1:nobs,]
     }
     max.diff(sim, drop(sim.R))
   })

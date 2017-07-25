@@ -28,7 +28,8 @@ diff.fun <- function(x, theta) {
   df[,2] <- -theta[,2]*x[,1]*x[,2] # -beta * H*L
   df[,3] <- df[,2] # -beta * H*L
   df[,4] <- theta[,2]*x[,1]*x[,2] + theta[,3]*x[,2] # beta * H*L + gamma * L
-  t(apply(df, 1, function(x) chol(matrix(x,2,2)))) # always use sd scale in R
+  t(apply(df, 1,
+          function(xx) chol(matrix(xx,2,2)))) # always use sd scale in R
 }
 # generate heston data/parameters
 randx <- function(nreps) {
@@ -37,9 +38,12 @@ randx <- function(nreps) {
   X0
 }
 randt <- function(nreps) {
-  Theta <- c(alpha = .5, beta = .0025, gamma = .3)
+  Theta <- c(alpha = .5, beta = .01, gamma = .3)
   if(nreps > 1) Theta <- apply(t(replicate(nreps, Theta)), 2, jitter)
   Theta
+}
+validx <- function(x, theta) {
+  all(x > 0)
 }
 
 source("msde-test_debug.R", local = TRUE)

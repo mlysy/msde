@@ -14,10 +14,16 @@ See package vignettes; \code{vignette("msde-quicktut")} for a tutorial and \code
 \examples{
 \donttest{
 # Posterior inference for Heston's model
-hex <- example.models("hest")
-hmod <- sde.make.model(ModelFile = hex$ModelFile,
-                       param.names = hex$param.names,
-                       data.names = hex$data.names)
+
+# compile model
+hfile <- sde.examples("hest", ModelFile.only = TRUE)
+params.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+data.names <- c("X", "Z")
+hmod <- sde.make.model(ModelFile = hfile,
+                       param.names = param.names,
+                       data.names = data.names)
+# or simply load pre-compiled version
+hmod <- sde.examples("hest")
 
 # Simulate data
 X0 <- c(X = log(1000), Z = 0.1)

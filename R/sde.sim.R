@@ -27,11 +27,8 @@
 #' }
 #' @examples
 #' \donttest{
-#' # compile model
-#' hex <- example.models("hest")
-#' hmod <- sde.make.model(ModelFile = hex$ModelFile,
-#'                        param.names = hex$param.names,
-#'                        data.names = hex$data.names)
+#' # load pre-compiled model
+#' hmod <- sde.examples("hest")
 #'
 #' # initial values
 #' x0 <- c(X = log(1000), Z = 0.1)

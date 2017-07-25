@@ -71,10 +71,7 @@ For SDE models with thousands of latent variables, \code{data.out} can be used t
 \examples{
 \donttest{
 # Posterior inference for Heston's model
-hex <- example.models("hest")
-hmod <- sde.make.model(ModelFile = hex$ModelFile,
-                       param.names = hex$param.names,
-                       data.names = hex$data.names)
+hmod <- sde.examples("hest") # load pre-compiled model
 
 # Simulate data
 X0 <- c(X = log(1000), Z = 0.1)
