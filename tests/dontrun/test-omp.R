@@ -1,5 +1,9 @@
 #--- test omp implementation ---------------------------------------------------
 
+# check that omp = T/F models can be simultaneously loaded
+# and give same results
+
+
 devtools::document()
 devtools::install()
 
@@ -8,12 +12,21 @@ require(msde)
 # build model
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
+hfile <- sde.examples("hest", file.only = TRUE)
 
 # with omp
-hmod <- sde.make.model(ModelFile = "hestModel.h",
+hmod <- sde.make.model(ModelFile = hfile,
                        param.names = param.names,
                        data.names = data.names,
-                       OpenMP = TRUE, showOutput = TRUE, rebuild = TRUE)
+                       OpenMP = TRUE)
+
+# without omp
+hmod2 <- sde.make.model(ModelFile = hfile,
+                        param.names = param.names,
+                        data.names = data.names,
+                        OpenMP = FALSE)
+
+
 # NOTE: can't compile both versions in the same R session,
 # since Rcpp doesn't create a different .so, so get a segmentation fault.
 ## # without omp
@@ -50,7 +63,7 @@ colnames(X0) <- data.names
 # serial is better when nObs is small, presumably because memory allocation
 # is bottleneck
 
-nReps <- 1
+nReps <- 100
 nObs <- 100
 dT <- 1/252
 
@@ -65,20 +78,20 @@ hsim <- sde.sim(model = hmod, x0 = X0, theta = Theta,
                 dt = dT, dt.sim = dT, nobs = nObs, nreps = nReps)
 
 
-ncores <- 1
+# multicore
+ncores <- sample(1:8,1)
 system.time({
-  ll <- sde.loglik(model = hmod, x = hsim$data, dt = dT,
-                   theta = Theta, ncores = ncores)
+  ll1 <- sde.loglik(model = hmod, x = hsim$data, dt = dT,
+                    theta = Theta, ncores = ncores)
 })
-ll
 
+# single core
 system.time({
-  ll <- replicate(n = 100, expr = {
-    ncores <- sample(1:50, 1)
-    sde.loglik(model = hmod, x = hsim$data, dt = dT,
-               theta = Theta, ncores = ncores)
-  })
+  sde.loglik(model = hmod2, x = hsim$data, dt = dT,
+             theta = Theta)
 })
+
+range(ll1-ll2)
 
 #--- MCMC test -----------------------------------------------------------------
 
@@ -109,8 +122,11 @@ update.params <- TRUE
 update.data <- TRUE
 nsamples <- 1e3 # ifelse(update.data, 2e4, 4e4)
 burn <- 0
+SEED <- sample(999,1)
 
-ncores <- 4
+# multicore
+ncores <- 8
+set.seed(SEED)
 system.time({
   hpost <- sde.post(model = hmod, init = init,
                     nsamples = nsamples, burn = burn,
@@ -119,6 +135,18 @@ system.time({
                     update.data = update.data)
 })
 
+# single core
+set.seed(SEED)
+system.time({
+  hpost2 <- sde.post(model = hmod2, init = init,
+                     nsamples = nsamples, burn = burn,
+                     hyper = hyper,
+                     update.params = update.params,
+                     update.data = update.data)
+})
+
+# ok great
+identical(hpost, hpost2)
 
 #--- indexing test -------------------------------------------------------------
 

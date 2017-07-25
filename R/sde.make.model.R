@@ -15,17 +15,17 @@
 #' \item{\code{data.names, param.names}}{The names of the SDE components and parameters.}
 #' \item{\code{omp}}{A logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
 #' }
-#' @seealso \code{\link{sde.drift}}, \code{\link{sde.diff}}, \code{\link{sde.is.valid}}, \code{\link{sde.loglik}}, \code{\link{sde.prior}}, \code{\link{sde.sim}}, \code{\link{sde.post}}.
+#' @seealso \code{\link{sde.drift}}, \code{\link{sde.diff}}, \code{\link{sde.valid}}, \code{\link{sde.loglik}}, \code{\link{sde.prior}}, \code{\link{sde.sim}}, \code{\link{sde.post}}.
 #' @importFrom Rcpp sourceCpp
 #' @importFrom methods formalArgs
 #' @importFrom tools md5sum
 #' @examples
 #' # header (C++) file for Heston's model
-#' hfile <- example.models("hest")
+#' hfile <- sde.examples("hest", file.only = TRUE)
 #' cat(readLines(hfile), sep = "\n")
 #'
 #' # compile the model
-#' params.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+#' param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 #' data.names <- c("X", "Z")
 #' hmod <- sde.make.model(ModelFile = hfile,
 #'                        param.names = param.names,
@@ -35,7 +35,7 @@
 #' @export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, hyper.check,
-                           OpenMP = FALSE, ..., debug = FALSE) {
+                           OpenMP = FALSE, ...) {
   # prior specification
   if(PriorFile == "default") {
     PriorFile <- file.path(.msde_include_path, "mvnPrior.h")
@@ -54,12 +54,13 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   }
   # compile C++ code
   cppFile <- .copy.cpp.files(ModelFile, PriorFile, OpenMP)
-  if(debug) browser()
+  #if(debug) browser()
   if(OpenMP) old.env <- .omp.set()
-  sourceCpp(cppFile, env = environment(), ...)
+  fun.env <- environment()
+  sourceCpp(cppFile, env = fun.env, ...)
   if(OpenMP) .omp.unset(env = old.env)
   # extract ndims and nparams
-  sptr <- .sde_MakeModel()
+  sptr <- fun.env$.sde_MakeModel()
   ndims <- .sde_nDims(sptr)
   nparams <- .sde_nParams(sptr)
   # parameter and data names

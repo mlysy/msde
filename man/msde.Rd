@@ -16,8 +16,8 @@ See package vignettes; \code{vignette("msde-quicktut")} for a tutorial and \code
 # Posterior inference for Heston's model
 
 # compile model
-hfile <- sde.examples("hest", ModelFile.only = TRUE)
-params.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+hfile <- sde.examples("hest", file.only = TRUE)
+param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
 hmod <- sde.make.model(ModelFile = hfile,
                        param.names = param.names,

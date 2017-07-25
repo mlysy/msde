@@ -2,20 +2,21 @@
 #'
 #' Provides sample \code{C++} code for several SDE models.
 #' @param model Character string giving the name of a sample model.  Possible values are: \code{hest}, \code{pgnet}, \code{lotvol}, \code{biou}.  See Details.
-#' @param ModelFile.only If \code{TRUE} returns only the path to the header file containing the \code{sdeModel} object implementation.
-#' @return An \code{sde.model} object (see \code{\link{sde.make.model}}).
-#' @details A full description of the sample models can be found in the package vignette; to view it run \code{vignette("msde-exmodels")}.
+#' @param file.only If \code{TRUE} returns only the path to the header file containing the \code{sdeModel} object implementation.
+#' @return An \code{sde.model} object, or the path to the C++ model header file.
+#' @details All pre-compiled models are with the default prior and with \code{OpenMP} disabled.  A full description of the example models can be found in the package vignette; to view it run \code{vignette("msde-exmodels")}.
+#' @seealso \code{\link{sde.make.model}} for \code{sde.model} objects, \code{\link{mvn.hyper.check}} for specification of the default prior.
 #' @examples
 #' \donttest{
 #' # Heston's model
 #' hmod <- sde.examples("hest") # load pre-compiled model
 #'
 #' # inspect model's C++ code
-#' hfile <- example.models("hest")
+#' hfile <- sde.examples("hest", file.only = TRUE)
 #' cat(readLines(hfile), sep = "\n")
 #'
 #' # compile it from scratch
-#' params.names <- c("alpha", "gamma", "beta", "sigma", "rho")
+#' param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 #' data.names <- c("X", "Z")
 #' hmod <- sde.make.model(ModelFile = hfile,
 #'                        param.names = param.names,
@@ -23,7 +24,7 @@
 #' }
 #' @export
 sde.examples <- function(model = c("hest", "pgnet", "lotvol", "biou"),
-                         ModelFile.only = FALSE) {
+                         file.only = FALSE) {
   model <- match.arg(model)
   if(model == "hest") {
     ModelFile <- file.path(.msde_include_path, "hestModel.h")
@@ -48,7 +49,7 @@ sde.examples <- function(model = c("hest", "pgnet", "lotvol", "biou"),
     data.names <- c("H", "L")
     sptr <- .lotvol_MakeModel()
   }
-  if(!ModelFile.only) {
+  if(!file.only) {
     sde.model <- list(ptr = sptr,
                       ndims = length(data.names), nparams = length(param.names),
                       data.names = data.names, param.names = param.names,
