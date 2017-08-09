@@ -73,7 +73,9 @@ class sdeCobj {
 };
 
 // default destructor
-inline sdeCobj::~sdeCobj() {}
+inline sdeCobj::~sdeCobj() {
+  Rprintf("sdeCobj destroyed.\n");
+}
 
 template <class sMod, class sPi>
 class sdeRobj : public sdeCobj {

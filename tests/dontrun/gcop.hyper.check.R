@@ -30,18 +30,18 @@ gcop.hyper.check <- function(hyper, param.names, data.names) {
     prior.args <- sapply(names(hyper$XDens[[1]]), function(nm) {
       lapply(hyper$XDens, function(xd) xd[[nm]])
     }, simplify = FALSE)
+    #dx <- apply(matrix(prior.args$xrng,nrow = 2), 2, diff)
+    #dx <- dx/prior.args$ndens
+    dx <- sapply(prior.args$xrng, diff)/unlist(prior.args$ndens)
+    prior.args <- c(prior.args[1:2], list(dx = dx),
+                    prior.args[3:7],
+                    list(Rho = chol(hyper$Rho),
+                         thetaId = theta.id, xId = x.id))
+    names(prior.args)[c(1,2,4,5,6,9)] <- c("nBreaks", "range", "pdf",
+                                         "logPdf", "cdf", "RhoCholSd")
     prior.args <- lapply(prior.args, function(x) {
       if(length(x) == 0) NULL else as.double(unlist(x))
     })
-    dx <- apply(matrix(prior.args$xrng,nrow = 2), 2, diff)
-    dx <- dx/prior.args$ndens
-    prior.args <- c(prior.args[1:2], list(dx = as.double(dx)),
-                    prior.args[3:7],
-                    list(Rho = as.double(chol(hyper$Rho)),
-                         thetaId = as.double(theta.id),
-                         xId = as.double(x.id)))
-    names(prior.args)[c(1,2,4,5,6,9)] <- c("nBreaks", "range", "pdf",
-                                         "logPdf", "cdf", "RhoCholSd")
   } else {
     prior.args <- list(NULL)
   }
