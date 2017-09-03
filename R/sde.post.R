@@ -166,7 +166,8 @@ sde.post <- function(model, init, hyper,
                    nLogLikOut = as.integer(ifelse(loglik.out, nsamples, 1)),
                    updateLastMiss = as.integer(last.miss.out),
                    nLastMissOut = as.integer(nlast.miss.out),
-                   nCores = as.integer(ncores))
+                   nCores = as.integer(ncores),
+                   displayProgress = as.logical(verbose))
   tm <- chrono(tm, display = verbose)
   names(ans) <- c("paramsOut", "dataOut", "paramAccept", "gibbsAccept",
                   "logLikOut", "lastMissOut", "lastIter", "mwgSd")

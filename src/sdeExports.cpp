@@ -78,11 +78,12 @@ List Post(SEXP sdeptr, NumericVector initParams, NumericVector initData,
 	  IntegerVector dataOutComp, IntegerVector dataOutDims,
 	  double updateParams, double updateData, List priorArgs,
 	  List tunePar, int updateLogLik, int nLogLikOut,
-	  int updateLastMiss, int nLastMissOut, int nCores) {
+	  int updateLastMiss, int nLastMissOut,
+	  int nCores, bool displayProgress) {
   XPtr<sdeCobj> sde(sdeptr);
   return sde->Post(initParams, initData, dT, nDimsPerObs, fixedParams,
 		   nSamples, burn, nParamsOut, nDataOut, dataOutSmp,
 		   dataOutComp, dataOutDims, updateParams, updateData,
 		   priorArgs, tunePar, updateLogLik, nLogLikOut,
-		   updateLastMiss, nLastMissOut, nCores);
+		   updateLastMiss, nLastMissOut, nCores, displayProgress);
 }

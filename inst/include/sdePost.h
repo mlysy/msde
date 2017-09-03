@@ -3,6 +3,9 @@
 
 #include <Rcpp.h>
 using namespace Rcpp;
+// [[Rcpp::depends(RcppProgress)]]
+#include <progress.hpp>
+#include <progress_bar.hpp>
 #include "sdeMCMC.h"
 #include "mcmcUtils.h"
 #include "sdeInterface.h"
@@ -24,7 +27,8 @@ template <class sMod, class sPi>
 				       int updateLogLik,
 				       int nLogLikOut,
 				       int updateLastMiss,
-				       int nLastMissOut, int nCores) {
+				       int nLastMissOut, int nCores,
+				       bool displayProgress) {
   RNGScope scope;
   int ii, jj, kk;
 
@@ -79,12 +83,16 @@ template <class sMod, class sPi>
 			 INTEGER(nDimsPerObs), LOGICAL(fixedParams),
 			 phi, nArgs, nEachArg, nCores);
 
+  // progress bar
+  Progress Progress_Bar(burn + nSamples, displayProgress);
+
   // main MCMC loop
   jj = 0;
   for(int smp = -burn; smp < nSamples; smp++) {
     // user interrupt
-    if(smp % (int) 1e3) {
+    if(smp % (int) 5e3) {
       Rcpp::checkUserInterrupt();
+      Progress_Bar.increment();
     }
     // missing data update
     if(updateComponent(updateData, smp)) {

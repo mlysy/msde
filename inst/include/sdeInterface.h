@@ -68,7 +68,8 @@ class sdeCobj {
 		    IntegerVector dataOutComp, IntegerVector dataOutDims,
 		    double updateParams, double updateData, List priorArgs,
 		    List tunePar, int updateLogLik, int nLogLikOut,
-		    int updateLastMiss, int nLastMissOut, int nCores) = 0;
+		    int updateLastMiss, int nLastMissOut,
+		    int nCores, bool displayProgress) = 0;
   virtual ~sdeCobj() = 0;
 };
 
@@ -106,7 +107,8 @@ class sdeRobj : public sdeCobj {
 		    IntegerVector dataOutComp, IntegerVector dataOutDims,
 		    double updateParams, double updateData, List priorArgs,
 		    List tunePar, int updateLogLik, int nLogLikOut,
-		    int updateLastMiss, int nLastMissOut, int nCores);
+		    int updateLastMiss, int nLastMissOut,
+		    int nCores, bool displayProgress);
   virtual ~sdeRobj() {
     //Rprintf("sdeRobj destroyed.\n");
   };

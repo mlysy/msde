@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
-//[[Rcpp::depends("msde")]]
+//[[Rcpp::depends(msde)]]
+//[[Rcpp::depends(RcppProgress)]]
 #include <sdeInterface.h>
 #include "sdeModel.h"
 #include "sdePrior.h"

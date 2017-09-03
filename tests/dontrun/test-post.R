@@ -12,7 +12,7 @@ param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
 hmod <- sde.make.model(ModelFile = "hestModel.h",
                        param.names = param.names,
-                       data.names = data.names, debug = FALSE)
+                       data.names = data.names)
 ndims <- hmod$ndims
 nparams <- hmod$nparams
 
@@ -29,7 +29,7 @@ hsim <- sde.sim(model = hmod, x0 = x0, theta = theta,
 m <- 2 # degree of Euler approximation: dt_euler = dt/m
 nvar.obs <- c(2, rep(1, nObs-1)) # all but first vol unobserved
 init <- sde.init(model = hmod, x = hsim$data, dt = dT, m = m,
-                 nvar.obs = nvar.obs, theta = theta, debug = FALSE)
+                 nvar.obs = nvar.obs, theta = theta)
 
 # prior
 prior <- list(mu = c(.1, .35, 1.0, .5, -.81),
@@ -45,21 +45,23 @@ rownames(prior$Sigma) <- param.names
 mwg.sd <- NULL
 update.params <- TRUE
 update.data <- TRUE
-nsamples <- 1e3 # ifelse(update.data, 2e4, 4e4)
+nsamples <- 1e6 # ifelse(update.data, 2e4, 4e4)
 data.out <- list(isamples = sample(nsamples, 1),
                  idims = sample(ndims,1), icomp = sample(nrow(init$data), 5))
 burn <- 100
 SEED <- 549
 
 set.seed(SEED)
-hpost1 <- sde.post(model = hmod,
-                   init = init,
-                   nsamples = nsamples, burn = burn,
-                   hyper = prior, debug = FALSE,
-                   mwg.sd = mwg.sd, adapt = TRUE,
-                   data.out = 1:nsamples,
-                   update.params = update.params,
-                   update.data = update.data)
+system.time({
+  hpost1 <- sde.post(model = hmod,
+                     init = init,
+                     nsamples = nsamples, burn = burn,
+                     hyper = prior,
+                     mwg.sd = mwg.sd, adapt = TRUE,
+                     data.out = 1:nsamples,
+                     update.params = update.params,
+                     update.data = update.data, verbose = TRUE)
+})
 
 set.seed(SEED)
 hpost2 <- sde.post(model = hmod,

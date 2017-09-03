@@ -187,8 +187,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // Post
-List Post(SEXP sdeptr, NumericVector initParams, NumericVector initData, NumericVector dT, IntegerVector nDimsPerObs, LogicalVector fixedParams, int nSamples, int burn, int nParamsOut, int nDataOut, IntegerVector dataOutSmp, IntegerVector dataOutComp, IntegerVector dataOutDims, double updateParams, double updateData, List priorArgs, List tunePar, int updateLogLik, int nLogLikOut, int updateLastMiss, int nLastMissOut, int nCores);
-RcppExport SEXP _msde_Post(SEXP sdeptrSEXP, SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP fixedParamsSEXP, SEXP nSamplesSEXP, SEXP burnSEXP, SEXP nParamsOutSEXP, SEXP nDataOutSEXP, SEXP dataOutSmpSEXP, SEXP dataOutCompSEXP, SEXP dataOutDimsSEXP, SEXP updateParamsSEXP, SEXP updateDataSEXP, SEXP priorArgsSEXP, SEXP tuneParSEXP, SEXP updateLogLikSEXP, SEXP nLogLikOutSEXP, SEXP updateLastMissSEXP, SEXP nLastMissOutSEXP, SEXP nCoresSEXP) {
+List Post(SEXP sdeptr, NumericVector initParams, NumericVector initData, NumericVector dT, IntegerVector nDimsPerObs, LogicalVector fixedParams, int nSamples, int burn, int nParamsOut, int nDataOut, IntegerVector dataOutSmp, IntegerVector dataOutComp, IntegerVector dataOutDims, double updateParams, double updateData, List priorArgs, List tunePar, int updateLogLik, int nLogLikOut, int updateLastMiss, int nLastMissOut, int nCores, bool displayProgress);
+RcppExport SEXP _msde_Post(SEXP sdeptrSEXP, SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP fixedParamsSEXP, SEXP nSamplesSEXP, SEXP burnSEXP, SEXP nParamsOutSEXP, SEXP nDataOutSEXP, SEXP dataOutSmpSEXP, SEXP dataOutCompSEXP, SEXP dataOutDimsSEXP, SEXP updateParamsSEXP, SEXP updateDataSEXP, SEXP priorArgsSEXP, SEXP tuneParSEXP, SEXP updateLogLikSEXP, SEXP nLogLikOutSEXP, SEXP updateLastMissSEXP, SEXP nLastMissOutSEXP, SEXP nCoresSEXP, SEXP displayProgressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -214,7 +214,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type updateLastMiss(updateLastMissSEXP);
     Rcpp::traits::input_parameter< int >::type nLastMissOut(nLastMissOutSEXP);
     Rcpp::traits::input_parameter< int >::type nCores(nCoresSEXP);
-    rcpp_result_gen = Rcpp::wrap(Post(sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores));
+    Rcpp::traits::input_parameter< bool >::type displayProgress(displayProgressSEXP);
+    rcpp_result_gen = Rcpp::wrap(Post(sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores, displayProgress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -233,7 +234,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_msde_LogLik", (DL_FUNC) &_msde_LogLik, 9},
     {"_msde_Prior", (DL_FUNC) &_msde_Prior, 7},
     {"_msde_Sim", (DL_FUNC) &_msde_Sim, 12},
-    {"_msde_Post", (DL_FUNC) &_msde_Post, 22},
+    {"_msde_Post", (DL_FUNC) &_msde_Post, 23},
     {NULL, NULL, 0}
 };
 

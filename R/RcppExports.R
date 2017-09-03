@@ -53,7 +53,7 @@
     .Call(`_msde_Sim`, sdeptr, nDataOut, N, burn, reps, r, dT, MAXBAD, initData, params, singleX, singleTheta)
 }
 
-.sde_Post <- function(sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores) {
-    .Call(`_msde_Post`, sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores)
+.sde_Post <- function(sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores, displayProgress) {
+    .Call(`_msde_Post`, sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores, displayProgress)
 }
 
