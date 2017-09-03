@@ -74,7 +74,7 @@ class sdeCobj {
 
 // default destructor
 inline sdeCobj::~sdeCobj() {
-  Rprintf("sdeCobj destroyed.\n");
+  //Rprintf("sdeCobj destroyed.\n");
 }
 
 template <class sMod, class sPi>
@@ -107,7 +107,9 @@ class sdeRobj : public sdeCobj {
 		    double updateParams, double updateData, List priorArgs,
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut, int nCores);
-  virtual ~sdeRobj() {};
+  virtual ~sdeRobj() {
+    //Rprintf("sdeRobj destroyed.\n");
+  };
 };
 
 #include "sdeRUtils.h"

@@ -15,11 +15,14 @@ hmod <- sde.make.model(ModelFile = "hestModel.h",
 ndims <- hmod$ndims
 nparams <- hmod$nparams
 
+#tmp <- list(ptr = .sde_MakeModel())
+
 # ok fit a gcop model
 nRV <- ndims + nparams
+nsamples <- 1e5
 mu <- rnorm(nRV)
 Sigma <- crossprod(matrix(rnorm(nRV^2), nRV, nRV))
-X <- t(t(chol(Sigma)) %*% matrix(rnorm(1e5*nRV), nRV, 1e5) + mu)
+X <- t(t(chol(Sigma)) %*% matrix(rnorm(nsamples*nRV), nRV, nsamples) + mu)
 colnames(X) <- c(param.names, data.names)
 gcop <- gcopFit(X = X, fitXD = "normal")
 

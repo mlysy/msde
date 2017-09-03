@@ -52,15 +52,17 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
       stop("hyper.check must have formal arguments: hyper, param.names, data.names.")
     }
   }
+  # save all sdeObj pointers in the package environment
+  # as sdeObj pointers don't gc properly when R object is overwritten
+  globalptr <- gsub("^.", "", tempfile(pattern = "sdeObj_", tmpdir = ""))
   # compile C++ code
   cppFile <- .copy.cpp.files(ModelFile, PriorFile, OpenMP)
-  #if(debug) browser()
   if(OpenMP) old.env <- .omp.set()
-  fun.env <- environment()
-  sourceCpp(cppFile, env = fun.env, ...)
+  sourceCpp(cppFile, env = .msdeglobalenv, ...)
   if(OpenMP) .omp.unset(env = old.env)
+  assign(globalptr, .msdeglobalenv$.sde_MakeModel(), envir = .msdeglobalenv)
+  sptr <- .msdeglobalenv[[globalptr]]
   # extract ndims and nparams
-  sptr <- fun.env$.sde_MakeModel()
   ndims <- .sde_nDims(sptr)
   nparams <- .sde_nParams(sptr)
   # parameter and data names
@@ -83,7 +85,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
 #--- keep track of original models ---------------------------------------------
 
 # global variable: md5sum of model/prior pairs, modelID
-.msdeglobalenv <- new.env(parent=emptyenv())
+.msdeglobalenv <- new.env(parent = globalenv())
 
 # outputs the file "id"
 .cpp.model.id <- function(ModelFile, PriorFile, OpenMP) {

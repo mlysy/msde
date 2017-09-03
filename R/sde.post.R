@@ -18,7 +18,7 @@
 #' @param verbose Logical, whether to periodically output MCMC status.
 #' @details The Metropolis-within-Gibbs (MWG) jump sizes can be specified as a scalar, a vector or length \code{nparams + ndims}, or a named vector containing the elements defined by \code{sde.init$nvar.obs.m[1]} (the missing variables in the first SDE observation) and \code{fixed.params} (the SDE parameters which are not held fixed).  The default jump sizes for each MWG random variable are \code{.25 * |initial_value|} when \code{|initial_value| > 0}, and 1 otherwise.
 #'
-#' \code{adapt == TRUE} implements an adaptive MCMC proposal by Rosenthal and Roberts (2005).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
+#' \code{adapt == TRUE} implements an adaptive MCMC proposal by Roberts and Rosenthal (2009).  At step \eqn{n} of the MCMC, the jump size of each MWG random variable is increased or decreased by \eqn{\delta(n)}, depending on whether the cumulative acceptance rate is above or below the optimal value of 0.44.  If \eqn{\sigma_n} is the size of the jump at step \eqn{n}, then the next jump size is determined by
 #' \deqn{
 #' \log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, 1/n^{1/2}).
 #' }{
@@ -70,6 +70,7 @@
 #'        main = parse(text = hmod$param.names[ii]), xlab = "")
 #' }
 #' }
+#' @references Roberts, G.O. and Rosenthal, J.S. "Examples of adaptive MCMC." \emph{Journal of Computational and Graphical Statistics} 18.2 (2009): 349-367. \url{http://www.probability.ca/jeff/ftpdir/adaptex.pdf}.
 #' @export
 sde.post <- function(model, init, hyper,
                      nsamples, burn, mwg.sd = NULL, adapt = TRUE,
