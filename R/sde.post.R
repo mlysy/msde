@@ -31,8 +31,10 @@
 #' \describe{
 #'   \item{\code{params}}{An \code{nsamples x nparams} matrix of posterior parameter draws.}
 #'   \item{\code{data}}{A 3-d array of posterior missing data draws, for which the output dimensions are specified by \code{data.out}.}
-#'   \item{\code{data.out}}{A list of three integer vectors specifying which timepoints, variables, and MCMC iterations correspond to the values in the \code{data} output.}
 #'   \item{\code{init}}{The \code{sde.init} object which initialized the sampler.}
+#'   \item{\code{data.out}}{A list of three integer vectors specifying which timepoints, variables, and MCMC iterations correspond to the values in the \code{data} output.}
+#'   \item{\code{mwg.sd}}{A named vector of Metropolis-within-Gibbs standard devations used at the last posterior iteration.}
+#'   \item{\code{hyper}}{The hyperparameter specification.}
 #'   \item{\code{loglik}}{If \code{loglik.out == TRUE}, the vector of \code{nsamples} complete data loglikelihoods calculated at each posterior sample.}
 #'   \item{\code{last.iter}}{A list with elements \code{data} and \code{params} giving the last MCMC sample.  Useful for resuming the MCMC from that point.}
 #'   \item{\code{last.miss}}{If \code{last.miss.out == TRUE}, an \code{nsamples x nmissN} matrix of all posterior draws for the missing data in the final observation.  Useful for SDE forecasting at future timepoints.}
@@ -192,8 +194,12 @@ sde.post <- function(model, init, hyper,
     out <- c(out, list(data = x.out))
   } else out <- c(out, list(data = init.data))
   if(loglik.out) out <- c(out, list(loglik = ans$logLikOut))
+  mwg.sd <- ans$mwgSd
+  mwg.sd[1:nparams][fixed.params] <- 0
+  mwg.sd[nparams+1:ndims][1:ndims <= par.index[1]] <- 0
+  names(mwg.sd) <- c(param.names, data.names)
   out <- c(out, list(init = init, data.out = data.out,
-                     mwg.sd = ans$mwgSd, hyper = hyper))
+                     mwg.sd = mwg.sd, hyper = hyper))
   last.iter <- list(params = ans$lastIter[1:nparams],
                     data = matrix(ans$lastIter[nparams + 1:(ncomp*ndims)],
                                   ncomp, ndims, byrow = TRUE))
