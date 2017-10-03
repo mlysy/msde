@@ -39,6 +39,7 @@ Compiles the C++ code for various SDE-related algorithms and makes the routines 
 hfile <- sde.examples("hest", file.only = TRUE)
 cat(readLines(hfile), sep = "\\n")
 
+\donttest{
 # compile the model
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")
@@ -47,6 +48,7 @@ hmod <- sde.make.model(ModelFile = hfile,
                        data.names = data.names)
 
 hmod
+}
 }
 \seealso{
 \code{\link{sde.drift}}, \code{\link{sde.diff}}, \code{\link{sde.valid}}, \code{\link{sde.loglik}}, \code{\link{sde.prior}}, \code{\link{sde.sim}}, \code{\link{sde.post}}.

@@ -24,6 +24,7 @@
 #' hfile <- sde.examples("hest", file.only = TRUE)
 #' cat(readLines(hfile), sep = "\n")
 #'
+#' \donttest{
 #' # compile the model
 #' param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 #' data.names <- c("X", "Z")
@@ -32,6 +33,7 @@
 #'                        data.names = data.names)
 #'
 #' hmod
+#' }
 #' @export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, hyper.check,

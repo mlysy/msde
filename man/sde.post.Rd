@@ -71,6 +71,7 @@ When \code{adapt} is not logical, it is a list with elements \code{max} and \cod
 For SDE models with thousands of latent variables, \code{data.out} can be used to thin the MCMC missing data output.  An integer vector or scalar returns specific or evenly-spaced posterior samples from the \code{ncomp x ndims} complete data matrix.  A list with elements \code{isamples}, \code{icomp}, and \code{idims} determines which samples, time points, and SDE variables to return.  The first of these can be a scalar or vector with the same meaning as before.
 }
 \examples{
+\donttest{
 # Posterior inference for Heston's model
 hmod <- sde.examples("hest") # load pre-compiled model
 
@@ -99,6 +100,7 @@ par(mfrow = c(2,3))
 for(ii in 1:length(hmod$param.names)) {
   hist(hest.post$params[,ii],breaks=100, freq = FALSE,
        main = parse(text = hmod$param.names[ii]), xlab = "")
+}
 }
 }
 \references{

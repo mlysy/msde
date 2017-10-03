@@ -41,6 +41,7 @@
 #'   \item{\code{accept}}{A named list of acceptance rates for the various components of the MCMC sampler.}
 #' }
 #' @examples
+#' \donttest{
 #' # Posterior inference for Heston's model
 #' hmod <- sde.examples("hest") # load pre-compiled model
 #'
@@ -69,6 +70,7 @@
 #' for(ii in 1:length(hmod$param.names)) {
 #'   hist(hest.post$params[,ii],breaks=100, freq = FALSE,
 #'        main = parse(text = hmod$param.names[ii]), xlab = "")
+#' }
 #' }
 #' @references Roberts, G.O. and Rosenthal, J.S. "Examples of adaptive MCMC." \emph{Journal of Computational and Graphical Statistics} 18.2 (2009): 349-367. \url{http://www.probability.ca/jeff/ftpdir/adaptex.pdf}.
 #' @export
