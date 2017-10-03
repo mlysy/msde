@@ -113,7 +113,8 @@ template <class sMod, class sPi>
 						  NumericVector thetaIn,
 						  int nComp, int nReps,
 						  bool singleX,
-						  bool singleTheta, int nCores) {
+						  bool singleTheta,
+						  int nCores) {
   int nDims = sMod::nDims;
   int nParams = sMod::nParams;
   double *x = REAL(xIn);
@@ -139,18 +140,19 @@ template <class sMod, class sPi>
   int ii;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
-  int nArgs = phiIn.length();
-  double **phi = new double*[nArgs];
-  int *nEachArg = new int[nArgs];
-  for(ii=0; ii<nArgs; ii++) {
-    if(Rf_isNull(phiIn[ii])) {
-      nEachArg[ii] = 0;
-    } else {
-      nEachArg[ii] = as<NumericVector>(phiIn[ii]).length();
-      phi[ii] = REAL(phiIn[ii]);
-    }
-  }
-  sPi prior(phi, nArgs, nEachArg);
+  PriorArgs priorArgs(phiIn);
+  /* int nArgs = phiIn.length(); */
+  /* double **phi = new double*[nArgs]; */
+  /* int *nEachArg = new int[nArgs]; */
+  /* for(ii=0; ii<nArgs; ii++) { */
+  /*   if(Rf_isNull(phiIn[ii])) { */
+  /*     nEachArg[ii] = 0; */
+  /*   } else { */
+  /*     nEachArg[ii] = as<NumericVector>(phiIn[ii]).length(); */
+  /*     phi[ii] = REAL(phiIn[ii]); */
+  /*   } */
+  /* } */
+  sPi prior(priorArgs.phi, priorArgs.nArgs, priorArgs.nEachArg);
   NumericVector lpOut(nReps);
   double *lp = REAL(lpOut);
   // NOTE: this can't be parallelized because private storage is common
@@ -159,8 +161,8 @@ template <class sMod, class sPi>
     lp[ii] = prior.logPrior(&theta[ii*(!singleTheta)*nParams],
 			    &x[ii*(!singleX)*nDims]);
   }
-  delete [] phi;
-  delete [] nEachArg;
+  /* delete [] phi; */
+  /* delete [] nEachArg; */
   return lpOut;
 }
 

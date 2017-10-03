@@ -50,7 +50,6 @@ Y_(t+1) ~ N(Y_t + dr(Y_t, \theta) dt_(sim), df(Y_t, \theta) dt_(sim)),
 where \eqn{\mathrm{dr}(y, \theta)}{dr(y, \theta)} is the SDE drift function and \eqn{\mathrm{df}(y, \theta)}{df(y, \theta)} is the diffusion function on the \strong{variance} scale.  At each step, a while-loop is used until a valid SDE draw is produced.  The simulation algorithm terminates after \code{nreps} trajectories are drawn or once a total of \code{max.bad.draws} are reached.
 }
 \examples{
-\donttest{
 # load pre-compiled model
 hmod <- sde.examples("hest")
 
@@ -71,5 +70,4 @@ plot(hsim$data[,"X"], type = "l", xlab = "Time", ylab = "",
      main = expression(X[t]))
 plot(hsim$data[,"Z"], type = "l", xlab = "Time", ylab = "",
      main = expression(Z[t]))
-}
 }

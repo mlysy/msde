@@ -20,7 +20,6 @@ A matrix with \code{ndims^2} columns containing the diffusion function evaluated
 Computes the SDE model's diffusion function given data and parameter values.
 }
 \examples{
-\donttest{
 # load Heston's model
 hmod <- sde.examples("hest")
 
@@ -37,5 +36,4 @@ sde.diff(model = hmod, x = X0, theta = Theta)
 
 # mixed inputs
 sde.diff(model = hmod, x = x0, theta = Theta)
-}
 }

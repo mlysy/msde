@@ -3,7 +3,7 @@
 
 #include <Rcpp.h>
 using namespace Rcpp;
-// [[Rcpp::depends(RcppProgress)]]
+//[[Rcpp::depends(RcppProgress)]]
 #include <progress.hpp>
 #include <progress_bar.hpp>
 #include "sdeMCMC.h"
@@ -15,7 +15,7 @@ template <class sMod, class sPi>
 				       NumericVector initData,
 				       NumericVector dT,
 				       IntegerVector nDimsPerObs,
-				       LogicalVector fixedParams,
+				       LogicalVector fixedParamsIn,
 				       int nSamples, int burn,
 				       int nParamsOut, int nDataOut,
 				       IntegerVector dataOutSmp,
@@ -23,7 +23,7 @@ template <class sMod, class sPi>
 				       IntegerVector dataOutDims,
 				       double updateParams,
 				       double updateData,
-				       List priorArgs, List tunePar,
+				       List priorArgsIn, List tunePar,
 				       int updateLogLik,
 				       int nLogLikOut,
 				       int updateLastMiss,
@@ -54,34 +54,41 @@ template <class sMod, class sPi>
   int *paramAccept = INTEGER(paramAcceptOut);
   int *gibbsAccept = INTEGER(gibbsAcceptOut);
   double *mwgSd = REAL(mwgSdOut);
+  // convert LogicalVectors to vector of bools
+  bool *fixedParams = new bool[nParams];
+  bool *tunePar_adapt = new bool[nParams + nDims];
+  convert_Logical(fixedParams, fixedParamsIn);
+  convert_Logical(tunePar_adapt, tunePar["adapt"]);
 
   // MCMC tuning parameters
   for(ii=0; ii<nParams+nDims; ii++) {
     mwgSd[ii] = REAL(tunePar["sd"])[ii];
   }
   mwgAdapt tuneMCMC(REAL(tunePar["max"]), REAL(tunePar["rate"]),
-		    LOGICAL(tunePar["adapt"]), nParams+nDims);
+		    tunePar_adapt, nParams+nDims);
 
   // prior specification
   // hyper parameters: actual prior gets constructed inside MCMC object
-  int nArgs = priorArgs.length();
-  double **phi = new double*[nArgs];
-  int *nEachArg = new int[nArgs];
-  for(ii=0; ii<nArgs; ii++) {
-    if(Rf_isNull(priorArgs[ii])) {
-      nEachArg[ii] = 0;
-    } else {
-      nEachArg[ii] = as<NumericVector>(priorArgs[ii]).length();
-      phi[ii] = REAL(priorArgs[ii]);
-    }
-  }
+  PriorArgs priorArgs(priorArgsIn);
+  /* int nArgs = priorArgs.length(); */
+  /* double **phi = new double*[nArgs]; */
+  /* int *nEachArg = new int[nArgs]; */
+  /* for(ii=0; ii<nArgs; ii++) { */
+  /*   if(Rf_isNull(priorArgs[ii])) { */
+  /*     nEachArg[ii] = 0; */
+  /*   } else { */
+  /*     nEachArg[ii] = as<NumericVector>(priorArgs[ii]).length(); */
+  /*     phi[ii] = REAL(priorArgs[ii]); */
+  /*   } */
+  /* } */
 
   // initialize MCMC
   // prior gets constructed inside of object -- is this really beneficial?
   sdeMCMC<sMod,sPi> mcmc(nComp, REAL(dT), REAL(initData),
 			 REAL(initParams),
-			 INTEGER(nDimsPerObs), LOGICAL(fixedParams),
-			 phi, nArgs, nEachArg, nCores);
+			 INTEGER(nDimsPerObs), fixedParams,
+			 priorArgs.phi, priorArgs.nArgs, priorArgs.nEachArg,
+			 nCores);
 
   // progress bar
   Progress Progress_Bar(burn + nSamples, displayProgress);
@@ -142,8 +149,8 @@ template <class sMod, class sPi>
   }
 
   // delete dynamic variables
-  delete [] phi;
-  delete [] nEachArg;
+  delete [] fixedParams;
+  delete [] tunePar_adapt;
 
   return List::create(_["paramsOut"] = paramsOut,
 		      _["dataOut"] = dataOut,

@@ -6,7 +6,6 @@
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
 #' @return A matrix with \code{ndims^2} columns containing the diffusion function evaluated at \code{x} and \code{theta}. Each row corresponds to the upper triangular Cholesky factor of the diffusion matrix.  If either input contains invalid SDE data or parameters an error is thrown.
 #' @examples
-#' \donttest{
 #' # load Heston's model
 #' hmod <- sde.examples("hest")
 #'
@@ -23,7 +22,6 @@
 #'
 #' # mixed inputs
 #' sde.diff(model = hmod, x = x0, theta = Theta)
-#' }
 #' @export
 sde.diff <- function(model, x, theta) {
   if(class(model) != "sde.model") {

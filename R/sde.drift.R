@@ -6,7 +6,6 @@
 #' @param theta A vector or matrix of parameters with \code{nparams} columns.
 #' @return A matrix with \code{ndims} columns containing the drift function evaluated at \code{x} and \code{theta}.  If either input contains invalid SDE data or parameters an error is thrown.
 #' @examples
-#' \donttest{
 #' # load Heston's model
 #' hmod <- sde.examples("hest")
 #'
@@ -20,7 +19,6 @@
 #' Theta <- apply(t(replicate(nreps,theta)),2,jitter)
 #' X0 <- apply(t(replicate(nreps,x0)),2,jitter)
 #' sde.drift(model = hmod, x = X0, theta = Theta)
-#' }
 #' @export
 sde.drift <- function(model, x, theta) {
   if(class(model) != "sde.model") {

@@ -10,7 +10,7 @@ Description: Implements an MCMC sampler for the posterior distribution of arbitr
 Depends: R (>= 3.0.0)
 Imports: Rcpp (>= 0.12.7), methods, stats, tools
 LinkingTo: Rcpp, RcppProgress
-Suggests: knitr, rmarkdown, testthat
+Suggests: knitr, rmarkdown, testthat, RcppProgress
 VignetteBuilder: knitr
 License: GPL-3
 LazyData: true

@@ -22,7 +22,6 @@ Provides sample \code{C++} code for several SDE models.
 All pre-compiled models are with the default prior and with \code{OpenMP} disabled.  A full description of the example models can be found in the package vignette; to view it run \code{vignette("msde-exmodels")}.
 }
 \examples{
-\donttest{
 # Heston's model
 hmod <- sde.examples("hest") # load pre-compiled model
 
@@ -30,6 +29,7 @@ hmod <- sde.examples("hest") # load pre-compiled model
 hfile <- sde.examples("hest", file.only = TRUE)
 cat(readLines(hfile), sep = "\\n")
 
+\dontrun{
 # compile it from scratch
 param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 data.names <- c("X", "Z")

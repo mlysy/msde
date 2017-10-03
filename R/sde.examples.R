@@ -7,7 +7,6 @@
 #' @details All pre-compiled models are with the default prior and with \code{OpenMP} disabled.  A full description of the example models can be found in the package vignette; to view it run \code{vignette("msde-exmodels")}.
 #' @seealso \code{\link{sde.make.model}} for \code{sde.model} objects, \code{\link{mvn.hyper.check}} for specification of the default prior.
 #' @examples
-#' \donttest{
 #' # Heston's model
 #' hmod <- sde.examples("hest") # load pre-compiled model
 #'
@@ -15,6 +14,7 @@
 #' hfile <- sde.examples("hest", file.only = TRUE)
 #' cat(readLines(hfile), sep = "\n")
 #'
+#' \dontrun{
 #' # compile it from scratch
 #' param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
 #' data.names <- c("X", "Z")

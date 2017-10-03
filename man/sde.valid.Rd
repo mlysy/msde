@@ -24,7 +24,6 @@ A logical scalar or vector indicating whether the given data/parameter pair is v
 Checks whether input SDE data and parameters are valid.
 }
 \examples{
-\donttest{
 # Heston's model
 # valid data is: Z > 0
 # valid parameters are: gamma, sigma > 0, |rho| < 1, beta > .5 * sigma^2
@@ -47,5 +46,4 @@ sde.valid.params(model = hmod, theta = theta)
 # invalid parameters
 theta <- c(alpha = 0.1, gamma = -4, beta = 0.8, sigma = 0.6, rho = -0.8)
 sde.valid.params(model = hmod, theta = theta)
-}
 }

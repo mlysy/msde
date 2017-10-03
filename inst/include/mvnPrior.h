@@ -24,9 +24,9 @@ class sdePrior {
 inline sdePrior::sdePrior(double **phi, int nArgs, int *nEachArg) {
   int ii;
   nRV = nEachArg[0];
-  nParamRV = nEachArg[2];
-  nDataRV = nEachArg[3];
   if(nRV > 0) {
+    nParamRV = nEachArg[2];
+    nDataRV = nEachArg[3];
     mean = new double[nRV];
     cholSd = new double[nRV*nRV];
     tmpX = new double[nRV];

@@ -52,7 +52,7 @@ class sdeMCMC : public sdeLogLik<sMod> {
   void missGibbsUpdate(double *jumpSd, int *gibbsAccept, int *paramAccept);
   void paramVanillaUpdate(double *jumpSd, int *paramAccept);
   sdeMCMC(int n, double *dt, double *xInit, double *thetaInit,
-	  int *xIndex, int *thetaIndex,
+	  int *xIndex, bool *thetaIndex,
 	  double **phi, int nArgs, int *nEachArg, int ncores);
   ~sdeMCMC();
 };
@@ -60,7 +60,7 @@ class sdeMCMC : public sdeLogLik<sMod> {
 template <class sMod, class sPi>
   inline sdeMCMC<sMod, sPi>::sdeMCMC(int n, double *dt,
 				     double *xInit, double *thetaInit,
-				     int *xIndex, int *thetaIndex,
+				     int *xIndex, bool *thetaIndex,
 				     double **phi,
 				     int nArgs, int *nEachArg,
 				     int ncores) :
@@ -130,7 +130,8 @@ template <class sMod, class sPi>
   currTheta = currFull;
   propTheta = propFull;
   for(ii=0; ii<nParams; ii++) {
-    fixedTheta[ii] = (thetaIndex[ii] != 0); // R logicals stored as C++ ints
+    //fixedTheta[ii] = (thetaIndex[ii] != 0); // R logicals stored as C++ ints
+    fixedTheta[ii] = thetaIndex[ii]; // R logicals stored as C++ ints
     currTheta[ii] = thetaInit[ii];
     propTheta[ii] = currTheta[ii];
   }

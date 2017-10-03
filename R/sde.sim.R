@@ -26,7 +26,6 @@
 #'   \item{\code{nbad}}{The total number of bad draws.}
 #' }
 #' @examples
-#' \donttest{
 #' # load pre-compiled model
 #' hmod <- sde.examples("hest")
 #'
@@ -47,7 +46,6 @@
 #'      main = expression(X[t]))
 #' plot(hsim$data[,"Z"], type = "l", xlab = "Time", ylab = "",
 #'      main = expression(Z[t]))
-#' }
 #' @export
 sde.sim <- function(model, x0, theta, dt, dt.sim,
                     nobs, burn = 0, nreps = 1,
@@ -84,7 +82,7 @@ sde.sim <- function(model, x0, theta, dt, dt.sim,
   burn <- floor(burn)
   if(verbose) {
     message("Number of normal draws required: ",
-            round((nobs+burn-1)*rr*nreps, 2))
+            round((nobs+burn)*rr*nreps, 2))
     message("Running simulation...")
   }
 #  if(debug) browser()

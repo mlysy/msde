@@ -16,7 +16,6 @@
 #' }
 #' @importFrom stats approx
 #' @examples
-#' \donttest{
 #' # load Heston's model
 #' hmod <- sde.examples("hest")
 #'
@@ -39,7 +38,6 @@
 #' m <- 3 # divide each observation interval into m equally spaced timepoints
 #' sde.init(model = hmod, x = X0, dt = dT,
 #'          m = m, nvar.obs = 1, theta = theta)
-#' }
 #' @export
 sde.init <- function(model, x, dt, m = 1, nvar.obs, theta) {
   if(class(model) != "sde.model") {

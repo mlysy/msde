@@ -39,6 +39,48 @@ using namespace Rcpp;
 //#include "sdeMCMC.h"
 //#include "mcmcUtils.h"
 
+// --- helper functions --------------------------------------------------------
+
+// R -> C++ logical vector conversion.
+inline void convert_Logical(bool *out, LogicalVector in) {
+  for(int ii=0; ii<in.length(); ii++) {
+    if(LogicalVector::is_na(in[ii])) {
+      Rprintf("convert_Logical: NA detected.\n");
+    }
+    out[ii] = (in[ii] != 0);
+  }
+  return;
+}
+
+// parse prior arguments from R list
+class PriorArgs {
+ public:
+  int nArgs;
+  double **phi;
+  int *nEachArg;
+  PriorArgs(List phiIn);
+  ~PriorArgs() {
+    delete [] nEachArg;
+    delete [] phi;
+  }
+};
+
+inline PriorArgs::PriorArgs(List phiIn) {
+  nArgs = phiIn.length(); // at least 1, since hyper at least list(NULL)
+  phi = new double*[nArgs];
+  nEachArg = new int[nArgs];
+  for(int ii=0; ii<nArgs; ii++) {
+    if(Rf_isNull(phiIn[ii])) {
+      nEachArg[ii] = 0;
+    } else {
+      nEachArg[ii] = as<NumericVector>(phiIn[ii]).length();
+      phi[ii] = REAL(phiIn[ii]);
+    }
+  }
+}
+
+// --- C -> R object conversion ------------------------------------------------
+
 // for some reason sdeCobj needs a virtual destructor with explicit default.
 class sdeCobj {
  public:
