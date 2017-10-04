@@ -2,7 +2,11 @@
 #define sdePost_h
 
 #include <Rcpp.h>
-using namespace Rcpp;
+//using namespace Rcpp;
+typedef Rcpp::LogicalVector Logical;
+typedef Rcpp::NumericVector Numeric;
+typedef Rcpp::IntegerVector Integer;
+typedef Rcpp::List List;
 //[[Rcpp::depends(RcppProgress)]]
 #include <progress.hpp>
 #include <progress_bar.hpp>
@@ -11,16 +15,16 @@ using namespace Rcpp;
 #include "sdeInterface.h"
 
 template <class sMod, class sPi>
-  inline List sdeRobj<sMod, sPi>::Post(NumericVector initParams,
-				       NumericVector initData,
-				       NumericVector dT,
-				       IntegerVector nDimsPerObs,
-				       LogicalVector fixedParamsIn,
+  inline List sdeRobj<sMod, sPi>::Post(Numeric initParams,
+				       Numeric initData,
+				       Numeric dT,
+				       Integer nDimsPerObs,
+				       Logical fixedParamsIn,
 				       int nSamples, int burn,
 				       int nParamsOut, int nDataOut,
-				       IntegerVector dataOutSmp,
-				       IntegerVector dataOutComp,
-				       IntegerVector dataOutDims,
+				       Integer dataOutSmp,
+				       Integer dataOutComp,
+				       Integer dataOutDims,
 				       double updateParams,
 				       double updateData,
 				       List priorArgsIn, List tunePar,
@@ -42,14 +46,14 @@ template <class sMod, class sPi>
   int nMissN = nDims-nDimsPerObs[nComp-1]; // unobserved states in last observation
 
   // output variables
-  NumericVector paramsOut(nParamsOut);
-  NumericVector dataOut(nDataOut);
-  IntegerVector paramAcceptOut(nParams + nMiss0);
-  IntegerVector gibbsAcceptOut(nComp);
-  NumericVector logLikOut(nLogLikOut);
-  NumericVector lastMissOut(nLastMissOut);
-  NumericVector lastIter(nParams + nComp*nDims);
-  NumericVector mwgSdOut(nParams + nDims);
+  Numeric paramsOut(nParamsOut);
+  Numeric dataOut(nDataOut);
+  Integer paramAcceptOut(nParams + nMiss0);
+  Integer gibbsAcceptOut(nComp);
+  Numeric logLikOut(nLogLikOut);
+  Numeric lastMissOut(nLastMissOut);
+  Numeric lastIter(nParams + nComp*nDims);
+  Numeric mwgSdOut(nParams + nDims);
   // pointers to acceptance rate counters for internal use
   int *paramAccept = INTEGER(paramAcceptOut);
   int *gibbsAccept = INTEGER(gibbsAcceptOut);

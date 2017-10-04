@@ -2,7 +2,12 @@
 #define sdeSim_h
 
 #include <Rcpp.h>
-using namespace Rcpp;
+typedef Rcpp::LogicalVector Logical;
+typedef Rcpp::NumericVector Numeric;
+typedef Rcpp::IntegerVector Integer;
+typedef Rcpp::List List;
+//using namespace Rcpp;
+#include "rngUtils.h"
 #include "sdeUtils.h"
 #include "sdeInterface.h"
 
@@ -10,8 +15,8 @@ template <class sMod, class sPi>
   inline List sdeRobj<sMod, sPi>::Sim(int nDataOut,
 				      int N, int burn, int reps, int r,
 				      double dT, int MAXBAD,
-				      NumericVector initData,
-				      NumericVector params,
+				      Numeric initData,
+				      Numeric params,
 				      bool singleX, bool singleTheta) {
   RNGScope scope;
 
@@ -20,7 +25,7 @@ template <class sMod, class sPi>
   double sqrtDT = sqrt(dT);
   int bad = 0;
   // output
-  NumericVector dataOut(nDataOut);
+  Numeric dataOut(nDataOut);
   int nBadDraws;
 
   // storage
@@ -45,7 +50,7 @@ template <class sMod, class sPi>
       mvEuler<sMod>(mean, sd, X, dT, sqrtDT, theta, sde);
       do {
 	for(kk = 0; kk < nDims; kk++) {
-	  Z[kk] = norm_rand();
+	  Z[kk] = sdeRNG::rnorm();
 	}
 	xmvn<sMod>(X, Z, mean, sd, nDims);
 	// validate draw

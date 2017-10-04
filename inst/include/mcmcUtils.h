@@ -1,8 +1,9 @@
 #ifndef mcmcUtils_h
 #define mcmcUtils_h 1
 
-#include <Rcpp.h>
-using namespace Rcpp;
+//#include <Rmath.h>
+//using namespace Rcpp;
+#include "rngUtils.h"
 
 // x is either:
 // T/F: in which case it's a yes or no
@@ -12,7 +13,7 @@ inline bool updateComponent(double x, int iter) {
   bool update = false;
   if(x > 0.0) {
     if(x < 1.0) {
-      update = unif_rand() <= x;
+      update = sdeRNG::runif() <= x;
     }
     else {
       update = (iter % (int) x) == 0;

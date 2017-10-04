@@ -34,7 +34,11 @@ sde.post
 #define sdeInterface_h
 
 #include <Rcpp.h>
-using namespace Rcpp;
+typedef Rcpp::LogicalVector Logical;
+typedef Rcpp::NumericVector Numeric;
+typedef Rcpp::IntegerVector Integer;
+typedef Rcpp::List List;
+//using namespace Rcpp;
 //#include "sdeLogLik.h"
 //#include "sdeMCMC.h"
 //#include "mcmcUtils.h"
@@ -42,9 +46,9 @@ using namespace Rcpp;
 // --- helper functions --------------------------------------------------------
 
 // R -> C++ logical vector conversion.
-inline void convert_Logical(bool *out, LogicalVector in) {
+inline void convert_Logical(bool *out, Logical in) {
   for(int ii=0; ii<in.length(); ii++) {
-    if(LogicalVector::is_na(in[ii])) {
+    if(Logical::is_na(in[ii])) {
       Rprintf("convert_Logical: NA detected.\n");
     }
     out[ii] = (in[ii] != 0);
@@ -73,7 +77,7 @@ inline PriorArgs::PriorArgs(List phiIn) {
     if(Rf_isNull(phiIn[ii])) {
       nEachArg[ii] = 0;
     } else {
-      nEachArg[ii] = as<NumericVector>(phiIn[ii]).length();
+      nEachArg[ii] = as<Numeric>(phiIn[ii]).length();
       phi[ii] = REAL(phiIn[ii]);
     }
   }
@@ -86,28 +90,28 @@ class sdeCobj {
  public:
   virtual int get_nParams(void) = 0;
   virtual int get_nDims(void) = 0;
-  virtual LogicalVector isData(NumericVector xIn, NumericVector thetaIn,
+  virtual Logical isData(Numeric xIn, Numeric thetaIn,
 			       bool singleX, bool singleTheta, int nReps) = 0;
-  virtual LogicalVector isParams(NumericVector thetaIn, int nReps) = 0;
-  virtual NumericVector Drift(NumericVector xIn, NumericVector thetaIn,
+  virtual Logical isParams(Numeric thetaIn, int nReps) = 0;
+  virtual Numeric Drift(Numeric xIn, Numeric thetaIn,
 			      bool singleX, bool singleTheta, int nReps) = 0;
-  virtual NumericVector Diff(NumericVector xIn, NumericVector thetaIn,
+  virtual Numeric Diff(Numeric xIn, Numeric thetaIn,
 			     bool singleX, bool singleTheta, int nReps) = 0;
-  virtual NumericVector LogLik(NumericVector xIn, NumericVector dTIn,
-			       NumericVector thetaIn,
+  virtual Numeric LogLik(Numeric xIn, Numeric dTIn,
+			       Numeric thetaIn,
 			       int nComp, int nReps,
 			       bool singleX, bool singleTheta, int nCores) = 0;
-  virtual NumericVector Prior(NumericVector thetaIn, NumericVector xIn,
+  virtual Numeric Prior(Numeric thetaIn, Numeric xIn,
 			      bool singleTheta, bool singleX,
 			      int nReps, List phiIn) = 0;
   virtual List Sim(int nDataOut, int N, int burn, int reps, int r, double dT,
-		   int MAXBAD, NumericVector initData, NumericVector params,
+		   int MAXBAD, Numeric initData, Numeric params,
 		   bool singleX, bool singleTheta) = 0;
-  virtual List Post(NumericVector initParams, NumericVector initData,
-		    NumericVector dT, IntegerVector nDimsPerObs,
-		    LogicalVector fixedParams, int nSamples, int burn,
-		    int nParamsOut, int nDataOut, IntegerVector dataOutSmp,
-		    IntegerVector dataOutComp, IntegerVector dataOutDims,
+  virtual List Post(Numeric initParams, Numeric initData,
+		    Numeric dT, Integer nDimsPerObs,
+		    Logical fixedParams, int nSamples, int burn,
+		    int nParamsOut, int nDataOut, Integer dataOutSmp,
+		    Integer dataOutComp, Integer dataOutDims,
 		    double updateParams, double updateData, List priorArgs,
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut,
@@ -125,28 +129,28 @@ class sdeRobj : public sdeCobj {
  public:
   virtual int get_nParams(void);
   virtual int get_nDims(void);
-  virtual LogicalVector isData(NumericVector xIn, NumericVector thetaIn,
+  virtual Logical isData(Numeric xIn, Numeric thetaIn,
 			       bool singleX, bool singleTheta, int nReps);
-  virtual LogicalVector isParams(NumericVector thetaIn, int nReps);
-  virtual NumericVector Drift(NumericVector xIn, NumericVector thetaIn,
+  virtual Logical isParams(Numeric thetaIn, int nReps);
+  virtual Numeric Drift(Numeric xIn, Numeric thetaIn,
 			      bool singleX, bool singleTheta, int nReps);
-  virtual NumericVector Diff(NumericVector xIn, NumericVector thetaIn,
+  virtual Numeric Diff(Numeric xIn, Numeric thetaIn,
 			     bool singleX, bool singleTheta, int nReps);
-  virtual NumericVector LogLik(NumericVector xIn, NumericVector dTIn,
-			       NumericVector thetaIn,
+  virtual Numeric LogLik(Numeric xIn, Numeric dTIn,
+			       Numeric thetaIn,
 			       int nComp, int nReps,
 			       bool singleX, bool singleTheta, int nCores);
-  virtual NumericVector Prior(NumericVector thetaIn, NumericVector xIn,
+  virtual Numeric Prior(Numeric thetaIn, Numeric xIn,
 			      bool singleTheta, bool singleX,
 			      int nReps, List phiIn);
   virtual List Sim(int nDataOut, int N, int burn, int reps, int r, double dT,
-		   int MAXBAD, NumericVector initData, NumericVector params,
+		   int MAXBAD, Numeric initData, Numeric params,
 		   bool singleX, bool singleTheta);
-  virtual List Post(NumericVector initParams, NumericVector initData,
-		    NumericVector dT, IntegerVector nDimsPerObs,
-		    LogicalVector fixedParams, int nSamples, int burn,
-		    int nParamsOut, int nDataOut, IntegerVector dataOutSmp,
-		    IntegerVector dataOutComp, IntegerVector dataOutDims,
+  virtual List Post(Numeric initParams, Numeric initData,
+		    Numeric dT, Integer nDimsPerObs,
+		    Logical fixedParams, int nSamples, int burn,
+		    int nParamsOut, int nDataOut, Integer dataOutSmp,
+		    Integer dataOutComp, Integer dataOutDims,
 		    double updateParams, double updateData, List priorArgs,
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut,

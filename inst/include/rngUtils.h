@@ -4,21 +4,23 @@
 // entrypoint for specifying random number generators.
 // primarily useful for porting C++ library to something other than R.
 
-#include <Rcpp.h>
+#include <Rmath.h>
 
-inline double unif_rand(void) {
-  Rcpp::unif_rand();
-}
+namespace sdeRNG {
+  inline double runif(void) {
+    return unif_rand();
+  }
 
-inline double norm_rand(void) {
-  Rcpp::norm_rand();
+  inline double rnorm(void) {
+    return norm_rand();
+  }
 }
 
 // --- fast normal draws -------------------------------------------------------
 
 // not currently used, because box-muller "counter" issue can't be passed to
 // RNGkind, which would be ideal for debuggin...
-inline double fast_norm_rand(void) {
+inline double rnorm_fast(void) {
   static bool doCalc = true;
   static double y1, y2;
   double x1, x2, w, retval;

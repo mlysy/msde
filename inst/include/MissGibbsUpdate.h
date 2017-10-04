@@ -1,9 +1,9 @@
 #ifndef MissGibbsUpdate_h
 #define MissGibbsUpdate_h 1
 
-//[[Rcpp::depends("msde")]]
-#include <mvnUtils.h>
-#include <sdeMCMC.h>
+#include "rngUtils.h"
+#include "mvnUtils.h"
+#include "sdeMCMC.h"
 
 // eraker proposal mean and standard deviatiation
 // NOTE: sde = upper triangular cholesky factor
@@ -39,17 +39,17 @@ template <class sMod, class sPi>
   // Markov chain elements are conditionally independent,
   // so every other can be updated in parallel
   // pre-draw missing data (don't know how to parallelize this yet)
-  propU[0] = unif_rand(); // also pre-draw acceptance Uniforms
+  propU[0] = sdeRNG::runif(); // also pre-draw acceptance Uniforms
   for(II=0; II<nMiss; II++) {
     ii = missInd[II];
-    propU[ii] = unif_rand();
+    propU[ii] = sdeRNG::runif();
     for(jj=nObsComp[ii]; jj<nDims; jj++) {
-      propZ[ii*nDims + jj] = norm_rand();
+      propZ[ii*nDims + jj] = sdeRNG::rnorm();
     }
   }
   ii = nComp-1;
   for(jj=nObsComp[ii]; jj<nDims; jj++) {
-    propZ[ii*nDims + jj] = norm_rand();
+    propZ[ii*nDims + jj] = sdeRNG::rnorm();
   }
   // intermediate data points
   for(JJ = 0; JJ < 2; JJ++) {
@@ -139,7 +139,7 @@ template <class sMod, class sPi>
     // random walk metropolis
     for(jj = 0; jj < nMiss0; jj++) {
       // proposal
-      propX[nObsComp[0]+jj] = currX[nObsComp[0]+jj] + jumpSd[nParams+jj] * norm_rand();
+      propX[nObsComp[0]+jj] = currX[nObsComp[0]+jj] + jumpSd[nParams+jj] * sdeRNG::rnorm();
       if(sde[iCore].isValidData(&propX[iCore*nDims], currTheta)) {
 	// acceptance rate.
 	// target 1

@@ -1,9 +1,6 @@
 #ifndef mvnUtils_h
 #define mvnUtils_h 1
 
-#include <Rcpp.h>
-using namespace Rcpp;
-
 // main functions are: xmvn, zmvn, lmvn.  have one for cholSd's and sd's
 // which are just diagonal.
 
@@ -91,15 +88,5 @@ inline double lmvn_diag(double *x, double *z,
   }
   return(-(.5*ssq + ldC));
 }
-
-/*
-// iid normal draws
-void rnormiid(double *z, int n) {
-  for(int ii=0; ii<n; ii++) {
-    z[ii] = norm_rand();
-  }
-  return;
-}
-*/
 
 #endif

@@ -9,7 +9,6 @@
 // of the same object.
 // the object will inherit from sdeLogLik.
 
-//[[Rcpp::depends("msde")]]
 #include "mvnUtils.h"
 #include "sdeLogLik.h"
 //#include "mcmcUtils.h"

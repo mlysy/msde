@@ -2,7 +2,11 @@
 #define sdeRUtils_h
 
 #include <Rcpp.h>
-using namespace Rcpp;
+typedef Rcpp::LogicalVector Logical;
+typedef Rcpp::NumericVector Numeric;
+typedef Rcpp::IntegerVector Integer;
+typedef Rcpp::List List;
+//using namespace Rcpp;
 #include "sdeUtils.h"
 #include "sdeLogLik.h"
 #include "sdeInterface.h"
@@ -19,15 +23,14 @@ template <class sMod, class sPi>
 }
 
 template <class sMod, class sPi>
-  inline LogicalVector sdeRobj<sMod, sPi>::isData(NumericVector xIn,
-						  NumericVector thetaIn,
-						  bool singleX,
-						  bool singleTheta, int nReps) {
+  inline Logical sdeRobj<sMod, sPi>::isData(Numeric xIn, Numeric thetaIn,
+					    bool singleX, bool singleTheta,
+					    int nReps) {
   int nDims = sMod::nDims;
   int nParams = sMod::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
-  LogicalVector validOut(nReps);
+  Logical validOut(nReps);
   sMod sde;
   for(int ii = 0; ii < nReps; ii++) {
     validOut[ii] = sde.isValidData(&x[ii*(!singleX)*nDims],
@@ -37,10 +40,10 @@ template <class sMod, class sPi>
 }
 
 template <class sMod, class sPi>
-  inline LogicalVector sdeRobj<sMod, sPi>::isParams(NumericVector thetaIn, int nReps) {
+  inline Logical sdeRobj<sMod, sPi>::isParams(Numeric thetaIn, int nReps) {
   int nParams = sMod::nParams;
   double *theta = REAL(thetaIn);
-  LogicalVector validOut(nReps);
+  Logical validOut(nReps);
   sMod sde;
   for(int ii = 0; ii < nReps; ii++) {
     validOut[ii] = sde.isValidParams(&theta[ii*nParams]);
@@ -51,16 +54,14 @@ template <class sMod, class sPi>
 // Best to parallelize these from within R: easier and prob faster since
 // memory can be allocated in parallel there
 template <class sMod, class sPi>
-  inline NumericVector sdeRobj<sMod, sPi>::Drift(NumericVector xIn,
-						 NumericVector thetaIn,
-						 bool singleX,
-						 bool singleTheta,
-						 int nReps) {
+  inline Numeric sdeRobj<sMod, sPi>::Drift(Numeric xIn, Numeric thetaIn,
+					   bool singleX, bool singleTheta,
+					   int nReps) {
   int nDims = sMod::nDims;
   int nParams = sMod::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
-  NumericVector drOut(nReps*nDims);
+  Numeric drOut(nReps*nDims);
   double *dr = REAL(drOut);
   sMod sde;
   for(int ii = 0; ii < nReps; ii++) {
@@ -71,16 +72,15 @@ template <class sMod, class sPi>
 }
 
 template <class sMod, class sPi>
-  inline NumericVector sdeRobj<sMod, sPi>::Diff(NumericVector xIn,
-						NumericVector thetaIn,
-						bool singleX,
-						bool singleTheta, int nReps) {
+  inline Numeric sdeRobj<sMod, sPi>::Diff(Numeric xIn, Numeric thetaIn,
+					  bool singleX, bool singleTheta,
+					  int nReps) {
   int nDims = sMod::nDims;
   int nDims2 = nDims*nDims;
   int nParams = sMod::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
-  NumericVector dfOut(nReps*nDims2);
+  Numeric dfOut(nReps*nDims2);
   double *df = REAL(dfOut);
   sMod sde;
   int ii,jj;
@@ -108,18 +108,15 @@ template <class sMod, class sPi>
 
 // SDE log-likelihood evaluation.
 template <class sMod, class sPi>
-  inline NumericVector sdeRobj<sMod, sPi>::LogLik(NumericVector xIn,
-						  NumericVector dTIn,
-						  NumericVector thetaIn,
-						  int nComp, int nReps,
-						  bool singleX,
-						  bool singleTheta,
-						  int nCores) {
+  inline Numeric sdeRobj<sMod, sPi>::LogLik(Numeric xIn, Numeric dTIn,
+					    Numeric thetaIn, int nComp,
+					    int nReps, bool singleX,
+					    bool singleTheta, int nCores) {
   int nDims = sMod::nDims;
   int nParams = sMod::nParams;
   double *x = REAL(xIn);
   double *theta = REAL(thetaIn);
-  NumericVector llOut(nReps);
+  Numeric llOut(nReps);
   double *ll = REAL(llOut);
   sdeLogLik<sMod> sdeLL(nComp, REAL(dTIn), nCores);
   for(int ii=0; ii<nReps; ii++) {
@@ -130,11 +127,9 @@ template <class sMod, class sPi>
 }
 
 template <class sMod, class sPi>
-  inline NumericVector sdeRobj<sMod, sPi>::Prior(NumericVector thetaIn,
-						 NumericVector xIn,
-						 bool singleTheta,
-						 bool singleX,
-						 int nReps, List phiIn) {
+  inline Numeric sdeRobj<sMod, sPi>::Prior(Numeric thetaIn, Numeric xIn,
+					   bool singleTheta, bool singleX,
+					   int nReps, List phiIn) {
   int nDims = sMod::nDims;
   int nParams = sMod::nParams;
   int ii;
@@ -153,7 +148,7 @@ template <class sMod, class sPi>
   /*   } */
   /* } */
   sPi prior(priorArgs.phi, priorArgs.nArgs, priorArgs.nEachArg);
-  NumericVector lpOut(nReps);
+  Numeric lpOut(nReps);
   double *lp = REAL(lpOut);
   // NOTE: this can't be parallelized because private storage is common
   // to parallelize need array of sdePrior objects
