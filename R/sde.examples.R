@@ -41,7 +41,7 @@ sde.examples <- function(model = c("hest", "pgnet", "lotvol", "biou"),
     param.names <- c("Gamma11", "Gamma21", "Gamma12", "Gamma22",
                      "Lambda1", "Lambda2",
                      "Psi11", "Psi12", "Psi22")
-    data.names <- c("X1","X2")
+    data.names <- c("Y1","Y2")
     sptr <- .biou_MakeModel()
   } else if(model == "lotvol") {
     ModelFile <- file.path(.msde_include_path, "lotvolModel.h")
