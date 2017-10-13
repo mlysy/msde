@@ -1,4 +1,4 @@
-#' Loglikelihood for multivariate Ornstein-Uhlenbeck model.
+#' Loglikelihood for multivariate Ornstein-Uhlenbeck process.
 #'
 #' Computes the exact Euler loglikelihood for any amount of missing data using a Kalman filter.
 #' @param X An \code{nobs x ndims} matrix of complete data.

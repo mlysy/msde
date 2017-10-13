@@ -2,7 +2,7 @@
 % Please edit documentation in R/mou.loglik.R
 \name{mou.loglik}
 \alias{mou.loglik}
-\title{Loglikelihood for multivariate Ornstein-Uhlenbeck model.}
+\title{Loglikelihood for multivariate Ornstein-Uhlenbeck process.}
 \usage{
 mou.loglik(X, dt, nvar.obs, Gamma, Lambda, Phi, mu0, Sigma0)
 }
