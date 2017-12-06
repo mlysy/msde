@@ -19,30 +19,33 @@ pf_test() # returns nDims
 require(msde)
 source("smc-functions.R")
 
-data.names <- c("X", "A")
+# eou model setup
+data.names <- c("X", "V")
 param.names <- c("alpha", "gamma", "eta", "sigma", "rho")
 emod <- sde.make.model("eouModel.h",
                        data.names = data.names, param.names = param.names)
 
 # simulate some data
-theta0 <- c(alpha = .1, gamma = 4.8, eta = 0.1, sigma = .1, rho = -.63)
-nObs <- 10
-nDims <- emod$ndims
-dT <- runif(1)
-Y0 <- c(X = rnorm(1), A = rnorm(1))
-
+theta0 <- c(alpha = .1, gamma = 4.8, eta = 0.1, sigma = .1, rho = -.63) # true parameter values
+nObs <- 10 # number of observations
+nDims <- emod$ndims # number of dimensions 
+dT <- 1 # time between observations (years)
+Y0 <- c(X = rnorm(1), V = rnorm(1)) # initial SDE values
 esim <- sde.sim(emod, x0 = Y0, theta = theta0,
-                dt = dT, dt.sim = dT/10, nobs = nObs)
-Yt <- esim$data
+                nobs = nObs-1, # nObs-1 steps forward
+                dt = dT,
+                dt.sim = dT/10) # internal observation time
+Yt <- esim$data # extract the simulated SDE values
 
 # ok infill
 
 # normal draws
 nPart <- 50 # number of particles
-Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
-
+# initialize the posterior sampler
 einit <- sde.init(emod, x = Yt, dt = dT, theta = theta0,
-                  nvar.obs = sample(nDims, nObs, replace = TRUE))
+                  nvar.obs = 1, # number of observed variables per timepoint
+                  #nvar.obs = sample(nDims, nObs, replace = TRUE), # I don't think it makes sense 
+                  m = 1) # assume no missing point for the time being
 
 Yup <- matrix(NA, nObs, nDims*nPart)
 lwgt <- matrix(NA, nObs, nPart)
@@ -56,6 +59,8 @@ for(ipart in 1:nPart) {
   Yup[,ind] <- tmp$X
   lwgt[,ipart] <- tmp$lwgt
 }
+
+Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
 
 # ok now in C++: without SMCTC
 tmp <- pf_update(initParams = einit$params, initData = t(Yt),
