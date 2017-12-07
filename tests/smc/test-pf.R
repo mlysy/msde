@@ -41,10 +41,11 @@ Yt <- esim$data # extract the simulated SDE values
 
 # normal draws
 nPart <- 50 # number of particles
-# initialize the posterior sampler
+# initialize
+# assume all volatilities missing
 einit <- sde.init(emod, x = Yt, dt = dT, theta = theta0,
                   nvar.obs = 1, # number of observed variables per timepoint
-                  #nvar.obs = sample(nDims, nObs, replace = TRUE), # I don't think it makes sense 
+                  #nvar.obs = sample(nDims, nObs, replace = TRUE), # I don't what it means 
                   m = 1) # assume no missing point for the time being
 
 Yup <- matrix(NA, nObs, nDims*nPart)
