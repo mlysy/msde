@@ -109,7 +109,7 @@ void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
 template <class sMod>
 void fInitialise(sdeParticle<sMod>& value, double& logweight,
 		 sdeFilter<sMod> & pf_calcs) {
-  Rprintf("made it to fInitialise.\n");
+  //Rprintf("made it to fInitialise.\n");
   // set particle
   logweight = pf_calcs.init(value.yObs);
   pf_calcs.increase_counter();
@@ -120,7 +120,7 @@ template <class sMod>
 void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
 	   sdeFilter<sMod> & pf_calcs) {
   int iCore = 0;
-  Rprintf("counter = %i\n", pf_calcs.get_counter());
+  //Rprintf("counter = %i\n", pf_calcs.get_counter());
   logweight += pf_calcs.update(value.yObs, value.yObs, lTime,
 			       pf_calcs.get_counter(), iCore);
   pf_calcs.increase_counter();

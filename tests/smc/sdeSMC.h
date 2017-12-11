@@ -258,7 +258,7 @@ sdeFilter<sMod>::operator=(const sdeFilter<sMod> & other) {
 
 template <class sMod>
 inline sdeFilter<sMod>::~sdeFilter() {
-  Rprintf("sdeFilter destructor called.\n");
+  //Rprintf("sdeFilter destructor called.\n");
   clear();
 }
 
@@ -288,7 +288,7 @@ class sdeParticle {
     return;
   }
   ~sdeParticle() {
-    Rprintf("sdeParticle destructor called.\n");
+    //Rprintf("sdeParticle destructor called.\n");
     delete [] yObs;
   }
   sdeParticle & operator=(const sdeParticle & other) {
@@ -298,7 +298,7 @@ class sdeParticle {
     return *this;
   }
   sdeParticle(const sdeParticle & from) {
-    Rprintf("sdeParticle copy constructor called.\n");
+    //Rprintf("sdeParticle copy constructor called.\n");
     yObs = new double[nDims];
     set_yObs(from.yObs);
   }
