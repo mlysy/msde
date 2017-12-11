@@ -86,9 +86,12 @@ tmp2 <- pf_eval(initParams = einit$params, initData = t(Yt),
                 NormalDraws = t(Z))
 
 Yup2 <- t(tmp2$X)
+# To normalize the weghts in lwgt to make it comparable with tmp2$lgwt
+# the outer apply(.., 1, func...) will implictly change the dimension of lwgt
+# since each row it extracts will be treated as a column vector in func(x){...}
 lwgt2 <- apply(apply(lwgt, 2, cumsum), 1, function(x) {
   mx <- max(x)
-  x - (log(sum(exp(x - mx))) + mx)
+  x - (log(sum(exp(x - mx))) + mx) # for avoiding enumerical overflow
 })
 
 # ----- test smoothing results -----
