@@ -154,8 +154,10 @@ List particleEval(NumericVector initParams, NumericMatrix initData,
   int nStride = nDims*nPart;
   NumericMatrix dataOut(nDims*nPart, nComp);
   NumericMatrix LogWeightOut(nPart, nComp);
+  NumericMatrix unLogWeightOut(nPart, nComp);
   double *yOut = REAL(dataOut);
   double *lwgt = REAL(LogWeightOut);
+  double *unlwgt = REAL(unLogWeightOut);
   sdeParticle<sMod> pTmp;
   smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> > *Adapt;
   Adapt = new sdeAdapt<sMod>;
@@ -185,12 +187,18 @@ List particleEval(NumericVector initParams, NumericMatrix initData,
     for(int ii=1; ii<nComp; ii++) {
       Rprintf("lTime = %i\n", ii);
       Sampler.Iterate();
+      // to get unormalized log-weights from smctc member function
+      for(int jj=0; jj != nPart; ++jj) {
+          int tmp = jj + (ii-1)*nPart;
+          unlwgt[tmp] = Sampler.GetParticleLogWeightN(jj);
+      }
       save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
     }
     //delete Sampler;
     delete Adapt;
     return List::create(Rcpp::Named("X") = dataOut,
-			Rcpp::Named("lwgt") = LogWeightOut);
+			Rcpp::Named("lwgt") = LogWeightOut,
+			Rcpp::Named("unlwgt") = unLogWeightOut);
   }
   catch(smc::exception e) {
     Rcpp::Rcout << e;
