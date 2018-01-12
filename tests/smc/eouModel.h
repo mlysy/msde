@@ -24,6 +24,7 @@ class sdeModel {
 };
 
 // drift function
+// theta = c(alpha, gamma, eta, sigma, rho)
 inline void sdeModel::sdeDr(double *dr, double *x, double *theta) {
   dr[0] = (theta[0] - .5 * exp(x[1])); // x
   dr[1] = -(theta[1]*x[1] + theta[2]); // z

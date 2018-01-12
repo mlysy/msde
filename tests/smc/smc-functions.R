@@ -41,6 +41,8 @@ cmvn <- function(x2, x1, mean, cholsd) {
 
 
 # update
+#'@param X The SDE data which is an nObs x nDims matrix 
+#'@param Z The normal draws corresponding to each dimension of X, an nObs-1 x nDims matrix 
 smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
   nobs <- nrow(X)
   ndims <- ncol(X)
