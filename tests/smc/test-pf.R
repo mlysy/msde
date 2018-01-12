@@ -67,7 +67,8 @@ lwgt2 <- t(tmp$lwgt)
 range(Yup - Yup2)
 range(lwgt - lwgt2)
 
-# with SMCTC.
+#--- with SMCTC. -----------------------------------------------------------
+
 tmp2 <- pf_eval(initParams = einit$params, initData = t(Yt),
                 dT = einit$dt.m, nDimsPerObs = einit$nvar.obs.m,
                 NormalDraws = t(Z))

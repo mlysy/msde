@@ -2,7 +2,7 @@
 // --- SMC for multivariate SDEs -----------------------------------------------
 
 Limitations:
-- only unbounded data, i.e., isValidData == TRUE.
+- undefined behavior for invalid data (isValidData = FALSE).  This is because
 - no filtering, only smoothing.
 - no parallel processing.
 
@@ -52,10 +52,10 @@ class sdeFilter {
   int nDims2;
   int nPart; // number of particles
   int iPart; // which particle are we on
-  // internal constructor
+  // internal constructor (shared by overloaded constructors)
   void initialize(int np, int nc, double *dt, int *yIndex,
 		  double *yInit, double *thetaInit);
-  void clear(); // internal destructor
+  void clear(); // internal destructor (for delete and deep-copy overwrite)
  public:
   int nDims, nParams, nComp;
   int *nObsComp;
@@ -119,7 +119,7 @@ inline double sdeFilter<sMod>::update(double *yNew, double *yOld,
   if(sde[iCore].isValidData(yTmp, theta)) {
     lw = lmvn<sMod>(yTmp, Z, mean, sd, nObs);
   } else {
-    lw = 1.0/0.0;
+    lw = -1.0/0.0;
   }
   return lw;
 }
@@ -229,6 +229,9 @@ inline sdeFilter<sMod>::sdeFilter() {
 }
 
 // deep copy assignment
+// required to pass in AlgParams to Sampler.
+// (which first creates AlgParams with "default ctor", then deep-copies
+// to replace it when setAlgParams is called)
 template <class sMod>
 inline sdeFilter<sMod> &
 sdeFilter<sMod>::operator=(const sdeFilter<sMod> & other) {
@@ -297,6 +300,7 @@ class sdeParticle {
     }
     return *this;
   }
+  // deep copy required to extract particle from Sampler.
   sdeParticle(const sdeParticle & from) {
     Rprintf("sdeParticle copy constructor called.\n");
     yObs = new double[nDims];

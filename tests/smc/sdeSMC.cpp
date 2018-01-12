@@ -16,100 +16,17 @@ using namespace Rcpp;
 // typedef Rcpp::IntegerVector Integer;
 // typedef Rcpp::List List;
 
-// better test this before we get too far...
-//[[Rcpp::export("pf_test")]]
-int Test() {
-  sdeParticle<eou::sdeModel> particle;
-  return particle.get_nDims();
-}
-
-// particle filter without SMCTC
+// particle filter with SMCTC
 // requires precomputed normal draws, i.e., deterministic output
-//[[Rcpp::export("pf_update")]]
-List particleUpdate(NumericVector initParams, NumericMatrix initData,
-		    NumericVector dT, IntegerVector nDimsPerObs,
-		    NumericMatrix NormalDraws) {
-  typedef eou::sdeModel sMod;
-  int nDims = sMod::nDims;
-  int nComp = initData.ncol();
-  int nPart = NormalDraws.nrow()/nDims;
-  int nStride = nDims*nPart;
-  NumericMatrix dataOut(nDims*nPart, nComp);
-  NumericMatrix LogWeightOut(nPart, nComp);
-  double *yOut = REAL(dataOut);
-  double *lwgt = REAL(LogWeightOut);
-  sdeFilter<sMod> pf(nPart, nComp, REAL(dT), INTEGER(nDimsPerObs),
-		     REAL(initData), REAL(initParams), REAL(NormalDraws));
-  // initialize
-  int ii,jj;
-  for(jj=0; jj<nPart; jj++) {
-    lwgt[jj] = pf.init(&yOut[nDims*jj]);
-  }
-  for(ii=1; ii<nComp; ii++) {
-    for(jj=0; jj<nPart; jj++) {
-      lwgt[ii*nPart + jj] = pf.update(&yOut[ii*nDims*nPart + jj*nDims],
-				      &yOut[(ii-1)*nDims*nPart + jj*nDims],
-				      ii, jj, 0);
-    }
-  }
-  return List::create(Rcpp::Named("X") = dataOut,
-		      Rcpp::Named("lwgt") = LogWeightOut);
-}
 
-// experiment with "algorithm" parameter to SMC constructor
-template <class sMod>
-class testAlg {
-private:
-  static const int nDims = sMod::nDims;
-public:
-  std::vector<double> yObs;
-  testAlg() {
-    yObs.resize(nDims);
-    for(int ii=0; ii<nDims; ii++) {
-      yObs[ii] = 1.0*ii;
-    }
-  }
-  ~testAlg() {
-  }
-};
-
-/*
-template <class sMod>
-void fInitialise(sdeParticle<sMod>& value, double& logweight,
-		 testAlg<sMod> & pf_calcs) {
-  //Rprintf("made it to fInitialise.\n");
-  logweight = 0.0;
-  //for(int ii=0; ii<sMod::nDims; ii++) {
-    //Rprintf("value.yObs.size() = %i\n", value.yObs.size());
-    //Rprintf("value.yObs[%i] = %f\n", ii, value.yObs[ii]);
-    //value.yObs[ii] = ii*1.0;
-  //}
-  value.set_yObs(&pf_calcs.yObs[0]);
-  Rprintf("made it through fInitialize.\n");
-  return;
-}
-
-template <class sMod>
-void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
-	   testAlg<sMod> & pf_calcs) {
-  int iCore = 0;
-  logweight = lTime * 1.0;
-  for(int ii=0; ii<sMod::nDims; ii++) {
-    Rprintf("value.yObs[%i] = %f\n", ii, value.yObs[ii]);
-    //value.yObs[ii] = lTime*ii*1.0;
-  }
-  return;
-}
-*/
-
-// -----------------------------------------------------------------------------
-
-// same thing, but using SMCTC
+// initialize and move methods for Sampler.
+// note that the actual computations are done with the sdeFilter object,
+// i.e., the algorithm parameters, which efficiently handles memory allocation.
 
 template <class sMod>
 void fInitialise(sdeParticle<sMod>& value, double& logweight,
 		 sdeFilter<sMod> & pf_calcs) {
-  Rprintf("made it to fInitialise.\n");
+  //Rprintf("made it to fInitialise.\n");
   // set particle
   logweight = pf_calcs.init(value.yObs);
   pf_calcs.increase_counter();
@@ -120,13 +37,14 @@ template <class sMod>
 void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
 	   sdeFilter<sMod> & pf_calcs) {
   int iCore = 0;
-  Rprintf("counter = %i\n", pf_calcs.get_counter());
+  //Rprintf("counter = %i\n", pf_calcs.get_counter());
   logweight += pf_calcs.update(value.yObs, value.yObs, lTime,
 			       pf_calcs.get_counter(), iCore);
   pf_calcs.increase_counter();
   return;
 }
 
+// extract double* representation of each particle from the sdeParticle representation used in the Sampler, i.e., the final output of the PF is a vector of logweights, and a nPart x nDims matrix, where each row is a samples from p(X_T, Y_T | X_0:T, theta).
 template <class sMod>
 void save_state(double *yOut, double *lwgt,
 		smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
@@ -152,38 +70,44 @@ List particleEval(NumericVector initParams, NumericMatrix initData,
   int nComp = initData.ncol();
   int nPart = NormalDraws.nrow()/nDims;
   int nStride = nDims*nPart;
+  // for debugging purposes, output whole history
   NumericMatrix dataOut(nDims*nPart, nComp);
   NumericMatrix LogWeightOut(nPart, nComp);
-  double *yOut = REAL(dataOut);
+  // pointers to Rcpp memory, i.e., double* representation
+  double *yOut = REAL(dataOut); 
   double *lwgt = REAL(LogWeightOut);
+  // Sampler can only deep-copy particles out from its storage
   sdeParticle<sMod> pTmp;
+  // this is for eventual parallel implementation.
   smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> > *Adapt;
   Adapt = new sdeAdapt<sMod>;
-  Rprintf("before SMC.\n");
+  //Rprintf("before SMC.\n");
   // SMC
   try {
     smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> >
       Sampler((long)nPart, HistoryType::NONE);
     smc::moveset<sdeParticle<sMod>, sdeFilter<sMod> >
       Moveset(fInitialise<sMod>, fMove<sMod>, NULL);
-    Rprintf("Sampler and Moveset created.\n");
+    //Rprintf("Sampler and Moveset created.\n");
 
-    Rprintf("right before SetAlgParams.\n");
+    // AlgParam needs to be deep-copied into Sampler
+    //Rprintf("right before SetAlgParams.\n");
     Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp, REAL(dT),
 					INTEGER(nDimsPerObs),
 					REAL(initData), REAL(initParams),
 					REAL(NormalDraws)));
-    Rprintf("algParams passed in.\n");
+    //Rprintf("algParams passed in.\n");
     // no resampling to give same output as R code (for debugging only)
     Sampler.SetResampleParams(ResampleType::RESIDUAL, -1.0);
     Sampler.SetMoveSet(Moveset);
     Sampler.Initialise();
-    save_state<sMod>(yOut, lwgt, Sampler, pTmp);
-    Sampler.SetAdaptMethods(Adapt);
-    Rprintf("Sampler initialized.\n");
+    // extract particle from Sampler
+    save_state<sMod>(yOut, lwgt, Sampler, pTmp); 
+    Sampler.SetAdaptMethods(Adapt); // TBD for parallel processing
+    //Rprintf("Sampler initialized.\n");
     // long lTime;
     for(int ii=1; ii<nComp; ii++) {
-      Rprintf("lTime = %i\n", ii);
+      //Rprintf("lTime = %i\n", ii);
       Sampler.Iterate();
       save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
     }
@@ -196,47 +120,4 @@ List particleEval(NumericVector initParams, NumericMatrix initData,
     Rcpp::Rcout << e;
   }
   return R_NilValue;
-}
-
-//[[Rcpp::export("pf_eval_test")]]
-int particleEvalTest(NumericVector initParams, NumericMatrix initData,
-		     NumericVector dT, IntegerVector nDimsPerObs,
-		     NumericMatrix NormalDraws) {
-  typedef eou::sdeModel sMod;
-  int nDims = sMod::nDims;
-  int nComp = initData.ncol();
-  int nPart = NormalDraws.nrow()/nDims;
-  int nStride = nDims*nPart;
-  NumericMatrix dataOut(nDims*nPart, nComp);
-  NumericMatrix LogWeightOut(nPart, nComp);
-  double *yOut = REAL(dataOut);
-  double *lwgt = REAL(LogWeightOut);
-  sdeParticle<sMod> pOut;
-  Rprintf("before SMC.\n");
-  // SMC
-  try {
-    smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> >
-      Sampler((long)nPart, HistoryType::NONE);
-    smc::moveset<sdeParticle<sMod>, sdeFilter<sMod> >
-      Moveset(fInitialise<sMod>, fMove<sMod>, NULL);
-
-    sdeFilter<sMod> sf;
-    Rprintf("created empty sdeFilter.\n");
-    sdeFilter<sMod> sf2(nPart, nComp, REAL(dT),
-			INTEGER(nDimsPerObs),
-			REAL(initData), REAL(initParams),
-			REAL(NormalDraws));
-    Rprintf("created full sdeFilter.\n");
-    sf = sf2;
-    Rprintf("assigned sdeFilter.\n");
-    // Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp, REAL(dT),
-    // 					INTEGER(nDimsPerObs),
-    // 					REAL(initData), REAL(initParams),
-    // 					REAL(NormalDraws)));
-    return 0;
-  }
-  catch(smc::exception e) {
-    Rcpp::Rcout << e;
-  }
-  return 0;
 }
