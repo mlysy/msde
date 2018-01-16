@@ -23,6 +23,10 @@ namespace pgnet {
 #include "pgnetModel.h"
 #undef sdeModel_h
 }
+namespace eou {
+#include "eouModel.h"
+#undef eouModel_h
+}
 
 //[[Rcpp::export(".hest_MakeModel")]]
 SEXP hestMakeModel() {
@@ -48,6 +52,13 @@ SEXP pgnetMakeModel() {
 //[[Rcpp::export(".lotvol_MakeModel")]]
 SEXP lotvolMakeModel() {
   sdeCobj *sde = new sdeRobj<lotvol::sdeModel, mvn::sdePrior>;
+  XPtr<sdeCobj> sdeptr(sde, true);
+  return sdeptr;
+}
+
+//[[Rcpp::export(".eou_MakeModel")]]
+SEXP eouMakeModel() {
+  sdeCobj *sde = new sdeRobj<eou::sdeModel, mvn::sdePrior>;
   XPtr<sdeCobj> sdeptr(sde, true);
   return sdeptr;
 }
