@@ -34,11 +34,7 @@ Implementation:
 #ifndef sdeSMC_h
 #define sdeSMC_h 1
 
-//[[Rcpp::depends("RcppArmadillo")]]
-//[[Rcpp::depends("RcppSMC")]]
-//[[Rcpp::depends("msde")]]
 #include <vector>
-#include <RcppArmadillo.h>
 #include <smctc.h>
 #include <rngUtils.h>
 #include <sdeUtils.h>
