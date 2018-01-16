@@ -61,7 +61,7 @@ void save_state(double *yOut, double *lwgt,
 // returns a list with the log-weight and updated lastmiss.
 // for now same signature as pf_update, but this will be changed as we move
 // out of debugging phase.
-//[[Rcpp::export("pf_eval")]]
+//[[Rcpp::export(".pf_eval")]]
 List particleEval(NumericVector initParams, NumericMatrix initData,
 		  NumericVector dT, IntegerVector nDimsPerObs,
 		  NumericMatrix NormalDraws) {
