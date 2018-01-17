@@ -45,6 +45,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// eouMakeModel
+SEXP eouMakeModel();
+RcppExport SEXP _msde_eouMakeModel() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(eouMakeModel());
+    return rcpp_result_gen;
+END_RCPP
+}
 // sde_nParams
 double sde_nParams(SEXP sdeptr);
 RcppExport SEXP _msde_sde_nParams(SEXP sdeptrSEXP) {
@@ -219,12 +229,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// particleEval
+List particleEval(SEXP sdeptr, NumericVector initParams, NumericMatrix initData, NumericVector dT, IntegerVector nDimsPerObs, NumericMatrix NormalDraws);
+RcppExport SEXP _msde_particleEval(SEXP sdeptrSEXP, SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP NormalDrawsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type sdeptr(sdeptrSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type initParams(initParamsSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type initData(initDataSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type dT(dTSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nDimsPerObs(nDimsPerObsSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type NormalDraws(NormalDrawsSEXP);
+    rcpp_result_gen = Rcpp::wrap(particleEval(sdeptr, initParams, initData, dT, nDimsPerObs, NormalDraws));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_msde_hestMakeModel", (DL_FUNC) &_msde_hestMakeModel, 0},
     {"_msde_biouMakeModel", (DL_FUNC) &_msde_biouMakeModel, 0},
     {"_msde_pgnetMakeModel", (DL_FUNC) &_msde_pgnetMakeModel, 0},
     {"_msde_lotvolMakeModel", (DL_FUNC) &_msde_lotvolMakeModel, 0},
+    {"_msde_eouMakeModel", (DL_FUNC) &_msde_eouMakeModel, 0},
     {"_msde_sde_nParams", (DL_FUNC) &_msde_sde_nParams, 1},
     {"_msde_sde_nDims", (DL_FUNC) &_msde_sde_nDims, 1},
     {"_msde_isData", (DL_FUNC) &_msde_isData, 6},
@@ -235,6 +262,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_msde_Prior", (DL_FUNC) &_msde_Prior, 7},
     {"_msde_Sim", (DL_FUNC) &_msde_Sim, 12},
     {"_msde_Post", (DL_FUNC) &_msde_Post, 23},
+    {"_msde_particleEval", (DL_FUNC) &_msde_particleEval, 6},
     {NULL, NULL, 0}
 };
 
