@@ -17,6 +17,10 @@
     .Call(`_msde_lotvolMakeModel`)
 }
 
+.eou_MakeModel <- function() {
+    .Call(`_msde_eouMakeModel`)
+}
+
 .sde_nParams <- function(sdeptr) {
     .Call(`_msde_sde_nParams`, sdeptr)
 }
@@ -55,5 +59,9 @@
 
 .sde_Post <- function(sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores, displayProgress) {
     .Call(`_msde_Post`, sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores, displayProgress)
+}
+
+.pf_eval <- function(sdeptr, initParams, initData, dT, nDimsPerObs, NormalDraws) {
+    .Call(`_msde_particleEval`, sdeptr, initParams, initData, dT, nDimsPerObs, NormalDraws)
 }
 
