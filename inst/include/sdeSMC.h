@@ -36,6 +36,7 @@ Implementation:
 
 //[[Rcpp::depends("RcppArmadillo")]]
 //[[Rcpp::depends("RcppSMC")]]
+//[[Rcpp::depends("msde")]]
 #include <vector>
 #include <RcppArmadillo.h>
 #include <smctc.h>
