@@ -1,9 +1,7 @@
 //[[Rcpp::depends("RcppArmadillo")]]
 //[[Rcpp::depends("RcppSMC")]]
-//[[Rcpp::depends("msde")]]
 // #include <RcppArmadillo.h>
 // #include <smctc.h>
-// #include <sdeUtils.h>
 #include "sdeSMC.h"
 namespace eou {
 #include "eouModel.h"
