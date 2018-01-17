@@ -8,8 +8,8 @@ Authors@R: c(person("Martin", "Lysy", role = c("aut", "cre"),
 	     person("Nigel", "Delaney", role = "ctb"))
 Description: Implements an MCMC sampler for the posterior distribution of arbitrary time-homogeneous multivariate stochastic differential equation (SDE) models with possibly latent components.  The package provides a simple entry point to integrate user-defined models directly with the sampler's C++ code, and parallelizes large portions of the calculations when compiled with 'OpenMP'.
 Depends: R (>= 3.0.0)
-Imports: Rcpp (>= 0.12.7), methods, stats, tools, RcppArmadillo, RcppSMC
-LinkingTo: Rcpp, RcppProgress
+Imports: Rcpp (>= 0.12.7), methods, stats, tools
+LinkingTo: Rcpp, RcppProgress, RcppArmadillo, RcppSMC
 Suggests: knitr, rmarkdown, testthat, RcppProgress
 VignetteBuilder: knitr
 License: GPL-3
