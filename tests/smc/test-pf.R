@@ -5,16 +5,18 @@
 
 # will need to create an object from the class template.
 
+# TODO: use built-in eouModel and eou.pf
+
 #--- quick tests ---------------------------------------------------------------
 
 require(testthat)
-require(Rcpp)
-require(RcppSMC)
+# require(Rcpp)
+# require(RcppSMC)
 
-sourceCpp(file = "sdeSMC.cpp")
-sourceCpp(file = "sdeSMCtest.cpp")
-
-pf_test() # returns nDims
+# sourceCpp(file = "sdeSMC.cpp")
+# sourceCpp(file = "sdeSMCtest.cpp")
+# 
+# pf_test() # returns nDims
 
 #--- ok now see about particle updates (no loglik calculation yet...) ----------
 
@@ -24,10 +26,13 @@ require(msde)
 source("smc-functions.R")
 
 # eou model setup
-data.names <- c("X", "V")
-param.names <- c("alpha", "gamma", "eta", "sigma", "rho")
-emod <- sde.make.model("eouModel.h",
-                       data.names = data.names, param.names = param.names)
+# data.names <- c("X", "V")
+# param.names <- c("alpha", "gamma", "eta", "sigma", "rho")
+# emod <- sde.make.model("eouModel.h",
+#                        data.names = data.names, param.names = param.names)
+emod <- sde.examples("eou")
+data.names <- emod$data.names
+param.names <- emod$param.names
 
 # simulate some data
 theta0 <- c(alpha = .1, gamma = 4.8, eta = 0.1, sigma = .1, rho = -.63) # true parameter values
@@ -86,6 +91,11 @@ test_that("log-weights.R == log-weights.cpp", {
 })
 
 #--- with SMCTC. -----------------------------------------------------------
+
+tmp2 <- eou.pf(init = einit, npart = nPart, Z = Z)
+Yup2 <- tmp2$X
+lwgt2 <- tmp2$lwgt # normalized log-weights
+
 
 tmp2 <- pf_eval(initParams = einit$params, initData = t(Yt),
                 dT = einit$dt.m, nDimsPerObs = einit$nvar.obs.m,
