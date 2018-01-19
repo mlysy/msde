@@ -220,6 +220,8 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP _msde_particleEval(SEXP, SEXP, SEXP, SEXP, SEXP);
+
 static const R_CallMethodDef CallEntries[] = {
     {"_msde_hestMakeModel", (DL_FUNC) &_msde_hestMakeModel, 0},
     {"_msde_biouMakeModel", (DL_FUNC) &_msde_biouMakeModel, 0},
@@ -235,6 +237,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_msde_Prior", (DL_FUNC) &_msde_Prior, 7},
     {"_msde_Sim", (DL_FUNC) &_msde_Sim, 12},
     {"_msde_Post", (DL_FUNC) &_msde_Post, 23},
+    {"_msde_particleEval",    (DL_FUNC) &_msde_particleEval,     5},
     {NULL, NULL, 0}
 };
 

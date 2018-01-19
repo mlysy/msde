@@ -108,7 +108,7 @@ test_that("ll.R == ll.cpp", {
       ll.R <- ll.R[1]
     }
     mxd[ii,] <- max.diff(ll, ll.R)
-    expect_equal(mxd[ii,], c(0, 0))
+    expect_equal(mxd[ii,], c(0, 0), tolerance = 1e-6, scale = 1)
   }
 })
 
