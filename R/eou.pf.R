@@ -1,5 +1,5 @@
 #' particle filter prototype for eou model
-#' 
+#'
 #' @export
 eou.pf <- function(init, npart, Z) {
     ndims <- 2 # for eou model
@@ -23,3 +23,10 @@ eou.pf <- function(init, npart, Z) {
     ans$lwgt <- t(ans$lwgt)
     return(ans)
 }
+
+# todo:
+# 1.  augment this to sde.pf, i.e, any sdeModel.
+#     - make sdePF <= particleEval  a virtual function of sdeCobj/sdeRobj
+#     - every call to sde.pf allocates/deallocates full memory.
+#     - sdeSMC.cpp should become (possible multiple) header files.
+# 2.  add smc debug to each model using msde-test_debug.R
