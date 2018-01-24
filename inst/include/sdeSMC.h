@@ -319,6 +319,7 @@ class sdeAdapt: public smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> >
   double *theta;
   int nParams = sMod::nParams;
  public:
+  sdeAdapt() = default;
   sdeAdapt(double *theta_in) {
     theta = new double[nParams];
     set_theta(theta_in);
