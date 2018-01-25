@@ -116,9 +116,9 @@ class sdeCobj {
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut,
 		    int nCores, bool displayProgress) = 0;
-  // virtual List particleEval(NumericVector initParams, NumericMatrix initData,
-  //                           NumericVector dT, IntegerVector nDimsPerObs, 
-  //                           NumericMatrix NormalDraws) = 0;
+  virtual List particleEval(NumericVector initParams, NumericMatrix initData,
+                            NumericVector dT, IntegerVector nDimsPerObs, 
+                            NumericMatrix NormalDraws) = 0;
   virtual ~sdeCobj() = 0;
 };
 
@@ -158,9 +158,9 @@ class sdeRobj : public sdeCobj {
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut,
 		    int nCores, bool displayProgress);
-  // virtual List particleEval(NumericVector initParams, NumericMatrix initData,
-  //                           NumericVector dT, IntegerVector nDimsPerObs, 
-  //                           NumericMatrix NormalDraws);
+  virtual List particleEval(NumericVector initParams, NumericMatrix initData,
+                            NumericVector dT, IntegerVector nDimsPerObs, 
+                            NumericMatrix NormalDraws);
   virtual ~sdeRobj() {
     //Rprintf("sdeRobj destroyed.\n");
   };
