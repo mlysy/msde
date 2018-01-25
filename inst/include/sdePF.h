@@ -64,7 +64,7 @@ void save_state(double *yOut, double *lwgt,
 }
 
 // definition of sdeRobj<sMode, sPi>::particleEval
-// sPi is not used in fact, we keep it for consistency
+// there is no prior specification for now, we keep sPi only for consistency
 template <class sMod, class sPi>
   inline List sdeRobj<sMod, sPi>::particleEval(NumericVector initParams,
   	NumericMatrix initData, NumericVector dT, IntegerVector nDimsPerObs,
