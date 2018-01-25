@@ -30,3 +30,6 @@ eou.pf <- function(init, npart, Z) {
 #     - every call to sde.pf allocates/deallocates full memory.
 #     - sdeSMC.cpp should become (possible multiple) header files.
 # 2.  add smc debug to each model using msde-test_debug.R
+#
+# 1) I need to change sdeInterface.h
+# 2) translate particleEval to a function template and include it in a header file (similar as sdeSim.h/sdePost.h)
