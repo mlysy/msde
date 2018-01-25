@@ -9,10 +9,11 @@
 // member functions: fInitialise, fMove, save_state, particleEval
 
 #include <Rcpp.h>
-//using namespace Rcpp;
+// using namespace Rcpp;
 typedef Rcpp::LogicalVector Logical;
 typedef Rcpp::NumericVector Numeric;
 typedef Rcpp::IntegerVector Integer;
+typedef Rcpp::NumericMatrix Matrix;
 typedef Rcpp::List List;
 #include "sdeInterface.h"
 #include "sdeSMC.h"
@@ -66,9 +67,9 @@ void save_state(double *yOut, double *lwgt,
 // definition of sdeRobj<sMode, sPi>::particleEval
 // there is no prior specification for now, we keep sPi only for consistency
 template <class sMod, class sPi>
-  inline List sdeRobj<sMod, sPi>::particleEval(NumericVector initParams,
-  	NumericMatrix initData, NumericVector dT, IntegerVector nDimsPerObs,
-		NumericMatrix NormalDraws) {
+  inline List sdeRobj<sMod, sPi>::particleEval(Numeric initParams,
+  	Matrix initData, Numeric dT, Integer nDimsPerObs,
+		Matrix NormalDraws) {
   int nDims = sMod::nDims;
   int nComp = initData.ncol();
   int nPart = NormalDraws.nrow()/nDims;
