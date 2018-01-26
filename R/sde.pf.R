@@ -45,6 +45,5 @@ sde.pf <- function(model, init, npart, Z) {
 # my steps:
 # 1) change sdeInterface.h accordingly
 # 2) translate particleEval to a function template and include it in a header file sdePF.h (similar as sdeSim.h/sdePost.h)
-# 3) modify the function parameter list of particleEval, just as sdeSim.h & sdePost.h
-# 4) add particleEval in sdeExports.cpp
-# 5) change eou.pf.R into sde.pf.R and update the function body (refer to sde.sim.R & sde.post.R)
+# 3) add particleEval in sdeExports.cpp
+# 4) change eou.pf.R into sde.pf.R and update the function body (similar as sde.sim.R & sde.post.R)
