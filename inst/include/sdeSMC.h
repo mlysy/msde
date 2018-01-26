@@ -38,10 +38,11 @@ Implementation:
 //[[Rcpp::depends("RcppSMC")]]
 //[[Rcpp::depends("msde")]]
 //#include <vector>
-#include <RcppArmadillo.h>
+//#include <RcppArmadillo.h>
 #include <smctc.h>
 #include <rngUtils.h>
 #include <sdeUtils.h>
+#include <sdeParticle.h>
 
 // observed data, i.e., data matrix, dT/sqrtDT, nvarObs
 template <class sMod>
@@ -72,9 +73,20 @@ class sdeFilter {
   sdeFilter & operator=(const sdeFilter & other); // deep copy
   double init(double *yNew);
   double update(double *yNew, double *yOld, long lTime, int iPart, int iCore);
+  // for parallelization
   int get_counter() const {return iPart;}
   void increase_counter() {iPart++; return;}
   void reset_counter() {iPart = 0;}
+  // smc sampler
+  sdeParticle<sMod> pTmp;
+  void fInitialize(sdeParticle<sMod>& value, double& logweight, smc::nullParams & param);
+  void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
+	   smc::nullParams & param);
+  void save_state(double *yOut, double *lwgt);
+  smc::sampler<sdeParticle<sMod>, smc::nullParams >
+    Sampler((long)nPart, HistoryType::NONE);
+  smc::moveset<sdeParticle<sMod>, smc::nullParams >
+    Moveset(fInitialise, fMove, NULL);
   ~sdeFilter();
 };
 
@@ -170,6 +182,9 @@ inline void sdeFilter<sMod>::initialize(int np, int nc, double *dt,
   for(ii=0; ii<nParams; ii++) {
     theta[ii] = thetaInit[ii];
   }
+  // initialize Sampler
+  Sampler.SetResampleParams(ResampleType::RESIDUAL, -1.0);
+  Sampler.SetMoveSet(Moveset);
   return;
 }
 
@@ -265,49 +280,41 @@ inline sdeFilter<sMod>::~sdeFilter() {
   clear();
 }
 
-// the particle itself
-template <class sMod>
-class sdeParticle {
- private:
-  static const int nDims = sMod::nDims;
- public:
-  double *yObs;
-  sdeParticle() {
-    yObs = new double[nDims];
-  }
-  int get_nDims() {
-    return nDims;
-  }
-  void get_yObs(double *yOut) {
-    for(int ii=0; ii<nDims; ii++) {
-      yOut[ii] = yObs[ii];
-    }
-    return;
-  }
-  void set_yObs(double *yIn) {
-    for(int ii=0; ii<nDims; ii++) {
-      yObs[ii] = yIn[ii];
-    }
-    return;
-  }
-  ~sdeParticle() {
-    //Rprintf("sdeParticle destructor called.\n");
-    delete [] yObs;
-  }
-  sdeParticle & operator=(const sdeParticle & other) {
-    if(this != &other) {
-      set_yObs(other.yObs);
-    }
-    return *this;
-  }
-  // deep copy required to extract particle from Sampler.
-  sdeParticle(const sdeParticle & from) {
-    //Rprintf("sdeParticle copy constructor called.\n");
-    yObs = new double[nDims];
-    set_yObs(from.yObs);
-  }
-};
+// --- sampler functions ---------------------------------------------------
 
+template <class sMod>
+inline void fInitialize(sdeParticle<sMod>& value, double& logweight,
+			smc::nullParams & param) {
+  //Rprintf("made it to fInitialise.\n");
+  // set particle
+  logweight = init(value.yObs);
+  increase_counter();
+  return;
+}
+
+template <class sMod>
+inline void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
+		  smc::nullParams & param) {
+  int iCore = 0;
+  logweight += update(value.yObs, value.yObs, lTime,
+		      get_counter(), iCore);
+  increase_counter();
+  return;
+}
+
+template <class sMod>
+inline void save_state(double *yOut, double *lwgt) {
+  for(long iPart=0; iPart<Sampler.GetNumber(); iPart++) {
+    pTmp = Sampler.GetParticleValueN(iPart);
+    pTmp.get_yObs(&yOut[iPart*sMod::nDims]);
+    lwgt[iPart] = Sampler.GetParticleLogWeightN(iPart);
+  }
+  return;
+}
+
+// -------------------------------------------------------------
+
+/*
 // adaptor class
 // want to keep track of particle in fMove/fInitialise
 // also want to input new theta at the beginning of every pf calculation.
@@ -338,5 +345,6 @@ class sdeAdapt: public smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> >
   }
   ~sdeAdapt() {};
 };
+*/
 
 #endif
