@@ -37,7 +37,7 @@ sde.post
 typedef Rcpp::LogicalVector Logical;
 typedef Rcpp::NumericVector Numeric;
 typedef Rcpp::IntegerVector Integer;
-typedef Rcpp::NumericMatrix Matrix;
+typedef Rcpp::NumericMatrix NumericMatrix;
 typedef Rcpp::List List;
 //using namespace Rcpp;
 //#include "sdeLogLik.h"
@@ -117,9 +117,9 @@ class sdeCobj {
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut,
 		    int nCores, bool displayProgress) = 0;
-  virtual List particleEval(Numeric initParams, Matrix initData,
+  virtual List particleEval(Numeric initParams, NumericMatrix initData,
                             Numeric dT, Integer nDimsPerObs, 
-                            Matrix NormalDraws) = 0;
+                            NumericMatrix NormalDraws) = 0;
   virtual ~sdeCobj() = 0;
 };
 
@@ -159,9 +159,9 @@ class sdeRobj : public sdeCobj {
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut,
 		    int nCores, bool displayProgress);
-  virtual List particleEval(Numeric initParams, Matrix initData,
+  virtual List particleEval(Numeric initParams, NumericMatrix initData,
                             Numeric dT, Integer nDimsPerObs, 
-                            Matrix NormalDraws);
+                            NumericMatrix NormalDraws);
   virtual ~sdeRobj() {
     //Rprintf("sdeRobj destroyed.\n");
   };

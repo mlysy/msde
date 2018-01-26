@@ -2,33 +2,42 @@
 #define sdePF_h 
 
 // This header file contains the definition of particleEval template and 
-// other dependent function templates (i.e. fInitialise, fMove, save_state)
+// class template sdePF with member functions fInitialise, fMove, save_state)
 //
 // TODO:
 // change the header into a particle filter template class for sde
 // member functions: fInitialise, fMove, save_state, particleEval
 
 #include <Rcpp.h>
+#include <smctc.h>
 // using namespace Rcpp;
 typedef Rcpp::LogicalVector Logical;
 typedef Rcpp::NumericVector Numeric;
 typedef Rcpp::IntegerVector Integer;
-typedef Rcpp::NumericMatrix Matrix;
+// if we define Rcpp::NumericMatrix as Matrix, an error 
+// "reference to 'Matrix' is ambiguous" would be encountered
+typedef Rcpp::NumericMatrix NumericMatrix;
 typedef Rcpp::List List;
 #include "sdeInterface.h"
 #include "sdeSMC.h"
 
-/*template <class sMod> 
+template <class sMod> 
 class sdePF {
   public:
-
-	
-};*/
+      virtual void fInitialise(sdeParticle<sMod>& value, double& logweight,
+                    sdeFilter<sMod> & pf_calcs) = 0;
+      virtual void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
+                    sdeFilter<sMod> & pf_calcs) = 0;
+      virtual void save_state(double *yOut, double *lwgt,
+                    smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
+                    sdeParticle<sMod> & pTmp) = 0;
+      virtual ~sdePF() = 0;
+};
 
 // definition of fInitialise template
 // directly copied from sdeSMC.cpp
 template <class sMod>
-void fInitialise(sdeParticle<sMod>& value, double& logweight,
+inline void sdePF<sMod>::fInitialise(sdeParticle<sMod>& value, double& logweight,
 		 sdeFilter<sMod> & pf_calcs) {
   //Rprintf("made it to fInitialise.\n");
   // set particle
@@ -40,7 +49,7 @@ void fInitialise(sdeParticle<sMod>& value, double& logweight,
 // definition of fMove template
 // directly copied from sdeSMC.cpp
 template <class sMod>
-void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
+inline void sdePF<sMod>::fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
 	   sdeFilter<sMod> & pf_calcs) {
   int iCore = 0;
   //Rprintf("counter = %i\n", pf_calcs.get_counter());
@@ -53,7 +62,7 @@ void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
 // definition of save_state template
 // directly copied from sdeSMC.cpp
 template <class sMod>
-void save_state(double *yOut, double *lwgt,
+inline void sdePF<sMod>::save_state(double *yOut, double *lwgt,
 		smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
 		sdeParticle<sMod> & pTmp) {
   for(long iPart=0; iPart<Sampler.GetNumber(); iPart++) {
@@ -65,11 +74,12 @@ void save_state(double *yOut, double *lwgt,
 }
 
 // definition of sdeRobj<sMode, sPi>::particleEval
+// particleEval is a member function of sdeRobj & sdeCobj
 // there is no prior specification for now, we keep sPi only for consistency
 template <class sMod, class sPi>
   inline List sdeRobj<sMod, sPi>::particleEval(Numeric initParams,
-  	Matrix initData, Numeric dT, Integer nDimsPerObs,
-		Matrix NormalDraws) {
+  	NumericMatrix initData, Numeric dT, Integer nDimsPerObs,
+		NumericMatrix NormalDraws) {
   int nDims = sMod::nDims;
   int nComp = initData.ncol();
   int nPart = NormalDraws.nrow()/nDims;
@@ -91,7 +101,7 @@ template <class sMod, class sPi>
     smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> >
       Sampler((long)nPart, HistoryType::NONE);
     smc::moveset<sdeParticle<sMod>, sdeFilter<sMod> >
-      Moveset(fInitialise<sMod>, fMove<sMod>, NULL);
+      Moveset(sdePF<sMod>::fInitialise, sdePF<sMod>::fMove, NULL);
     //Rprintf("Sampler and Moveset created.\n");
 
     // AlgParam needs to be deep-copied into Sampler
@@ -106,14 +116,14 @@ template <class sMod, class sPi>
     Sampler.SetMoveSet(Moveset);
     Sampler.Initialise();
     // extract particle from Sampler
-    save_state<sMod>(yOut, lwgt, Sampler, pTmp); 
+    sdePF<sMod>::save_state(yOut, lwgt, Sampler, pTmp); 
     Sampler.SetAdaptMethods(Adapt); // TBD for parallel processing
     //Rprintf("Sampler initialized.\n");
     // long lTime;
     for(int ii=1; ii<nComp; ii++) {
       //Rprintf("lTime = %i\n", ii);
       Sampler.Iterate();
-      save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
+      sdePF<sMod>::save_state(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
     }
     //delete Sampler;
     delete Adapt;

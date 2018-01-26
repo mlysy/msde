@@ -27,11 +27,9 @@ sde.pf <- function(model, init, npart, Z) {
     Z <- t(Z)
 
   # run particle filter
-  # for matrix data type initData and NormalDraws, we use as.double() to 
-  # convert them into numeric vectors stacked by column and then pass them to C
   ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params), 
-            initData = as.double(init.data), dT = as.double(dt),
-            nDimsPerObs = as.integer(par.index), NormalDraws = as.double(Z))
+            initData = as.matrix(init.data), dT = as.double(dt),
+            nDimsPerObs = as.integer(par.index), NormalDraws = as.matrix(Z))
   ans$X <- t(ans$X)
   ans$lwgt <- t(ans$lwgt)
   return(ans)
