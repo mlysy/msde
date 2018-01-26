@@ -24,6 +24,7 @@ typedef Rcpp::List List;
 template <class sMod> 
 class sdePF {
   public:
+      // define fInitialise, fMove, save_state as pure virtual functions
       virtual void fInitialise(sdeParticle<sMod>& value, double& logweight,
                     sdeFilter<sMod> & pf_calcs) = 0;
       virtual void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
