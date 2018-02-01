@@ -1,6 +1,8 @@
 // export sample models
 
-#include <Rcpp.h>
+// #include <Rcpp.h>
+//[[Rcpp::depends("RcppArmadillo")]]
+#include <RcppArmadillo.h>
 using namespace Rcpp;
 #include "sdeInterface.h"
 namespace mvn {

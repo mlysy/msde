@@ -53,7 +53,7 @@ lwgtn <- apply(apply(lwgt, 2, cumsum), 1, function(x) {
 lwgtn <- t(lwgtn)
 
 ##---------- particle filter with SMCTC -----------------------------------------------------------
-tmp2 <- eou.pf(init = einit, npart = nPart, Z = Z)
+tmp2 <- sde.pf(model = emod, init = einit, npart = nPart, Z = Z)
 Yup2 <- tmp2$X
 lwgt2 <- tmp2$lwgt # normalized log-weights
 
