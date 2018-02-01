@@ -2,7 +2,7 @@
 
 #library(msde)
 context("exponential OU model -- partilce filter")
-source("smc-functions.R")
+source("smc-testfunctions.R")
 
 ##---------- eou model settings -------------------------------------------------------------------
 # eou model setup
@@ -26,36 +26,22 @@ Yt <- esim$data # extract the simulated SDE values (X, V), Yt is an nObs x nDims
 nPart <- 50 # number of particles
 Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims) # normal draws
 # initialization
-einit <- sde.init(emod, x = Yt, dt = dT, theta = theta0, nvar.obs = 1, m = 1) 
+einit <- sde.init(emod, x = Yt, dt = dT, theta = theta0, nvar.obs = 1, m = 1)
 
 ##---------- particle filter in R ------------------------------------------------------------------
-Yup <- matrix(NA, nObs, nDims*nPart)
-lwgt <- matrix(NA, nObs, nPart)
-for(ipart in 1:nPart) {
-  ind <- (ipart-1)*nDims+(1:nDims) # column index for Xt, Vt corresponding to particle ipart
-  tmp <- smc.update(Yt, Z = Z[,ind], # update each particle
-                    dt = einit$dt.m, nvar.obs = einit$nvar.obs.m,
-                    theta = einit$params,
-                    dr = function(x, theta) sde.drift(emod, x, theta)[1,],
-                    df = function(x, theta) sde.diff(emod, x, theta)[1,])
-  Yup[,ind] <- tmp$X
-  lwgt[,ipart] <- tmp$lwgt
-}
 
-# normalize R log-weights
-# To normalize the weghts in lwgt to make it comparable with tmp2$lgwt
-# the outer apply(.., 1, func...) will implictly change the dimension of lwgt
-# since each row it extracts will be treated as a column vector in func(x){...}
-lwgtn <- apply(apply(lwgt, 2, cumsum), 1, function(x) {
-  mx <- max(x)
-  x - (log(sum(exp(x - mx))) + mx) # for avoiding enumerical overflow
-})
-lwgtn <- t(lwgtn)
+pf.R <- pf.fun(einit,
+               dr = function(x, theta) sde.drift(emod, x, theta)[1,],
+               df = function(x, theta) sde.diff(emod, x, theta)[1,],
+               Z = Z)
 
 ##---------- particle filter with SMCTC -----------------------------------------------------------
-tmp2 <- sde.pf(model = emod, init = einit, npart = nPart, Z = Z)
-Yup2 <- tmp2$X
-lwgt2 <- tmp2$lwgt # normalized log-weights
+
+pf <- sde.pf(model = emod, init = einit, npart = nPart, Z = Z)
+
+test_that("pf.R == pf.cpp", {
+  expect_equal(pf, pf.R)
+})
 
 ##---------- testing ------------------------------------------------------------------------------
 #----- test smoothing results -----

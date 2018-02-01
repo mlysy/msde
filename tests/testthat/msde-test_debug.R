@@ -9,6 +9,7 @@ ndims <- model$ndims
 nparams <- model$nparams
 
 source("msde-testfunctions.R")
+source("smc-testfunctions.R")
 
 #--- test drift and diffusion --------------------------------------------------
 
@@ -86,15 +87,15 @@ test_that("sim.R == sim.cpp", {
 
 #--- test log-likelihood -------------------------------------------------------
 
-dT <- runif(1)
-nreps <- 10
-nobs <- 8
 cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE))
 ncases <- nrow(cases)
 
 test_that("ll.R == ll.cpp", {
   mxd <- matrix(NA, ncases, 2)
   for(ii in 1:ncases) {
+    dT <- runif(1)
+    nobs <- sample(5:20, 1)
+    nreps <- sample(10:20, 1)
     sx <- cases$single.x[ii]
     st <- cases$single.theta[ii]
     init <- input.init(nreps = c(nobs, nreps), sx, st, randx, randt)
@@ -154,4 +155,35 @@ test_that("lpi.R == lpi.cpp", {
     mxd[ii,] <- max.diff(lpi, lpi.R)
     expect_equal(mxd[ii,2], 0)
   }
+})
+
+#--- test particle filter ------------------------------------------------------
+
+ncases <- 10
+
+test_that("pf.R == pf.cpp", {
+
+  mxd <- matrix(NA, ncases, 4)
+  for(ii in 1:ncases) {
+    nObs <- 10 # number of observations
+    nPart <- 20 # number of particles
+    nDims <- model$ndims # number of dimensions
+    dT <- 1/252 # time between observations (1 year has about 252 trading days)
+    init <- input.init(nreps = 1, sx = TRUE, st = TRUE, randx ,randt)
+    msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
+                    nobs = nObs, dt = dT, dt.sim = dT/10)
+    # initialize the sde model
+    Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims) # normal draws
+    # initialization
+    minit <- sde.init(model, x = msim$data, dt = dT,
+                      theta = init$Theta, nvar.obs = 1, m = 1)
+    pf.R <- pf.fun(minit,
+                   dr = drift.fun,
+                   df = diff.fun,
+                   Z = Z)
+    pf <- sde.pf(model = model, init = minit, npart = nPart, Z = Z)
+    mxd[ii,] <- c(max.diff(pf$X, pf.R$X), max.diff(pf$lwgt, pf.R$lwgt))
+    expect_equal(mxd[ii,], rep(0, 4), tolerance = 1e-6, scale = 1)
+  }
+
 })

@@ -317,9 +317,9 @@ class sdeAdapt: public smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> >
  private:
   bool updateTheta;
   double *theta;
-  int nParams = sMod::nParams;
+  static const int nParams = sMod::nParams;
  public:
-  sdeAdapt() = default;
+  sdeAdapt() {}
   sdeAdapt(double *theta_in) {
     theta = new double[nParams];
     set_theta(theta_in);

@@ -1,26 +1,5 @@
-Notes on documentation:
+1.  Finish testthat test for `sde.pf`.  See why there is a discrepancy, perhaps due to invalid proposals?  See `validx(x, theta)` in e.g., `test-hest_sd.R`.  Also, randomize inputs as much as possible (can do for other tests as well).
 
-1.  Uniform formatting of `@title`.  Should be: first word only capitalized, ends with ".".
-2.  `@return` lists.  These should all be of the form
+2.  Make `sde.pf` usable.  First of all, no need to return *all* `X/lwgt` output.  Last observation is sufficient.  Can potentially add a logical argument to output if desired.  Second, don't always provide `Z` matrix.  In fact, `sdeFilter` constructor can overload without `Z`, which requires significantly less memory (i.e., only enough for one obs), i.e., much faster if we rerun `sde.pf` over and over, realllocating memory every time.  Also, provide **R**-level argument to `smc::sampler` RESAMPLE type (no resampling + prespecified `Z` is *mainly* for debugging, though does have other uses).  See RESAMPLE argument in `RcppSMC`, as it explains how/when to resample.
 
-```{r}
-#' @return something something a list with elements: (don't forget the ":")
-#' \describe{
-#'   \item{\code{a}}{description of element a.}
-#'   \item{\code{b}}{description of element b.}
-#' }
-```
-
-3.  Latex code.  Typically this doesn't display properly in vim/emacs & rstudio.  So the trick is to define such commands twice, , e.g.:
-
-```{r}
-#' \deqn{
-#' \mathbf{\Lambda}(\mathbf{Y}_t)^{\alpha - 1}
-#' }{
-#' \Lambda(Y_t)^(\alpha-1)
-#' }
-```
-
-To see the different outputs, compile the PDF doc (this can be done from the terminal using `R CMD check msde_XYZ.tar.gz`), and also look at output in Rstudio (which is a bit nicer than vim/emacs, but still very basic and it's what most people will be using)
-
-4.  `@description`.  These can sometimes be made more informative, if the `@title` is not enough.
+3.  Example in documentation.
