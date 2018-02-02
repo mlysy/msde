@@ -1,3 +1,7 @@
+// on-the-fly compilation of sde models
+// specific to R/C++ interface
+// (rest of include directory is not, except rngUtils.h)
+
 //[[Rcpp::depends("msde")]]
 //[[Rcpp::depends("RcppArmadillo")]]
 //[[Rcpp::depends("RcppProgress")]]
