@@ -159,22 +159,25 @@ test_that("lpi.R == lpi.cpp", {
 
 #--- test particle filter ------------------------------------------------------
 
-ncases <- 10
+nreps <- 1
+cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE))
+ncases <- nrow(cases)
 
 test_that("pf.R == pf.cpp", {
-
   mxd <- matrix(NA, ncases, 4)
   for(ii in 1:ncases) {
-    nObs <- 10 # number of observations
-    nPart <- 20 # number of particles
-    nDims <- model$ndims # number of dimensions
+    nObs <- 100 # number of observations
+    nPart <- 50 # number of particles
+    nDims <- ndims # number of dimensions
     dT <- 1/252 # time between observations (1 year has about 252 trading days)
-    init <- input.init(nreps = 1, sx = TRUE, st = TRUE, randx ,randt)
+    sx <- cases$single.x[ii]
+    st <- cases$single.theta[ii]
+    init <- input.init(nreps = nreps, sx = sx, st = st, randx ,randt)
     msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
                     nobs = nObs, dt = dT, dt.sim = dT/10)
-    # initialize the sde model
     Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims) # normal draws
     # initialization
+    # nvar.obs = c(2, rep(1, nObs-2), 2)
     minit <- sde.init(model, x = msim$data, dt = dT,
                       theta = init$Theta, nvar.obs = 1, m = 1)
     pf.R <- pf.fun(minit,
@@ -185,5 +188,4 @@ test_that("pf.R == pf.cpp", {
     mxd[ii,] <- c(max.diff(pf$X, pf.R$X), max.diff(pf$lwgt, pf.R$lwgt))
     expect_equal(mxd[ii,], rep(0, 4), tolerance = 1e-6, scale = 1)
   }
-
 })

@@ -32,7 +32,8 @@ randx <- function(nreps) {
   X0
 }
 randt <- function(nreps) {
-  Theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6)
+  Theta <- c(alpha = 0.04, gamma = 1.15, beta = 0.3, sigma = 0.19)
+  #Theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6)
   if(nreps > 1) Theta <- apply(t(replicate(nreps, Theta)), 2, jitter)
   Theta
 }
