@@ -77,49 +77,57 @@ void save_state(double *yOut, double *lwgt,
 // there is no prior specification for now, we keep sPi only for consistency
 template <class sMod, class sPi>
   inline List sdeRobj<sMod, sPi>::particleEval(Numeric initParams,
-  	NumericMatrix initData, Numeric dT, Integer nDimsPerObs,
-    int nPart, int resample, double dThreshold) {
+					       NumericMatrix initData,
+					       Numeric dT, Integer nDimsPerObs,
+					       int nPart, int resample,
+					       double dThreshold,
+					       NumericMatrix NormalDraws,
+					       bool hasNormalDraws,
+					       bool historyOut) {
   int nDims = sMod::nDims;
   int nComp = initData.ncol();
+  int nCompOut = historyOut ? nComp : 1;
   // without NormalDraws we then need users to give nPart
   //int nPart = NormalDraws.nrow()/nDims;
   int nStride = nDims*nPart;
   // for debugging purposes, output whole history
-  NumericMatrix dataOut(nDims*nPart, nComp);
-  NumericMatrix LogWeightOut(nPart, nComp);
+  NumericMatrix dataOut(nDims*nPart, nCompOut);
+  NumericMatrix LogWeightOut(nPart, nCompOut);
   // pointers to Rcpp memory, i.e., double* representation
   double *yOut = REAL(dataOut); 
   double *lwgt = REAL(LogWeightOut);
   // Sampler can only deep-copy particles out from its storage
   sdeParticle<sMod> pTmp;
   // this is for eventual parallel implementation.
+  // also required when NormalDraws are provided
   smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> > *Adapt;
   Adapt = new sdeAdapt<sMod>;
 
   // determine resample mode
-  ResampleType::Enum resampleMode;
-  switch (resample) {
-    // MULTINOMIAL
-    case 0:
-      resampleMode = ResampleType::MULTINOMIAL;
-      break;
-    // RESIDUAL
-    case 1:
-      resampleMode = ResampleType::RESIDUAL;
-      break;
-    // STRATIFIED
-    case 2:
-      resampleMode = ResampleType::STRATIFIED;
-      break;
-    // SYSTEMATIC
-    case 3:
-      resampleMode = ResampleType::SYSTEMATIC;
-      break;
-  }
+  ResampleType::Enum resampleMode = resample;
+  // switch (resample) {
+  //   // MULTINOMIAL
+  //   case 0:
+  //     resampleMode = ResampleType::MULTINOMIAL;
+  //     break;
+  //   // RESIDUAL
+  //   case 1:
+  //     resampleMode = ResampleType::RESIDUAL;
+  //     break;
+  //   // STRATIFIED
+  //   case 2:
+  //     resampleMode = ResampleType::STRATIFIED;
+  //     break;
+  //   // SYSTEMATIC
+  //   case 3:
+  //     resampleMode = ResampleType::SYSTEMATIC;
+  //     break;
+  // }
 
   //Rprintf("before SMC.\n");
   // SMC
   try {
+    // TODO: change HistoryType when historyOut = true
     smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> >
       Sampler((long)nPart, HistoryType::NONE);
     smc::moveset<sdeParticle<sMod>, sdeFilter<sMod> >
@@ -136,33 +144,43 @@ template <class sMod, class sPi>
     //
     // Also note nPart & nComp are just C++ int objects
     // Don't use INTEGER() to wrap them up
-    Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp,
-          REAL(dT), INTEGER(nDimsPerObs),
-          REAL(initData), REAL(initParams)));
+    if(hasNormalDraws) {
+      Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp,
+					  REAL(dT), INTEGER(nDimsPerObs),
+					  REAL(initData), REAL(initParams),
+					  REAL(NormalDraws)));
+    } else {
+      Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp,
+					  REAL(dT), INTEGER(nDimsPerObs),
+					  REAL(initData), REAL(initParams)));
+    }
     //Rprintf("algParams passed in.\n");
     Sampler.SetResampleParams(resampleMode, dThreshold);
     Sampler.SetMoveSet(Moveset);
     Sampler.Initialise();
-    // extract particle from Sampler
-    save_state<sMod>(yOut, lwgt, Sampler, pTmp); 
-    Sampler.SetAdaptMethods(Adapt); // TBD for parallel processing
+    Sampler.SetAdaptMethods(Adapt);
+    if(historyOut) {
+      // extract particle from Sampler
+      save_state<sMod>(yOut, lwgt, Sampler, pTmp);
+    }
     //Rprintf("Sampler initialized.\n");
     // long lTime;
     for(int ii=1; ii<nComp; ii++) {
       //Rprintf("lTime = %i\n", ii);
       Sampler.Iterate();
-      // save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
+      if(historyOut) {
+	save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
+      }
     }
-    // only save the last observation (yOut & lgwt)
-    save_state<sMod>(&yOut[(nComp-1)*(nPart*nDims)],&lwgt[(nComp-1)*nPart], Sampler, pTmp);
+    if(!historyOut) {
+      // only save the last observation (yOut & lgwt)
+      save_state<sMod>(&yOut,&lwgt, Sampler, pTmp);
+    }
     //delete Sampler;
     delete Adapt;
-    // output only the last observation
-    // nComp - 1 is the last column since the index starts from 0
-    return List::create(Rcpp::Named("X") = dataOut( _ , nComp - 1),
-      Rcpp::Named("lwgt") = LogWeightOut( _ , nComp - 1));
-    // return List::create(Rcpp::Named("X") = dataOut,
-    //   Rcpp::Named("lwgt") = LogWeightOut);
+    // output
+    return List::create(Rcpp::Named("data") = dataOut,
+			Rcpp::Named("lwgt") = LogWeightOut);
   }
   catch(smc::exception e) {
     Rcpp::Rcout << e;
