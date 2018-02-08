@@ -1,10 +1,48 @@
-#' particle filter prototype for any sde model
+#' Particle filter for SDE model
 #' @param model An \code{sde.model} object.
 #' @param init Initialization of SDE.
 #' @param npart Number of particles.
 #' @param resample An integer indicates which resampling scheme the particle filter should use, 0:multinomial; 1:residual; 2:stratified; 3:systematic. Default method is 0: Multinomial.
 #' @param threshold A real number between 0 and 1 to indicate the threshold for resampling. By default it is disabled, set to be -0.1
 #' @details ...
+#' 
+#' @return A list with elements:
+#' \describe{
+#'   \item{\code{Yup}}{A vector of last observation data}
+#'   \item{\code{lgwt}}{A vector of normalized log weights corresponding to the last observation.}
+#' }
+#' 
+#' @examples
+#' # load pre-compiled model
+#' model <- sde.examples("eou")
+#'
+#' # initial parameters
+#' theta0 <- c(alpha = .1, gamma = 1, eta = .3, sigma = .2, rho = -.63)
+#' # number of observations
+#' nObs <- 100 
+#' # number of dimensions
+#' nDims <- model$ndims
+#' # time between observations (1 year has about 252 trading days)
+#' dt <- 1/252 
+#' # internal observation time
+#' dt.sim <- dt/10
+#' # initial SDE values
+#' Y0 <- c(X = rnorm(1), V = rnorm(1))
+#' # simulate SDE data
+#' esim <- sde.sim(model, x0 = Y0, theta = theta0,
+#'                 nobs = nObs, # nObs steps forward
+#'                 dt = dt, dt.sim = dt/10)
+#' # initialization
+#' minit <- sde.init(model, x = esim$data, dt = dt, theta = theta0,
+#'                  nvar.obs = sample(nDims, nObs, replace = TRUE), m = 1)
+#' 
+#' # number of particles
+#' nPart <- 50
+#' # particle filter
+#' pf <- sde.pf(model = model, init = minit, npart = nPart, resample = 1, threshold = 0.2)
+#' # output the last observation and normalized log-weights
+#' X <- pf$X
+#' lwgt <- pf$lwgt
 #'
 #' @export
 sde.pf <- function(model, init, npart, resample = 0, threshold = -0.1) {

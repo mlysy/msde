@@ -182,7 +182,7 @@ test_that("pf.R == pf.cpp", {
     msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
                     nobs = nObs, dt = dT, dt.sim = dT/10)
     # initialization
-    # nvar.obs = c(2, rep(1, nObs-2), 2)
+    # we may set nvar.obs = sample(nDims, nObs, replace = TRUE) to add randomness
     minit <- sde.init(model, x = msim$data, dt = dT,
                       theta = init$Theta, nvar.obs = 1, m = 1)
     Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims) # normal draws
