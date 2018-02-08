@@ -121,7 +121,9 @@ class sdeCobj {
 		    int nCores, bool displayProgress) = 0;
   virtual List particleEval(Numeric initParams, NumericMatrix initData,
                             Numeric dT, Integer nDimsPerObs, 
-                            int nPart, int resample, double dThreshold) = 0;
+                            int nPart, int resample, double dThreshold,
+                            NumericMatrix NormalDraws, bool hasNormalDraws, 
+                            bool historyOut) = 0;
   virtual ~sdeCobj() = 0;
 };
 
@@ -163,7 +165,9 @@ class sdeRobj : public sdeCobj {
 		    int nCores, bool displayProgress);
   virtual List particleEval(Numeric initParams, NumericMatrix initData,
                             Numeric dT, Integer nDimsPerObs, 
-                            int nPart, int resample, double dThreshold);
+                            int nPart, int resample, double dThreshold,
+                            NumericMatrix NormalDraws, bool hasNormalDraws, 
+                            bool historyOut);
   virtual ~sdeRobj() {
     //Rprintf("sdeRobj destroyed.\n");
   };

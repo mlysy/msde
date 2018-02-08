@@ -61,7 +61,7 @@
     .Call(`_msde_Post`, sdeptr, initParams, initData, dT, nDimsPerObs, fixedParams, nSamples, burn, nParamsOut, nDataOut, dataOutSmp, dataOutComp, dataOutDims, updateParams, updateData, priorArgs, tunePar, updateLogLik, nLogLikOut, updateLastMiss, nLastMissOut, nCores, displayProgress)
 }
 
-.pf_eval <- function(sdeptr, initParams, initData, dT, nDimsPerObs, nPart, resample, dThreshold) {
-    .Call(`_msde_particleEval`, sdeptr, initParams, initData, dT, nDimsPerObs, nPart, resample, dThreshold)
+.pf_eval <- function(sdeptr, initParams, initData, dT, nDimsPerObs, nPart, resample, dThreshold, NormalDraws, hasNormalDraws, historyOut) {
+    .Call(`_msde_particleEval`, sdeptr, initParams, initData, dT, nDimsPerObs, nPart, resample, dThreshold, NormalDraws, hasNormalDraws, historyOut)
 }
 

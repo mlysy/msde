@@ -49,7 +49,8 @@
 #'
 #' @export
 sde.pf <- function(model, init, npart,
-                   resample = c("multi", "resid", "strat", "sys"),
+                   resample = "multi",
+                   #resample = c("multi", "resid", "strat", "sys"),
                    threshold = 0.5, Z, history = FALSE) {
   # model constants
   if (class(model) != "sde.model") {
@@ -69,18 +70,41 @@ sde.pf <- function(model, init, npart,
   dt <- init$dt.m
   par.index <- init$nvar.obs.m
   ncomp <- nrow(init$data)
-  # pre-specified Z
-  hasZ <- missing(Z)
-  if(hasZ) {
+
+  # convert resample to integer value
+  if(resample == "multi") {resample <- 0}
+  if(resample == "resid") {resample <- 1}
+  if(resample == "strat") {resample <- 2}
+  if(resample == "sys") {resample <- 3}
+
+  # if there is a pre-specified Z
+  # hasZ == TRUE when Z is provided; otherwise hasZ == FALSE
+  if(!missing(Z)) {
     if(!all(dim(Z) == c(ncomp-1, ndims, npart))) {
       stop("Z must be an array of dimensions (ncomp-1) x ndims x npart.")
     }
-  }
-  # run the PF without pre-specified Z
-  ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
+    hasZ <- TRUE
+    # run the PF with pre-specified Z
+    ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
                   initData = as.matrix(init.data), dT = as.double(dt),
                   nDimsPerObs = as.integer(par.index), nPart = npart,
-                  resample = resample, dThreshold = threshold)
+                  resample = resample, dThreshold = threshold,
+                  NormalDraws = Z, hasNormalDraws = hasZ,
+                  historyOut = history)
+  } else {
+    hasZ <- FALSE
+    # run the PF without pre-specified Z
+    # here NormalDraws is still supplied since we don't have a overloaded 
+    # .pf_eval (particleEval). We can use the boolean hasNormalDraws to control
+    # if the sdeFilter constructor overloads with Z
+    ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
+                  initData = as.matrix(init.data), dT = as.double(dt),
+                  nDimsPerObs = as.integer(par.index), nPart = npart,
+                  resample = resample, dThreshold = threshold,
+                  NormalDraws = Z, hasNormalDraws = hasZ,
+                  historyOut = history)
+  }
+  
   # output
   ans$data <- array(c(ans$data), dim = c(ndims, npart, ncomp))
   ans$data <- aperm(ans$data, dim = c(2, 1, 3))
@@ -93,12 +117,14 @@ sde.pf <- function(model, init, npart,
   return(ans)
 }
 
-# todo:
+# old todo:
 # 1.  augment this to sde.pf, i.e, any sdeModel.
 #     - make sdePF <= particleEval  a virtual function of sdeCobj/sdeRobj
 #     - every call to sde.pf allocates/deallocates full memory.
 #     - sdeSMC.cpp should become (possible multiple) header files.
 # 2.  add smc debug to each model using msde-test_debug.R
+#
+# new todo:
 # 3.  testthat check deterministic Z input, history = TRUE/FALSE.
 # 4.  Test a PMCMC written in R.
 #     - You can check against a so-called multivariate Ornstein-Uhlenbeck model, for which Kalman filter analytically does filter calculation.  This is coded in \code{mou.loglik}.
@@ -107,8 +133,3 @@ sde.pf <- function(model, init, npart,
 #     - Write up a report in the form of a vignette, which also shows how to
 #       use \code{sde.pf}.
 #
-# my steps:
-# 1) change sdeInterface.h accordingly
-# 2) translate particleEval to a function template and include it in a header file sdePF.h (similar as sdeSim.h/sdePost.h)
-# 3) add particleEval in sdeExports.cpp
-# 4) change eou.pf.R into sde.pf.R and update the function body (similar as sde.sim.R & sde.post.R)

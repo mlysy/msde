@@ -104,25 +104,27 @@ template <class sMod, class sPi>
   Adapt = new sdeAdapt<sMod>;
 
   // determine resample mode
-  ResampleType::Enum resampleMode = resample;
-  // switch (resample) {
-  //   // MULTINOMIAL
-  //   case 0:
-  //     resampleMode = ResampleType::MULTINOMIAL;
-  //     break;
-  //   // RESIDUAL
-  //   case 1:
-  //     resampleMode = ResampleType::RESIDUAL;
-  //     break;
-  //   // STRATIFIED
-  //   case 2:
-  //     resampleMode = ResampleType::STRATIFIED;
-  //     break;
-  //   // SYSTEMATIC
-  //   case 3:
-  //     resampleMode = ResampleType::SYSTEMATIC;
-  //     break;
-  // }
+  // notice we cannot initialize a variable of type 'ResampleType::Enum' 
+  // with an lvalue of type 'int'
+  ResampleType::Enum resampleMode;
+  switch (resample) {
+    // MULTINOMIAL
+    case 0:
+      resampleMode = ResampleType::MULTINOMIAL;
+      break;
+    // RESIDUAL
+    case 1:
+      resampleMode = ResampleType::RESIDUAL;
+      break;
+    // STRATIFIED
+    case 2:
+      resampleMode = ResampleType::STRATIFIED;
+      break;
+    // SYSTEMATIC
+    case 3:
+      resampleMode = ResampleType::SYSTEMATIC;
+      break;
+  }
 
   //Rprintf("before SMC.\n");
   // SMC
@@ -169,7 +171,7 @@ template <class sMod, class sPi>
       //Rprintf("lTime = %i\n", ii);
       Sampler.Iterate();
       if(historyOut) {
-	save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
+        save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
       }
     }
     if(!historyOut) {
