@@ -1,7 +1,13 @@
 #' particle filter prototype for any sde model
+#' @param model An \code{sde.model} object.
+#' @param init Initialization of SDE.
+#' @param npart Number of particles.
+#' @param resample An integer indicates which resampling scheme the particle filter should use, 0:multinomial; 1:residual; 2:stratified; 3:systematic. Default method is 0: Multinomial.
+#' @param threshold A real number between 0 and 1 to indicate the threshold for resampling. By default it is disabled, set to be -0.1
+#' @details ...
 #'
 #' @export
-sde.pf <- function(model, init, npart) {
+sde.pf <- function(model, init, npart, resample = 0, threshold = -0.1) {
   # model constants
   if (class(model) != "sde.model") {
     stop("model must be an sde.model object.")
@@ -25,7 +31,8 @@ sde.pf <- function(model, init, npart) {
   # run the PF without pre-specified Z
   ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params), 
             initData = as.matrix(init.data), dT = as.double(dt),
-            nDimsPerObs = as.integer(par.index), nPart = npart)
+            nDimsPerObs = as.integer(par.index), nPart = npart,
+            resample = resample, dThreshold = threshold)
   
   ans$X <- t(ans$X)
   ans$lwgt <- t(ans$lwgt)

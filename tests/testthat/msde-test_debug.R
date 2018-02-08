@@ -191,7 +191,7 @@ test_that("pf.R == pf.cpp", {
                    df = diff.fun,
                    Z = Z)
     # pf with SMCTC in C++ does not need normal draws Z
-    pf <- sde.pf(model = model, init = minit, npart = nPart)
+    pf <- sde.pf(model = model, init = minit, npart = nPart, resample = 1, threshold = 0.2)
     mxd[ii,] <- c(max.diff(pf$X, pf.R$X), max.diff(pf$lwgt, pf.R$lwgt))
     expect_equal(mxd[ii,], rep(0, 4), tolerance = 1e-6, scale = 1)
   }

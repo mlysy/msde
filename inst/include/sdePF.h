@@ -81,7 +81,7 @@ void save_state(double *yOut, double *lwgt,
 template <class sMod, class sPi>
   inline List sdeRobj<sMod, sPi>::particleEval(Numeric initParams,
   	NumericMatrix initData, Numeric dT, Integer nDimsPerObs,
-    int nPart) {
+    int nPart, int resample, double dThreshold) {
   int nDims = sMod::nDims;
   int nComp = initData.ncol();
   // without NormalDraws we then need users to give nPart
@@ -98,6 +98,28 @@ template <class sMod, class sPi>
   // this is for eventual parallel implementation.
   smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> > *Adapt;
   Adapt = new sdeAdapt<sMod>;
+
+  // determine resample mode
+  ResampleType::Enum resampleMode;
+  switch (resample) {
+    // MULTINOMIAL
+    case 0:
+      resampleMode = ResampleType::MULTINOMIAL;
+      break;
+    // RESIDUAL
+    case 1:
+      resampleMode = ResampleType::RESIDUAL;
+      break;
+    // STRATIFIED
+    case 2:
+      resampleMode = ResampleType::STRATIFIED;
+      break;
+    // SYSTEMATIC
+    case 3:
+      resampleMode = ResampleType::SYSTEMATIC;
+      break;
+  }
+
   //Rprintf("before SMC.\n");
   // SMC
   try {
@@ -121,8 +143,7 @@ template <class sMod, class sPi>
           REAL(dT), INTEGER(nDimsPerObs),
           REAL(initData), REAL(initParams)));
     //Rprintf("algParams passed in.\n");
-    // no resampling to give same output as R code (for debugging only)
-    Sampler.SetResampleParams(ResampleType::RESIDUAL, -1.0);
+    Sampler.SetResampleParams(resampleMode, dThreshold);
     Sampler.SetMoveSet(Moveset);
     Sampler.Initialise();
     // extract particle from Sampler

@@ -92,7 +92,9 @@ List Post(SEXP sdeptr, NumericVector initParams, NumericVector initData,
 
 //[[Rcpp::export(".pf_eval")]]
 List particleEval(SEXP sdeptr, NumericVector initParams, NumericMatrix initData,
-		  NumericVector dT, IntegerVector nDimsPerObs, int nPart) {
+		  NumericVector dT, IntegerVector nDimsPerObs,
+      int nPart, int resample, double dThreshold) {
   XPtr<sdeCobj> sde(sdeptr);
-  return sde->particleEval(initParams, initData, dT, nDimsPerObs, nPart);
+  return sde->particleEval(initParams, initData, dT, nDimsPerObs,
+                  nPart, resample, dThreshold);
 }

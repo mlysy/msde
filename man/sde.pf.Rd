@@ -4,8 +4,22 @@
 \alias{sde.pf}
 \title{particle filter prototype for any sde model}
 \usage{
-sde.pf(model, init, npart)
+sde.pf(model, init, npart, resample = 0, threshold = -0.1)
+}
+\arguments{
+\item{model}{An \code{sde.model} object.}
+
+\item{init}{Initialization of SDE.}
+
+\item{npart}{Number of particles.}
+
+\item{resample}{An integer indicates which resampling scheme the particle filter should use, 0:multinomial; 1:residual; 2:stratified; 3:systematic. Default method is 0: Multinomial.}
+
+\item{threshold}{A real number between 0 and 1 to indicate the threshold for resampling. By default it is disabled, set to be -0.1}
 }
 \description{
 particle filter prototype for any sde model
+}
+\details{
+...
 }
