@@ -158,6 +158,12 @@ test_that("lpi.R == lpi.cpp", {
 })
 
 #--- test particle filter ------------------------------------------------------
+## Note: after we remove the normal draw input Z from sde.pf,
+## we cannot compare pf.R == pf.cpp since two results based on two different Z
+## I am not sure if there is a way to reference/point to the Z in sdeFilter constructor
+## from R version pf.fun
+## I have already kept the successfully tested version (after we fix the discrepancy and before we remove Z)
+## as a new branch called "pf-test"
 
 nreps <- 1
 cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE))
