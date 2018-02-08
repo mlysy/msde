@@ -37,7 +37,6 @@ typedef Rcpp::List List;
 // };
 
 // definition of fInitialise template
-// directly copied from sdeSMC.cpp
 template <class sMod>
 void fInitialise(sdeParticle<sMod>& value, double& logweight,
      sdeFilter<sMod> & pf_calcs) {
@@ -49,7 +48,6 @@ void fInitialise(sdeParticle<sMod>& value, double& logweight,
 }
 
 // definition of fMove template
-// directly copied from sdeSMC.cpp
 template <class sMod>
 void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
      sdeFilter<sMod> & pf_calcs) {
@@ -62,7 +60,6 @@ void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
 }
 
 // definition of save_state template
-// directly copied from sdeSMC.cpp
 template <class sMod>
 void save_state(double *yOut, double *lwgt,
     smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
@@ -154,12 +151,18 @@ template <class sMod, class sPi>
     for(int ii=1; ii<nComp; ii++) {
       //Rprintf("lTime = %i\n", ii);
       Sampler.Iterate();
-      save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
+      // save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
     }
+    // only save the last observation (yOut & lgwt)
+    save_state<sMod>(&yOut[(nComp-1)*(nPart*nDims)],&lwgt[(nComp-1)*nPart], Sampler, pTmp);
     //delete Sampler;
     delete Adapt;
-    return List::create(Rcpp::Named("X") = dataOut,
-      Rcpp::Named("lwgt") = LogWeightOut);
+    // output only the last observation
+    // nComp - 1 is the last column since the index starts from 0
+    return List::create(Rcpp::Named("X") = dataOut( _ , nComp - 1),
+      Rcpp::Named("lwgt") = LogWeightOut( _ , nComp - 1));
+    // return List::create(Rcpp::Named("X") = dataOut,
+    //   Rcpp::Named("lwgt") = LogWeightOut);
   }
   catch(smc::exception e) {
     Rcpp::Rcout << e;
