@@ -1,7 +1,7 @@
 #' particle filter prototype for any sde model
 #'
 #' @export
-sde.pf <- function(model, init, npart, Z) {
+sde.pf <- function(model, init, npart) {
   # model constants
   if (class(model) != "sde.model") {
     stop("model must be an sde.model object.")
@@ -21,15 +21,12 @@ sde.pf <- function(model, init, npart, Z) {
   par.index <- init$nvar.obs.m
 
   ncomp <- nrow(init$data)
-  # normal draws
-  if (missing(Z))
-    Z <- matrix(rnorm(npart * ndims * (ncomp - 1)), ncomp - 1, npart * ndims)
-    Z <- t(Z)
 
-  # run particle filter
+  # run the PF without pre-specified Z
   ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params), 
             initData = as.matrix(init.data), dT = as.double(dt),
-            nDimsPerObs = as.integer(par.index), NormalDraws = as.matrix(Z))
+            nDimsPerObs = as.integer(par.index), nPart = npart)
+  
   ans$X <- t(ans$X)
   ans$lwgt <- t(ans$lwgt)
   return(ans)

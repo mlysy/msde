@@ -4,7 +4,7 @@
 \alias{sde.pf}
 \title{particle filter prototype for any sde model}
 \usage{
-sde.pf(model, init, npart, Z)
+sde.pf(model, init, npart)
 }
 \description{
 particle filter prototype for any sde model

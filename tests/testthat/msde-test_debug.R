@@ -175,16 +175,17 @@ test_that("pf.R == pf.cpp", {
     init <- input.init(nreps = nreps, sx = sx, st = st, randx ,randt)
     msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
                     nobs = nObs, dt = dT, dt.sim = dT/10)
-    Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims) # normal draws
     # initialization
     # nvar.obs = c(2, rep(1, nObs-2), 2)
     minit <- sde.init(model, x = msim$data, dt = dT,
                       theta = init$Theta, nvar.obs = 1, m = 1)
+    Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims) # normal draws
     pf.R <- pf.fun(minit,
                    dr = drift.fun,
                    df = diff.fun,
                    Z = Z)
-    pf <- sde.pf(model = model, init = minit, npart = nPart, Z = Z)
+    # pf with SMCTC in C++ does not need normal draws Z
+    pf <- sde.pf(model = model, init = minit, npart = nPart)
     mxd[ii,] <- c(max.diff(pf$X, pf.R$X), max.diff(pf$lwgt, pf.R$lwgt))
     expect_equal(mxd[ii,], rep(0, 4), tolerance = 1e-6, scale = 1)
   }

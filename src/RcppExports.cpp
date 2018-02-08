@@ -232,8 +232,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // particleEval
-List particleEval(SEXP sdeptr, NumericVector initParams, NumericMatrix initData, NumericVector dT, IntegerVector nDimsPerObs, NumericMatrix NormalDraws);
-RcppExport SEXP _msde_particleEval(SEXP sdeptrSEXP, SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP NormalDrawsSEXP) {
+List particleEval(SEXP sdeptr, NumericVector initParams, NumericMatrix initData, NumericVector dT, IntegerVector nDimsPerObs, int nPart);
+RcppExport SEXP _msde_particleEval(SEXP sdeptrSEXP, SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP nPartSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -242,8 +242,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type initData(initDataSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type dT(dTSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type nDimsPerObs(nDimsPerObsSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type NormalDraws(NormalDrawsSEXP);
-    rcpp_result_gen = Rcpp::wrap(particleEval(sdeptr, initParams, initData, dT, nDimsPerObs, NormalDraws));
+    Rcpp::traits::input_parameter< int >::type nPart(nPartSEXP);
+    rcpp_result_gen = Rcpp::wrap(particleEval(sdeptr, initParams, initData, dT, nDimsPerObs, nPart));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -81,10 +81,11 @@ void save_state(double *yOut, double *lwgt,
 template <class sMod, class sPi>
   inline List sdeRobj<sMod, sPi>::particleEval(Numeric initParams,
   	NumericMatrix initData, Numeric dT, Integer nDimsPerObs,
-		NumericMatrix NormalDraws) {
+    int nPart) {
   int nDims = sMod::nDims;
   int nComp = initData.ncol();
-  int nPart = NormalDraws.nrow()/nDims;
+  // without NormalDraws we then need users to give nPart
+  //int nPart = NormalDraws.nrow()/nDims;
   int nStride = nDims*nPart;
   // for debugging purposes, output whole history
   NumericMatrix dataOut(nDims*nPart, nComp);
@@ -107,11 +108,18 @@ template <class sMod, class sPi>
     //Rprintf("Sampler and Moveset created.\n");
 
     // AlgParam needs to be deep-copied into Sampler
-    //Rprintf("right before SetAlgParams.\n");
-    Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp, REAL(dT),
-          INTEGER(nDimsPerObs),
-          REAL(initData), REAL(initParams),
-          REAL(NormalDraws)));
+    // Rprintf("right before SetAlgParams.\n");
+    //
+    // The sdeFilter constructor can overload without zInit
+    // sdeFilter(int np, int nc, 
+    //  double *dt, int *yIndex,
+    //  double *yInit, double *thetaInit)
+    //
+    // Also note nPart & nComp are just C++ int objects
+    // Don't use INTEGER() to wrap them up
+    Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp,
+          REAL(dT), INTEGER(nDimsPerObs),
+          REAL(initData), REAL(initParams)));
     //Rprintf("algParams passed in.\n");
     // no resampling to give same output as R code (for debugging only)
     Sampler.SetResampleParams(ResampleType::RESIDUAL, -1.0);
