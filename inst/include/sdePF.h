@@ -176,7 +176,7 @@ template <class sMod, class sPi>
     }
     if(!historyOut) {
       // only save the last observation (yOut & lgwt)
-      save_state<sMod>(&yOut,&lwgt, Sampler, pTmp);
+      save_state<sMod>(yOut,lwgt, Sampler, pTmp);
     }
     //delete Sampler;
     delete Adapt;
