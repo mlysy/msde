@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
+#include <RcppSMC.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -231,17 +232,20 @@ BEGIN_RCPP
 END_RCPP
 }
 // particleEval
-List particleEval(NumericVector initParams, NumericMatrix initData, NumericVector dT, IntegerVector nDimsPerObs, NumericMatrix NormalDraws);
-RcppExport SEXP _msde_particleEval(SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP NormalDrawsSEXP) {
+List particleEval(SEXP sdeptr, NumericVector initParams, NumericMatrix initData, NumericVector dT, IntegerVector nDimsPerObs, int nPart, int resample, double dThreshold);
+RcppExport SEXP _msde_particleEval(SEXP sdeptrSEXP, SEXP initParamsSEXP, SEXP initDataSEXP, SEXP dTSEXP, SEXP nDimsPerObsSEXP, SEXP nPartSEXP, SEXP resampleSEXP, SEXP dThresholdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type sdeptr(sdeptrSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type initParams(initParamsSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type initData(initDataSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type dT(dTSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type nDimsPerObs(nDimsPerObsSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type NormalDraws(NormalDrawsSEXP);
-    rcpp_result_gen = Rcpp::wrap(particleEval(initParams, initData, dT, nDimsPerObs, NormalDraws));
+    Rcpp::traits::input_parameter< int >::type nPart(nPartSEXP);
+    Rcpp::traits::input_parameter< int >::type resample(resampleSEXP);
+    Rcpp::traits::input_parameter< double >::type dThreshold(dThresholdSEXP);
+    rcpp_result_gen = Rcpp::wrap(particleEval(sdeptr, initParams, initData, dT, nDimsPerObs, nPart, resample, dThreshold));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -262,7 +266,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_msde_Prior", (DL_FUNC) &_msde_Prior, 7},
     {"_msde_Sim", (DL_FUNC) &_msde_Sim, 12},
     {"_msde_Post", (DL_FUNC) &_msde_Post, 23},
-    {"_msde_particleEval", (DL_FUNC) &_msde_particleEval, 5},
+    {"_msde_particleEval", (DL_FUNC) &_msde_particleEval, 8},
     {NULL, NULL, 0}
 };
 

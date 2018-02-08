@@ -9,6 +9,7 @@ ndims <- model$ndims
 nparams <- model$nparams
 
 source("msde-testfunctions.R")
+source("smc-testfunctions.R")
 
 #--- test drift and diffusion --------------------------------------------------
 
@@ -86,15 +87,15 @@ test_that("sim.R == sim.cpp", {
 
 #--- test log-likelihood -------------------------------------------------------
 
-dT <- runif(1)
-nreps <- 10
-nobs <- 8
 cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE))
 ncases <- nrow(cases)
 
 test_that("ll.R == ll.cpp", {
   mxd <- matrix(NA, ncases, 2)
   for(ii in 1:ncases) {
+    dT <- runif(1)
+    nobs <- sample(5:20, 1)
+    nreps <- sample(10:20, 1)
     sx <- cases$single.x[ii]
     st <- cases$single.theta[ii]
     init <- input.init(nreps = c(nobs, nreps), sx, st, randx, randt)
@@ -153,5 +154,45 @@ test_that("lpi.R == lpi.cpp", {
     if(sx && st) lpi.R <- lpi.R[1]
     mxd[ii,] <- max.diff(lpi, lpi.R)
     expect_equal(mxd[ii,2], 0)
+  }
+})
+
+#--- test particle filter ------------------------------------------------------
+## Note: after we remove the normal draw input Z from sde.pf,
+## we cannot compare pf.R == pf.cpp since two results based on two different Z
+## I am not sure if there is a way to reference/point to the Z in sdeFilter constructor
+## from R version pf.fun
+## I have already kept the successfully tested version (after we fix the discrepancy and before we remove Z)
+## as a new branch called "pf-test"
+
+nreps <- 1
+cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE))
+ncases <- nrow(cases)
+
+test_that("pf.R == pf.cpp", {
+  mxd <- matrix(NA, ncases, 4)
+  for(ii in 1:ncases) {
+    nObs <- 100 # number of observations
+    nPart <- 50 # number of particles
+    nDims <- ndims # number of dimensions
+    dT <- 1/252 # time between observations (1 year has about 252 trading days)
+    sx <- cases$single.x[ii]
+    st <- cases$single.theta[ii]
+    init <- input.init(nreps = nreps, sx = sx, st = st, randx ,randt)
+    msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
+                    nobs = nObs, dt = dT, dt.sim = dT/10)
+    # initialization
+    # we may set nvar.obs = sample(nDims, nObs, replace = TRUE) to add randomness
+    minit <- sde.init(model, x = msim$data, dt = dT,
+                      theta = init$Theta, nvar.obs = 1, m = 1)
+    Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims) # normal draws
+    pf.R <- pf.fun(minit,
+                   dr = drift.fun,
+                   df = diff.fun,
+                   Z = Z)
+    # pf with SMCTC in C++ does not need normal draws Z
+    pf <- sde.pf(model = model, init = minit, npart = nPart, resample = 1, threshold = 0.2)
+    mxd[ii,] <- c(max.diff(pf$X, pf.R$X), max.diff(pf$lwgt, pf.R$lwgt))
+    expect_equal(mxd[ii,], rep(0, 4), tolerance = 1e-6, scale = 1)
   }
 })

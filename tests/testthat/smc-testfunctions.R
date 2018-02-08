@@ -41,8 +41,8 @@ cmvn <- function(x2, x1, mean, cholsd) {
 
 
 # update
-#'@param X The SDE data which is an nObs x nDims matrix 
-#'@param Z The normal draws corresponding to each dimension of X, an nObs-1 x nDims matrix 
+#'@param X The SDE data which is an nObs x nDims matrix
+#'@param Z The normal draws corresponding to each dimension of X, an nObs-1 x nDims matrix
 smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
   nobs <- nrow(X)
   ndims <- ncol(X)
@@ -51,8 +51,8 @@ smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
   lw <- rep(NA, nobs)
   lw[1] <- 0
   for(ii in 2:nobs) {
-    mu <- x + dr(x, theta) * dt[ii-1]
-    csd <- df(x, theta) * sqrt(dt[ii-1])
+    mu <- x + c(dr(x, theta)) * dt[ii-1]
+    csd <- c(df(x, theta)) * sqrt(dt[ii-1])
     z <- zmvn(X[ii,], mu, csd)
     qn <- nvar.obs[ii]
     if(qn < ndims) {
@@ -68,3 +68,31 @@ smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
   list(X = X, lwgt = lw)
 }
 
+pf.fun <- function(init, dr, df, Z) {
+  Yt <- init$data
+  nObs <- nrow(Yt)
+  nDims <- ncol(Yt)
+  nPart <- ncol(Z)/nDims
+  Yup <- matrix(NA, nObs, nDims*nPart)
+  lwgt <- matrix(NA, nObs, nPart)
+  for(ipart in 1:nPart) {
+    ind <- (ipart-1)*nDims+(1:nDims) # column index for Xt, Vt corresponding to particle ipart
+    tmp <- smc.update(X = Yt, Z = Z[,ind], # update each particle
+                      dt = init$dt.m, nvar.obs = init$nvar.obs.m,
+                      theta = init$params,
+                      dr = dr, df = df)
+    Yup[,ind] <- tmp$X
+    lwgt[,ipart] <- tmp$lwgt
+  }
+  # normalize R log-weights
+  # To normalize the weghts in lwgt to make it comparable with tmp2$lgwt
+  # the outer apply(.., 1, func...) will implictly change the dimension of lwgt
+  # since each row it extracts will be treated as
+  # a column vector in func(x){...}
+  lwgtn <- apply(apply(lwgt, 2, cumsum), 1, function(x) {
+    mx <- max(x)
+    x - (log(sum(exp(x - mx))) + mx) # for avoiding enumerical overflow
+  })
+  lwgtn <- t(lwgtn)
+  list(X = Yup, lwgt = lwgtn)
+}
