@@ -41,10 +41,12 @@
 #'
 #' # number of particles
 #' nPart <- 50
-#' # particle filter
-#' pf <- sde.pf(emod, init = minit, npart = nPart, resample = 1, threshold = 0.2)
+#' # particle filter (without pre-specified Z)
+#' pf <- sde.pf(emod, init = minit, npart = nPart, 
+#'              resample = "multi", threshold = 0.5,
+#'              history = FALSE)
 #' # output the last observation and normalized log-weights
-#' X <- pf$X
+#' data <- pf$data
 #' lwgt <- pf$lwgt
 #'
 #' @export
@@ -94,7 +96,7 @@ sde.pf <- function(model, init, npart,
   } else {
     hasZ <- FALSE
     # run the PF without pre-specified Z
-    # here NormalDraws is still supplied since we don't have a overloaded 
+    # Here NormalDraws is still supplied since we don't have a overloaded 
     # .pf_eval (particleEval). We can use the boolean hasNormalDraws to control
     # if the sdeFilter constructor overloads with Z
     ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
