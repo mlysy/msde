@@ -42,7 +42,7 @@ cmvn <- function(x2, x1, mean, cholsd) {
 
 # update
 #'@param X The SDE data which is an nObs x nDims matrix
-#'@param Z The normal draws corresponding to each dimension of X, an nObs-1 x nDims matrix
+#'@param Z The normal draws, an nObs-1 by nPart*nDims matrix
 smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
   nobs <- nrow(X)
   ndims <- ncol(X)
@@ -68,12 +68,12 @@ smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
   list(X = X, lwgt = lw)
 }
 
-pf.fun <- function(init, dr, df, Z) {
+pf.fun <- function(init, dr, df, Z, history = FALSE) {
   Yt <- init$data
   nObs <- nrow(Yt)
   nDims <- ncol(Yt)
   nPart <- ncol(Z)/nDims
-  Yup <- matrix(NA, nObs, nDims*nPart)
+  data <- matrix(NA, nObs, nDims*nPart)
   lwgt <- matrix(NA, nObs, nPart)
   for(ipart in 1:nPart) {
     ind <- (ipart-1)*nDims+(1:nDims) # column index for Xt, Vt corresponding to particle ipart
@@ -81,11 +81,10 @@ pf.fun <- function(init, dr, df, Z) {
                       dt = init$dt.m, nvar.obs = init$nvar.obs.m,
                       theta = init$params,
                       dr = dr, df = df)
-    Yup[,ind] <- tmp$X
+    data[,ind] <- tmp$X
     lwgt[,ipart] <- tmp$lwgt
   }
   # normalize R log-weights
-  # To normalize the weghts in lwgt to make it comparable with tmp2$lgwt
   # the outer apply(.., 1, func...) will implictly change the dimension of lwgt
   # since each row it extracts will be treated as
   # a column vector in func(x){...}
@@ -94,5 +93,22 @@ pf.fun <- function(init, dr, df, Z) {
     x - (log(sum(exp(x - mx))) + mx) # for avoiding enumerical overflow
   })
   lwgtn <- t(lwgtn)
-  list(X = Yup, lwgt = lwgtn)
+  # return the whole history if history == TRUE
+  # or the last observation if history == FALSE
+  if (history == FALSE) {
+    out <- list(data = data[nObs, ], lwgt = lwgtn[nObs, ])
+  } else {
+    out <- list(data = data, lwgt = lwgtn)
+  }
+  return(out)
+  # data <- t(data)
+  # data <- as.vector(data)
+  # data <- array(data, dim = c(nDims, nPart, nObs))
+  # data <- aperm(data, dim = c(2, 1, 3))
+  # ans <- list(data = data, lwgt = lwgtn) 
+  # if(!history) {
+  #   ans$data <- ans$data[,,1]
+  #   ans$lwgt <- ans$lwgt[,1]
+  # }  
+  # return(ans)
 }

@@ -61,10 +61,13 @@ minit <- sde.init(emod, x = esim$data, dt = dt, theta = theta0,
 
 # number of particles
 nPart <- 50
-# particle filter
-pf <- sde.pf(emod, init = minit, npart = nPart, resample = 1, threshold = 0.2)
+# Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
+# particle filter (without pre-specified Z)
+pf <- sde.pf(emod, init = minit, npart = nPart, 
+             resample = "multi", threshold = -1,
+             Z = Z, history = FALSE)
 # output the last observation and normalized log-weights
-X <- pf$X
+data <- pf$data
 lwgt <- pf$lwgt
 
 }
