@@ -108,6 +108,7 @@ sde.pf <- function(model, init, npart,
   #                 historyOut = history)
   # }
   hasZ <- TRUE
+  Z <- t(Z)
   ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
                   initData = as.matrix(init.data), dT = as.double(dt),
                   nDimsPerObs = as.integer(par.index), nPart = npart,
