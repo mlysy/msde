@@ -80,41 +80,36 @@ sde.pf <- function(model, init, npart,
   if(resample == "strat") {resample <- 2}
   if(resample == "sys") {resample <- 3}
 
-  # # if there is a pre-specified Z
-  # # hasZ == TRUE when Z is provided; otherwise hasZ == FALSE
-  # if(!missing(Z)) {
-  #   # if(!all(dim(Z) == c(ncomp-1, ndims, npart))) {
-  #   #   stop("Z must be an array of dimensions (ncomp-1) x ndims x npart.")
-  #   # }
-  #   hasZ <- TRUE
-  #   # run the PF with pre-specified Z
-  #   ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
-  #                 initData = as.matrix(init.data), dT = as.double(dt),
-  #                 nDimsPerObs = as.integer(par.index), nPart = npart,
-  #                 resample = resample, dThreshold = threshold,
-  #                 NormalDraws = Z, hasNormalDraws = hasZ,
-  #                 historyOut = history)
-  # } else {
-  #   hasZ <- FALSE
-  #   # run the PF without pre-specified Z
-  #   # Here NormalDraws is still supplied since we don't have a overloaded 
-  #   # .pf_eval (particleEval). We can use the boolean hasNormalDraws to control
-  #   # if the sdeFilter constructor overloads with Z
-  #   ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
-  #                 initData = as.matrix(init.data), dT = as.double(dt),
-  #                 nDimsPerObs = as.integer(par.index), nPart = npart,
-  #                 resample = resample, dThreshold = threshold,
-  #                 NormalDraws = Z, hasNormalDraws = hasZ,
-  #                 historyOut = history)
-  # }
-  hasZ <- TRUE
-  Z <- t(Z)
-  ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
+  # if there is a pre-specified Z
+  # hasZ == TRUE when Z is provided; otherwise hasZ == FALSE
+  if(!missing(Z)) {
+    # if(!all(dim(Z) == c(ncomp-1, ndims, npart))) {
+    #   stop("Z must be an array of dimensions (ncomp-1) x ndims x npart.")
+    # }
+    hasZ <- TRUE
+    Z <- t(Z)
+    # run the PF with pre-specified Z
+    ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
                   initData = as.matrix(init.data), dT = as.double(dt),
                   nDimsPerObs = as.integer(par.index), nPart = npart,
                   resample = resample, dThreshold = threshold,
                   NormalDraws = Z, hasNormalDraws = hasZ,
                   historyOut = history)
+  } else {
+    hasZ <- FALSE
+    Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
+    Z <- t(Z)
+    # run the PF without pre-specified Z
+    # Here NormalDraws is still supplied since we don't have a overloaded 
+    # .pf_eval (particleEval). We can use the boolean hasNormalDraws to control
+    # if the sdeFilter constructor overloads with Z
+    ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
+                  initData = as.matrix(init.data), dT = as.double(dt),
+                  nDimsPerObs = as.integer(par.index), nPart = npart,
+                  resample = resample, dThreshold = threshold,
+                  NormalDraws = Z, hasNormalDraws = hasZ,
+                  historyOut = history)
+  }
   
   # output
   # ans$data <- array(c(ans$data), dim = c(ndims, npart, ncomp))

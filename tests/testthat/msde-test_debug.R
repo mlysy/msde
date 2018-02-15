@@ -166,7 +166,8 @@ test_that("lpi.R == lpi.cpp", {
 ## as a new branch called "pf-test"
 
 nreps <- 1
-cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE))
+cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE),
+                    single.history = c(TRUE, FALSE))
 ncases <- nrow(cases)
 
 test_that("pf.R == pf.cpp", {
@@ -174,7 +175,7 @@ test_that("pf.R == pf.cpp", {
   for(ii in 1:ncases) {
     sx <- cases$single.x[ii]
     st <- cases$single.theta[ii] 
-    history <- TRUE
+    history <- cases$single.history[ii]
     rr <- 10
 
     # setup
@@ -195,7 +196,8 @@ test_that("pf.R == pf.cpp", {
 
     # pf in R
     pf.R <- pf.fun(minit, dr = drift.fun, df = diff.fun, Z = Z, history = history)
-    # pf in C++ (for debugging, disable the resampling)
+    # pf in C++ (for debugging, disable the resampling) 
+    # sde.pf will internally transpose the given Z
     pf <- sde.pf(model = model, init = minit, npart = nPart,
                 resample = "multi", threshold = -1,
                 Z = Z, history = history)

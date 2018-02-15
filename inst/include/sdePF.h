@@ -89,7 +89,7 @@ template <class sMod, class sPi>
   int nCompOut = historyOut ? nComp : 1;
   // without NormalDraws we then need users to give nPart
   //int nPart = NormalDraws.nrow()/nDims;
-  int nStride = nDims*nPart;
+  // int nStride = nDims*nPart;
   // for debugging purposes, output whole history
   NumericMatrix dataOut(nDims*nPart, nCompOut);
   NumericMatrix LogWeightOut(nPart, nCompOut);
