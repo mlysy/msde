@@ -97,7 +97,7 @@ sde.pf <- function(model, init, npart,
                   historyOut = history)
   } else {
     hasZ <- FALSE
-    Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
+    Z <- matrix(rnorm(npart*ndims*(ncomp-1)), ncomp-1, npart*ndims)
     Z <- t(Z)
     # run the PF without pre-specified Z
     # Here NormalDraws is still supplied since we don't have a overloaded 
