@@ -167,7 +167,7 @@ test_that("lpi.R == lpi.cpp", {
 
 nreps <- 1
 cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE),
-                    single.history = c(TRUE, FALSE))
+                    single.history = c(TRUE, FALSE), single.rr = c(5,10))
 ncases <- nrow(cases)
 
 test_that("pf.R == pf.cpp", {
@@ -176,7 +176,7 @@ test_that("pf.R == pf.cpp", {
     sx <- cases$single.x[ii]
     st <- cases$single.theta[ii] 
     history <- cases$single.history[ii]
-    rr <- 10
+    rr <- cases$single.rr[ii]
 
     # setup
     nObs <- 100 # number of observations
@@ -192,7 +192,6 @@ test_that("pf.R == pf.cpp", {
                       theta = init$Theta, nvar.obs = 1, m = 1)
     # normal draws 
     Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
-    # Z_array <- as.vector(Z) # used for pf.cpp, 1-d array stacked by column
 
     # pf in R
     pf.R <- pf.fun(minit, dr = drift.fun, df = diff.fun, Z = Z, history = history)
