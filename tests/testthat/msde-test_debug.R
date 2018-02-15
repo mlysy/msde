@@ -165,37 +165,40 @@ test_that("lpi.R == lpi.cpp", {
 ## I have already kept the successfully tested version (after we fix the discrepancy and before we remove Z)
 ## as a new branch called "pf-test"
 
-nreps <- 1
-cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE),
-                    single.history = c(TRUE, FALSE), single.rr = c(5,10))
-ncases <- nrow(cases)
+## nreps <- 1
+## cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE),
+##                     single.history = c(TRUE, FALSE), single.rr = c(5,10))
+## ncases <- nrow(cases)
 
+ntest <- 10
 test_that("pf.R == pf.cpp", {
-  mxd <- matrix(NA, ncases, 4)
-  for(ii in 1:ncases) {
-    sx <- cases$single.x[ii]
-    st <- cases$single.theta[ii] 
-    history <- cases$single.history[ii]
-    rr <- cases$single.rr[ii]
-
+  mxd <- matrix(NA, ntest, 4)
+  for(ii in 1:ntest) {
+    ## sx <- cases$single.x[ii]
+    ## st <- cases$single.theta[ii]
+    ## history <- cases$single.history[ii]
+    ## rr <- cases$single.rr[ii]
     # setup
-    nObs <- 100 # number of observations
-    nPart <- 50 # number of particles
+    nObs <- sample(50:100,1) # number of observations
+    nPart <- sample(10:50,1) # number of particles
     nDims <- ndims # number of dimensions
-    dT <- 1/252 # time between observations (1 year has about 252 trading days)
-    init <- input.init(nreps = nreps, sx = sx, st = st, randx ,randt)
+    dT <- runif(1) # time between observations (1 year has about 252 trading days)
+    mm <- sample(1:2, 1)
+    history <- as.logical(rbinom(1,1,.5))
+    init <- input.init(nreps = nreps, sx = TRUE, st = TRUE, randx ,randt)
     msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
-                    nobs = nObs, dt = dT, dt.sim = dT/rr)
+                    nobs = nObs, dt = dT, dt.sim = dT)
     # initialization
     # m = 1 implies no missing data time points between two observations
     minit <- sde.init(model, x = msim$data, dt = dT,
-                      theta = init$Theta, nvar.obs = sample(nDims, nObs, replace = TRUE), m = 1)
-    # normal draws 
+                      theta = init$Theta,
+                      nvar.obs = sample(nDims, nObs, replace = TRUE), m = mm)
+    # normal draws
     Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
-
     # pf in R
-    pf.R <- pf.fun(minit, dr = drift.fun, df = diff.fun, Z = Z, history = history)
-    # pf in C++ (for debugging, disable the resampling) 
+    pf.R <- pf.fun(minit, dr = drift.fun, df = diff.fun, Z = Z,
+                   history = history)
+    # pf in C++ (for debugging, disable the resampling)
     # sde.pf will internally transpose the given Z
     pf <- sde.pf(model = model, init = minit, npart = nPart,
                 resample = "multi", threshold = -1,

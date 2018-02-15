@@ -43,7 +43,7 @@
 #' nPart <- 50
 #' # Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
 #' # particle filter (without pre-specified Z)
-#' pf <- sde.pf(emod, init = minit, npart = nPart, 
+#' pf <- sde.pf(emod, init = minit, npart = nPart,
 #'              resample = "multi", threshold = -1,
 #'              Z = Z, history = FALSE)
 #' # output the last observation and normalized log-weights
@@ -52,8 +52,7 @@
 #'
 #' @export
 sde.pf <- function(model, init, npart,
-                   resample = "multi",
-                   #resample = c("multi", "resid", "strat", "sys"),
+                   resample = c("multi", "resid", "strat", "sys"),
                    threshold = 0.5, Z, history = FALSE) {
   # model constants
   if (class(model) != "sde.model") {
@@ -73,44 +72,44 @@ sde.pf <- function(model, init, npart,
   dt <- init$dt.m
   par.index <- init$nvar.obs.m
   ncomp <- nrow(init$data)
-
   # code resample into integer value
-  if(resample == "multi") {resample <- 0}
-  if(resample == "resid") {resample <- 1}
-  if(resample == "strat") {resample <- 2}
-  if(resample == "sys") {resample <- 3}
+  resample <- match.arg(resample)
+  resample <- switch(resample,
+                     multi = 0L, resid = 1L, strat = 2L, sys = 3L)
+  ## if(resample == "multi") {resample <- 0}
+  ## if(resample == "resid") {resample <- 1}
+  ## if(resample == "strat") {resample <- 2}
+  ## if(resample == "sys") {resample <- 3}
 
   # if there is a pre-specified Z
   # hasZ == TRUE when Z is provided; otherwise hasZ == FALSE
-  if(!missing(Z)) {
-    # if(!all(dim(Z) == c(ncomp-1, ndims, npart))) {
-    #   stop("Z must be an array of dimensions (ncomp-1) x ndims x npart.")
-    # }
-    hasZ <- TRUE
+  hasZ <- !missing(Z)
+  if(hasZ) {
     Z <- t(Z)
-    # run the PF with pre-specified Z
-    ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
-                  initData = as.matrix(init.data), dT = as.double(dt),
-                  nDimsPerObs = as.integer(par.index), nPart = npart,
-                  resample = resample, dThreshold = threshold,
-                  NormalDraws = Z, hasNormalDraws = hasZ,
-                  historyOut = history)
   } else {
-    hasZ <- FALSE
-    Z <- matrix(rnorm(npart*ndims*(ncomp-1)), ncomp-1, npart*ndims)
-    Z <- t(Z)
+    Z <- 0
+    ## hasZ <- FALSE
+    ## Z <- matrix(rnorm(npart*ndims*(ncomp-1)), ncomp-1, npart*ndims)
+    ## Z <- t(Z)
     # run the PF without pre-specified Z
-    # Here NormalDraws is still supplied since we don't have a overloaded 
+    # Here NormalDraws is still supplied since we don't have a overloaded
     # .pf_eval (particleEval). We can use the boolean hasNormalDraws to control
     # if the sdeFilter constructor overloads with Z
-    ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
+    ## ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
+    ##               initData = as.matrix(init.data), dT = as.double(dt),
+    ##               nDimsPerObs = as.integer(par.index), nPart = npart,
+    ##               resample = resample, dThreshold = threshold,
+    ##               NormalDraws = Z, hasNormalDraws = hasZ,
+    ##               historyOut = history)
+  }
+  # run the PF with pre-specified Z
+  ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
                   initData = as.matrix(init.data), dT = as.double(dt),
                   nDimsPerObs = as.integer(par.index), nPart = npart,
-                  resample = resample, dThreshold = threshold,
+                  resample = as.integer(resample), dThreshold = threshold,
                   NormalDraws = Z, hasNormalDraws = hasZ,
                   historyOut = history)
-  }
-  
+
   # output
   # ans$data <- array(c(ans$data), dim = c(ndims, npart, ncomp))
   # ans$data <- aperm(ans$data, dim = c(2, 1, 3))
@@ -145,3 +144,6 @@ sde.pf <- function(model, init, npart,
 #     - Write up a report in the form of a vignette, which also shows how to
 #       use \code{sde.pf}.
 #
+# new todo:
+# * finish debugging
+# * Z should be passed as 3d array at R level, and data output should also be a 3d array.

@@ -1,22 +1,28 @@
 # update particles based on a fixed set of normal draws.
 source("msde-testfunctions.R")
 
-# conditional distribution
+# conditional distribution p(
 # returns the normalized log-pdf
 cmvn <- function(x2, x1, mean, cholsd) {
   n <- length(mean)
   Sigma <- crossprod(matrix(cholsd, n, n))
   n1 <- length(x1)
   n2 <- length(x2)
-  m1 <- mean[1:n1]
-  m2 <- mean[n1+1:n2]
-  V11 <- Sigma[1:n1,1:n1,drop=FALSE]
-  V12 <- Sigma[1:n1,n1+1:n2,drop=FALSE]
-  V22 <- Sigma[n1+1:n2,n1+1:n2,drop=FALSE]
-  # all inversion in one step
-  iV <- crossprod(V12, solve(V11, cbind(V12, x1 - m1)))
-  mn <- m2 + iV[,n2+1]
-  Vn <- V22 - iV[,1:n2]
+  if(n1 == 0) {
+    # no conditioning
+    mn <- mean
+    Vn <- Sigma
+  } else {
+    m1 <- mean[1:n1]
+    m2 <- mean[n1+1:n2]
+    V11 <- Sigma[1:n1,1:n1,drop=FALSE]
+    V12 <- Sigma[1:n1,n1+1:n2,drop=FALSE]
+    V22 <- Sigma[n1+1:n2,n1+1:n2,drop=FALSE]
+    # all inversion in one step
+    iV <- crossprod(V12, solve(V11, cbind(V12, x1 - m1)))
+    mn <- m2 + iV[,n2+1]
+    Vn <- V22 - iV[,1:n2]
+  }
   # double check the elements selection
   lmvn(x2, mn, chol(Vn))
 }
@@ -63,7 +69,9 @@ smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
     ## cSd <- matrix(csd, ndims, ndims)
     ## lw[ii] <- lmvn(x[1:qn], mu[1:qn], cSd[1:qn,1:qn,drop=FALSE])
     lw[ii] <- lmvn(x, mu, csd)
-    if(qn < ndims) lw[ii] <- lw[ii] - cmvn(x[(qn+1):ndims], x[1:qn], mu, csd)
+    if(qn < ndims) {
+      lw[ii] <- lw[ii] - cmvn(x[(qn+1):ndims], x[1:qn], mu, csd)
+    }
   }
   list(X = X, lwgt = lw)
 }
@@ -105,10 +113,10 @@ pf.fun <- function(init, dr, df, Z, history = FALSE) {
   # data <- as.vector(data)
   # data <- array(data, dim = c(nDims, nPart, nObs))
   # data <- aperm(data, dim = c(2, 1, 3))
-  # ans <- list(data = data, lwgt = lwgtn) 
+  # ans <- list(data = data, lwgt = lwgtn)
   # if(!history) {
   #   ans$data <- ans$data[,,1]
   #   ans$lwgt <- ans$lwgt[,1]
-  # }  
+  # }
   # return(ans)
 }

@@ -4,8 +4,8 @@
 \alias{sde.pf}
 \title{Particle filter for SDE model.}
 \usage{
-sde.pf(model, init, npart, resample = "multi", threshold = 0.5, Z,
-  history = FALSE)
+sde.pf(model, init, npart, resample = c("multi", "resid", "strat", "sys"),
+  threshold = 0.5, Z, history = FALSE)
 }
 \arguments{
 \item{model}{An \code{sde.model} object.}
@@ -63,7 +63,7 @@ minit <- sde.init(emod, x = esim$data, dt = dt, theta = theta0,
 nPart <- 50
 # Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
 # particle filter (without pre-specified Z)
-pf <- sde.pf(emod, init = minit, npart = nPart, 
+pf <- sde.pf(emod, init = minit, npart = nPart,
              resample = "multi", threshold = -1,
              Z = Z, history = FALSE)
 # output the last observation and normalized log-weights
