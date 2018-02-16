@@ -183,9 +183,9 @@ test_that("pf.R == pf.cpp", {
     nPart <- sample(10:50,1) # number of particles
     nDims <- ndims # number of dimensions
     dT <- runif(1) # time between observations (1 year has about 252 trading days)
-    mm <- sample(1:2, 1)
+    mm <- 1 #sample(1:2, 1)
     history <- as.logical(rbinom(1,1,.5))
-    init <- input.init(nreps = nreps, sx = TRUE, st = TRUE, randx ,randt)
+    init <- input.init(nreps = 1, sx = TRUE, st = TRUE, randx ,randt)
     msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
                     nobs = nObs, dt = dT, dt.sim = dT)
     # initialization

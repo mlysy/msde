@@ -64,10 +64,13 @@ template <class sMod>
 void save_state(double *yOut, double *lwgt,
     smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
     sdeParticle<sMod> & pTmp) {
+  // logweights are in fact normalized and divided by nPart
+  // undo this to just get the raw unnormalized weights.
+  double logNC = Sampler.GetLogNCPath() + log(Sampler.GetNumber());
   for(long iPart=0; iPart<Sampler.GetNumber(); iPart++) {
     pTmp = Sampler.GetParticleValueN(iPart);
     pTmp.get_yObs(&yOut[iPart*sMod::nDims]);
-    lwgt[iPart] = Sampler.GetParticleLogWeightN(iPart);
+    lwgt[iPart] = Sampler.GetParticleLogWeightN(iPart) + logNC;
   }
   return;
 }

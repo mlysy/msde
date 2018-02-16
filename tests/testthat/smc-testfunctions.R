@@ -96,11 +96,12 @@ pf.fun <- function(init, dr, df, Z, history = FALSE) {
   # the outer apply(.., 1, func...) will implictly change the dimension of lwgt
   # since each row it extracts will be treated as
   # a column vector in func(x){...}
-  lwgtn <- apply(apply(lwgt, 2, cumsum), 1, function(x) {
-    mx <- max(x)
-    x - (log(sum(exp(x - mx))) + mx) # for avoiding enumerical overflow
-  })
-  lwgtn <- t(lwgtn)
+  ## lwgtn <- apply(apply(lwgt, 2, cumsum), 1, function(x) {
+  ##   mx <- max(x)
+  ##   x - (log(sum(exp(x - mx))) + mx) # for avoiding enumerical overflow
+  ## })
+  ## lwgtn <- t(lwgtn)
+  lwgtn <- apply(lwgt, 2, cumsum)
   # return the whole history if history == TRUE
   # or the last observation if history == FALSE
   if (history == FALSE) {
