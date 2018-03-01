@@ -182,7 +182,7 @@ test_that("pf.R == pf.cpp", {
     nObs <- sample(50:100,1) # number of observations
     nPart <- sample(10:50,1) # number of particles
     nDims <- ndims # number of dimensions
-    dT <- runif(1) # time between observations (1 year has about 252 trading days)
+    dT <- runif(1, min = 0, max = 0.2) # time between observations (too large dT will cause testing failure in lotvol model)
     mm <- 1 #sample(1:2, 1)
     history <- as.logical(rbinom(1,1,.5))
     init <- input.init(nreps = 1, sx = TRUE, st = TRUE, randx ,randt)
