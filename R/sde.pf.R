@@ -3,7 +3,7 @@
 #' @param model An \code{sde.model} object.
 #' @param init Initialization of SDE.
 #' @param npart Number of particles.
-#' @param resample The type of particle resampling scheme to use.  These are: multi(nomial), resid(ual), strat(ified), sys(tematic).
+#' @param resample The type of particle resampling scheme to use. These are: multi(nomial), resid(ual), strat(ified), sys(tematic).
 #' @param threshold A scalar less than 1 to indicate the threshold for resampling. A negative number disables resampling.
 #' @param Z Optional array of dimensions \code{(ncomp - 1) x ndims x npart} providing the standard normal draws for the filter to use.  This is most useful for debugging, in conjunction with setting \code{threshold} to a negative value.
 #' @param history Logical; whether or not the entire history of the particle filter should be output, or only draws for the last observation.
@@ -87,7 +87,7 @@ sde.pf <- function(model, init, npart,
   if(hasZ) {
     Z <- t(Z)
   } else {
-    Z <- 0
+    Z <- as.matrix(0)
     ## hasZ <- FALSE
     ## Z <- matrix(rnorm(npart*ndims*(ncomp-1)), ncomp-1, npart*ndims)
     ## Z <- t(Z)
