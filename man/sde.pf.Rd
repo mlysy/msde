@@ -14,7 +14,7 @@ sde.pf(model, init, npart, resample = c("multi", "resid", "strat", "sys"),
 
 \item{npart}{Number of particles.}
 
-\item{resample}{The type of particle resampling scheme to use.  These are: multi(nomial), resid(ual), strat(ified), sys(tematic).}
+\item{resample}{The type of particle resampling scheme to use. These are: multi(nomial), resid(ual), strat(ified), sys(tematic).}
 
 \item{threshold}{A scalar less than 1 to indicate the threshold for resampling. A negative number disables resampling.}
 
