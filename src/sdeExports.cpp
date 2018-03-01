@@ -1,6 +1,8 @@
 // generic R wrappers to exported members of instantiated Cobj
 
-#include <Rcpp.h>
+// #include <Rcpp.h>
+//[[Rcpp::depends("RcppArmadillo")]]
+#include <RcppArmadillo.h>
 using namespace Rcpp;
 #include "sdeInterface.h"
 
@@ -86,4 +88,15 @@ List Post(SEXP sdeptr, NumericVector initParams, NumericVector initData,
 		   dataOutComp, dataOutDims, updateParams, updateData,
 		   priorArgs, tunePar, updateLogLik, nLogLikOut,
 		   updateLastMiss, nLastMissOut, nCores, displayProgress);
+}
+
+//[[Rcpp::export(".pf_eval")]]
+List particleEval(SEXP sdeptr, NumericVector initParams, NumericMatrix initData,
+		  NumericVector dT, IntegerVector nDimsPerObs,
+      int nPart, int resample, double dThreshold, 
+      NumericMatrix NormalDraws, bool hasNormalDraws, bool historyOut) {
+  XPtr<sdeCobj> sde(sdeptr);
+  return sde->particleEval(initParams, initData, dT, nDimsPerObs,
+                  nPart, resample, dThreshold, 
+                  NormalDraws, hasNormalDraws, historyOut);
 }

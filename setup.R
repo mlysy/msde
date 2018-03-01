@@ -5,8 +5,8 @@ require(Rcpp)
 
 Rcpp::compileAttributes()
 devtools::document()
-devtools::install(args = "--install-tests")
 devtools::build_vignettes()
+devtools::install(args = "--install-tests")
 
 devtools::build()
 
