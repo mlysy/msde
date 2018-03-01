@@ -1,9 +1,10 @@
 Package: msde
 Title: Bayesian Inference for Multivariate Stochastic Differential Equations
-Version: 1.0.3
+Version: 1.0.3.9000
 Date: 2017-12-16
 Authors@R: c(person("Martin", "Lysy", role = c("aut", "cre"),
                     email = "mlysy@uwaterloo.ca"),
+             person("Feiyu", "Zhu", role = "aut"),
              person("JunYong", "Tong", role = "aut"),
 	     person("Nigel", "Delaney", role = "ctb"))
 Description: Implements an MCMC sampler for the posterior distribution of arbitrary time-homogeneous multivariate stochastic differential equation (SDE) models with possibly latent components.  The package provides a simple entry point to integrate user-defined models directly with the sampler's C++ code, and parallelizes large portions of the calculations when compiled with 'OpenMP'.
