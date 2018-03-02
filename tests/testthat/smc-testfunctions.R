@@ -1,7 +1,7 @@
 # update particles based on a fixed set of normal draws.
 source("msde-testfunctions.R")
 
-# conditional distribution p(
+# conditional distribution
 # returns the normalized log-pdf
 cmvn <- function(x2, x1, mean, cholsd) {
   n <- length(mean)
@@ -26,25 +26,6 @@ cmvn <- function(x2, x1, mean, cholsd) {
   # double check the elements selection
   lmvn(x2, mn, chol(Vn))
 }
-
-## .cmvn <- function(x, mu, Sigma, qn) {
-##   ndims <- length(x)
-##   rn <- ndims-qn
-##   x <- x[1:qn] # selecting the observed Xn's
-##   m2 <- mu[1:qn]
-##   m1 <- mu[(qn+1):ndims]
-##   # double check the elements selection
-##   V22 <- Sigma[1:qn,1:qn,drop=FALSE] # qn x qn
-##   V21 <- Sigma[1:qn,(qn+1):ndims,drop=FALSE] # qn x (d - qn)
-##   V12 <- Sigma[(qn+1):ndims,1:qn,drop=FALSE] # (d - qn) x qn
-##   V11 <- Sigma[(qn+1):ndims,(qn+1):ndims,drop=FALSE] # (d - qn) x (d - qn)
-##   # all inversion in one step
-##   iV <- crossprod(V21, .solveV(V22, cbind(V21, x - m2)))
-##   mn <- m1 + iV[,rn+1]
-##   Vn <- V11 - iV[,1:rn]
-##   list(m = mn, V = Vn)
-## }
-
 
 # update
 #'@param X The SDE data which is an nObs x nDims matrix
@@ -92,15 +73,7 @@ pf.fun <- function(init, dr, df, Z, history = FALSE) {
     data[,ind] <- tmp$X
     lwgt[,ipart] <- tmp$lwgt
   }
-  # normalize R log-weights
-  # the outer apply(.., 1, func...) will implictly change the dimension of lwgt
-  # since each row it extracts will be treated as
-  # a column vector in func(x){...}
-  ## lwgtn <- apply(apply(lwgt, 2, cumsum), 1, function(x) {
-  ##   mx <- max(x)
-  ##   x - (log(sum(exp(x - mx))) + mx) # for avoiding enumerical overflow
-  ## })
-  ## lwgtn <- t(lwgtn)
+
   lwgtn <- apply(lwgt, 2, cumsum)
   # return the whole history if history == TRUE
   # or the last observation if history == FALSE
@@ -110,14 +83,4 @@ pf.fun <- function(init, dr, df, Z, history = FALSE) {
     out <- list(data = data, lwgt = lwgtn)
   }
   return(out)
-  # data <- t(data)
-  # data <- as.vector(data)
-  # data <- array(data, dim = c(nDims, nPart, nObs))
-  # data <- aperm(data, dim = c(2, 1, 3))
-  # ans <- list(data = data, lwgt = lwgtn)
-  # if(!history) {
-  #   ans$data <- ans$data[,,1]
-  #   ans$lwgt <- ans$lwgt[,1]
-  # }
-  # return(ans)
 }
