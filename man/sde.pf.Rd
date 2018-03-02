@@ -42,7 +42,7 @@ emod <- sde.examples("eou")
 # initial parameters
 theta0 <- c(alpha = .1, gamma = 1, eta = .3, sigma = .2, rho = -.63)
 # number of observations
-nObs <- 100
+nObs <- 10
 # number of dimensions
 nDims <- emod$ndims
 # time between observations (1 year has about 252 trading days)
@@ -60,12 +60,12 @@ minit <- sde.init(emod, x = esim$data, dt = dt, theta = theta0,
                  nvar.obs = sample(nDims, nObs, replace = TRUE), m = 1)
 
 # number of particles
-nPart <- 50
-# Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
+nPart <- 7
+Z <- array(rnorm(nPart*nDims*(nObs-1)), c(nObs-1, nDims, nPart))
 # particle filter (without pre-specified Z)
 pf <- sde.pf(emod, init = minit, npart = nPart,
              resample = "multi", threshold = -1,
-             Z = Z, history = FALSE)
+             Z = Z, history = TRUE)
 # output the last observation and normalized log-weights
 data <- pf$data
 lwgt <- pf$lwgt

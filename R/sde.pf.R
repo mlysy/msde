@@ -40,12 +40,12 @@
 #'                  nvar.obs = sample(nDims, nObs, replace = TRUE), m = 1)
 #'
 #' # number of particles
-#' nPart <- 50
-#' # Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
+#' nPart <- 37
+#' Z <- array(rnorm(nPart*nDims*(nObs-1)), c(nObs-1, nDims, nPart))
 #' # particle filter (without pre-specified Z)
 #' pf <- sde.pf(emod, init = minit, npart = nPart,
 #'              resample = "multi", threshold = -1,
-#'              Z = Z, history = FALSE)
+#'              Z = Z, history = TRUE)
 #' # output the last observation and normalized log-weights
 #' data <- pf$data
 #' lwgt <- pf$lwgt
@@ -77,17 +77,20 @@ sde.pf <- function(model, init, npart,
   resample <- switch(resample,
                      multi = 0L, resid = 1L, strat = 2L, sys = 3L)
 
-  # if there is a pre-specified Z
   # hasZ == TRUE when Z is provided; otherwise hasZ == FALSE
   hasZ <- !missing(Z)
   if(hasZ) {
+    # check the dimensions of Z input
+    if(!all(dim(Z) == c(ncomp-1, ndims, npart))) {
+ +    stop("Z must be an array of dimensions (ncomp-1) x ndims x npart.")
+ +  }
     # transform the input 3-d array Z into a matrix
     dim(Z) <- c((ncomp-1), ndims*npart)
     Z <- t(Z)
   } else {
     Z <- as.matrix(0)
   }
-  # run the PF with pre-specified Z
+  # run the particle filter
   ans <- .pf_eval(sdeptr = model$ptr, initParams = as.double(init$params),
                   initData = as.matrix(init.data), dT = as.double(dt),
                   nDimsPerObs = as.integer(par.index), nPart = npart,
@@ -95,40 +98,18 @@ sde.pf <- function(model, init, npart,
                   NormalDraws = Z, hasNormalDraws = hasZ,
                   historyOut = history)
 
-  # output
-  # ans$data <- array(c(ans$data), dim = c(ndims, npart, ncomp))
-  # ans$data <- aperm(ans$data, dim = c(2, 1, 3))
-  # dimnames(ans)[[2]] <- data.names
-  # ans$lwgt <- t(ans$lwgt)
+  # output 
+  # ans$data should also be a 3-d array if history == TRUE; otherwise, a matrix
+  if(history == TRUE) {
+    ans$data <- array(c(ans$data), dim = c(ndims, npart, ncomp))
+    ans$data <- aperm(ans$data, perm = c(2, 1, 3)) # notice the option is "perm" not "dim"
+    dimnames(ans$data)[[2]] <- data.names
+  } else {
+    ans$data <- matrix(ans$data, nrow = ndims, ncol = npart)
+    ans$data <- t(ans$data)
+  }
+  ans$lwgt <- t(ans$lwgt)
 
-  # output only the last observation when history == FALSE
-  # notice if history == FALSE, ans$data just contains the last observation
-  # given by .pf_eval
-  # if(!history) {
-  #   ans$data <- ans$data[,,1]
-  #   ans$lwgt <- ans$lwgt[,1]
-  # }
-
-  out <- list(data = t(ans$data), lwgt = t(ans$lwgt))
+  out <- list(data = ans$data, lwgt = ans$lwgt)
   return(out)
 }
-
-# old todo:
-# 1.  augment this to sde.pf, i.e, any sdeModel.
-#     - make sdePF <= particleEval  a virtual function of sdeCobj/sdeRobj
-#     - every call to sde.pf allocates/deallocates full memory.
-#     - sdeSMC.cpp should become (possible multiple) header files.
-# 2.  add smc debug to each model using msde-test_debug.R
-#
-# new todo:
-# 3.  testthat check deterministic Z input, history = TRUE/FALSE.
-# 4.  Test a PMCMC written in R.
-#     - You can check against a so-called multivariate Ornstein-Uhlenbeck model, for which Kalman filter analytically does filter calculation.  This is coded in \code{mou.loglik}.
-#     - Compare speed/accuracy against \code{sde.post} using true posterior as
-#       benchmark.
-#     - Write up a report in the form of a vignette, which also shows how to
-#       use \code{sde.pf}.
-#
-# new todo:
-# * finish debugging
-# * Z should be passed as 3d array at R level, and data output should also be a 3d array.
