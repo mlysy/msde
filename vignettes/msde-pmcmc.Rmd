@@ -1,0 +1,215 @@
+---
+title: "Particle MCMC for Multivariate Stochastic Differential Equations with **`msde`**"
+author: "Martin Lysy, Feiyu Zhu"
+date: "`r Sys.Date()`"
+output:
+  html_vignette:
+    toc: true
+bibliography: references.bib
+csl: taylor-and-francis-harvard-x.csl
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{Particle MCMC with msde}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+\newcommand{\Ep}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\idm}{\mathrm{I}}
+\newcommand{\secref}[1]{Section~\ref{#1}}
+
+This vignette shows how to realize particle MCMC for multivariate SDEs with **`msde`**.
+
+## Introduction
+
+Parameter estimation of multivariate stochastic differential equations is a very meaningful but usually difficult task. If we translate a given stochastic differential equation into a non-linear state-space model (SSM), then Particle Markov chain Monte Carlo methods are the state-of-the-art technique that can be applied to make Bayesian inference feasible in such a situation.
+
+For tutorial purposes, we will not delve into the theoretical details behind. Instead, we will explain the methods by directly showing the code, output and plots. A bivariate Ornstein-Uhlenbeck process will be used as an example. We will then compare the posterior given by Metropolis-within-Gibbs MCMC and that produced by particle MCMC with the analytic result given by Kalman Filter. A benchmark test will also be carried out and we will discuss the pros and cons of particle MCMC at the end.
+
+[@tutorial] is a good tutorial for SSM. For details about particle MCMC, please see the seminal paper by [@pmcmc].
+
+## Multivariate Ornstein-Uhlenbeck Process
+The $p$-dimensional multivariate Ornstein-Uhlenbeck (mOU) process $Y_t = (Y_{1t}, \ldots, Y_{dt})$ satisfies the SDE
+$$
+dY_t = (\Gamma Y_t + \Lambda)dt + \Phi^{1/2} dB_t
+$$
+where $B_t = (B_{1t}, \ldots, B_{pt})$ is $p$-dimensional Brownian motion.  Its Euler discretization is of the form
+$$
+Y_{n+1} = Y_n + (\Gamma Y_n + \Lambda) \Delta_n + \Phi^{1/2} \Delta B_n,
+$$
+where $Y_n = Y(t_n)$, $\Delta_n = t_{n+1} - t_n$ and 
+$$
+\Delta B_n = B(t_{n+1}) - B(t_n) \overset{\textit{ind}}{\sim} \mathcal N(0, \Delta_n).
+$$
+Thus, $Y_0, \ldots, Y_N$ is multivariate normal Markov chain for which the marginal distribution of any subset of timepoints and/or components can be efficiently calculated using the Kalman filter.  This can be used to check the MCMC output of `sde.post` and particle MCMC output as in the following example.
+
+## MCMC for Bivariate OU Process
+For reproducibility, we may first set up a seed.
+```{r seed}
+set.seed(123)
+```
+
+### Data simulation
+We choose the pre-compiled bivariate OU model supplied by **`msde`**.
+```{r bmod}
+library(msde)
+bmod <- sde.examples("biou")
+```
+Then we can generate some initial parameter values
+```{r init-values}
+# parameter values
+Gamma0 <- .1 * crossprod(matrix(rnorm(4),2,2))
+Lambda0 <- rnorm(2)
+Phi0 <- crossprod(matrix(rnorm(4),2,2))
+Psi0 <- chol(Phi0) # precompiled model uses the Cholesky scale
+theta0 <- c(Gamma0, Lambda0, Psi0[c(1,3,4)])
+names(theta0) <- bmod$param.names
+# initial sde value
+Y0 <- rnorm(2)
+names(Y0) <- bmod$data.names
+```
+We set the total observation period to be `10` and simulate observations of SDE as follows:
+```{r sim}
+# simulation
+dT <- runif(1, max = .1) # time step
+nObs <- 10
+bsim <- sde.sim(bmod, x0 = Y0, theta = theta0,
+                dt = dT, dt.sim = dT, nobs = nObs)
+YObs <- bsim$data
+```
+For description of the options in `sde.sim`, please check the help manual of `sde.sim`.
+
+Finally, we can initializa the bOU model.
+```{r initialization}
+# initialization before MCMC
+binit <- sde.init(bmod, x = YObs, dt = dT, theta = theta0,
+                  nvar.obs = 1) # second component is unobserved
+```
+
+
+### Posterior sampling via MCMC
+We assume only $\Lambda_1$ is unknown (i.e., needs to be estimated). Thus, we introduce a vector `fixed.params` of logical `TRUE` and `FALSE` to indicate if a parameter is fixed or not. Since $\Lambda_1$ is unknown, it is, therefore, not fixed. 
+```{r fixed-params}
+# only Lambda1 is unknown
+fixed.params <- rep(TRUE, bmod$nparams)
+names(fixed.params) <- bmod$param.names
+fixed.params["Lambda1"] <- FALSE
+```
+Then we set the prior on the unknown parameter(s) and observations.
+```{r prior}
+# prior on (Lambda1, Y_0)
+hyper <- list(mu = c(0,0), Sigma = diag(2))
+names(hyper$mu) <- bmod$data.names
+dimnames(hyper$Sigma) <- rep(list(bmod$data.names), 2)
+```
+We set the total number of posterior samples as `100,000` with the burn-in period as `1,000`. The posterior sampling via MCMC is given as follows:
+```{r mcmc, cache = TRUE}
+# posterior sampling
+nsamples <- 1e5
+burn <- 1e3
+bpost <- sde.post(bmod, binit, hyper = hyper,
+                  fixed.params = fixed.params,
+                  nsamples = nsamples, burn = burn)
+```
+Within `sde.post`, Metropolis-within-Gibbs (MWG) is used. The MWG jump size can be specified as a scalar, a vector or length `nparams + ndims`, or a named vector containing the elements defined by `sde.init$nvar.obs.m[1]` (the missing variables in the first SDE observation) and `fixed.params` (the SDE parameters which are not held fixed). The default jump sizes are adaptive. For each MWG random variable, the jump sizes are `.25 * |initial_value|` when `|initial_value| > 0`, and `1` otherwise. For further details of the implementation of the MWG algorithm, please check the description of `sde.post`.
+
+It is widely recognized that the optimal coordinate-wise acceptance rate should be around $45\%$. As we can see, our result $43.8\%$ is very good in terms of the acceptance rate.
+
+After the posterior sampling, we can extract the posterior samples corresponding to the unknown parameter $\Lambda_1$.
+```{r L1-mcmc}
+L1.mcmc <- bpost$params[,"Lambda1"]
+```
+
+### Analytic sampling via Kalman filter
+In order to check the sampling result given by MCMC, we can compare it with the analytic solution given by Kalman filter.
+```{r kalman, cache = TRUE}
+# analytic posterior
+L1.seq <- seq(min(L1.mcmc), max(L1.mcmc), len = 500)
+L1.loglik <- sapply(L1.seq, function(l1) {
+  lambda <- Lambda0
+  lambda[1] <- l1
+  mou.loglik(X = YObs, dt = dT, nvar.obs = 1,
+             Gamma = Gamma0, Lambda = lambda, Phi = Phi0,
+             mu0 = hyper$mu, Sigma0 = hyper$Sigma)
+})
+
+# normalize density
+L1.Kalman <- exp(L1.loglik - max(L1.loglik))
+L1.Kalman <- L1.Kalman/sum(L1.Kalman)/(L1.seq[2]-L1.seq[1])
+```
+In the following subsection, we will then compare the histogram of posterior samples given by MCMC with the analytic curve given by Kalman filter.
+
+### Result comparison
+As we can see from the following plot, the MCMC method is fine but definitely not great in this case. 
+```{r mcmc-plot, fig.width = 10, fig.height = 5, out.width = "90%"}
+# compare MCMC with Kalman filter
+hist(L1.mcmc, breaks = 100, freq = FALSE,
+     main = expression(p(Lambda[1]*" | "*bold(Y)[1])),
+     xlab = expression(Lambda[1]))
+lines(L1.seq, L1.Kalman, col = "red")
+legend("topright", legend = c("Analytic", "MCMC"),
+       pch = c(NA, 22), lty = c(1, NA), col = c("red", "black"))
+```
+
+Later we will show that even the basic particle MCMC can produce better result than the carefully tuned MWG MCMC.
+
+## Particle MCMC for Bivariate OU Process
+### Algorithm
+general algorithm, sde.pf, sdePF.h, sdeSMC.h, SMCTC
+
+### Posterior sampling via particle MCMC
+Let's set the number of particles as `100` and use just IID-Metropolis proposal for updating the unknown parameter $\Lambda_1$. Here our aim is to show that even "off-the-shelf" choice can give satisfactory result.
+```{r pmcmc, cache = TRUE}
+npart <- 100
+mwg.sd <- 0.3 # for convenience, just use a fixed jump size instead of an adaptive one
+ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, nsamples, npart, dT,
+                   resample = "multi", threshold = 0.5, mwg.sd)
+```
+Then we can check the acceptance rate.
+```{r accept}
+# check the acceptance rate
+accept <- ppost$accept
+print(accept)
+```
+The acceptance rate is $94.6\%$ which is close to the optimal $100\%$.
+
+Finally, we extract the posterior samples of $\Lambda_1$ which will be used for comparison in the following subsection.
+```{r}
+# posterior mean of theta
+L1.pmcmc <- ppost$params[ ,!fixed.params]
+```
+### Result comparison 
+Similarly, we compare the histogram of posterior samples of $\Lambda_1$ given by particle MCMC with the analytic curve solved by Kalman filter.
+```{r pmcmc-plot, fig.width = 10, fig.height = 5, out.width = "90%"}
+# compare particle MCMC with Kalman filter
+hist(L1.pmcmc, breaks = 100, freq = FALSE,
+     main = expression(p(Lambda[1]*" | "*bold(Y)[1])),
+     xlab = expression(Lambda[1]))
+lines(L1.seq, L1.Kalman, col = "red")
+legend("topright", legend = c("Analytic", "PMCMC"),
+       pch = c(NA, 22), lty = c(1, NA), col = c("red", "black"))
+```
+It is clear that the result given by particle MCMC can fit the analytic curve better than the MWG MCMC. However, such gain in performance comes at a price, as we will discuss in the next section.
+
+## Benchmark Study
+The better performance of particle MCMC sacrifices the computational speed. We can do a benchmark test to show the computational complexity of particle MCMC relative to the usual MCMC.
+```{r benchmark, cache = TRUE}
+require(microbenchmark)
+mbm <- microbenchmark(
+  "MCMC" = {
+    bpost <- sde.post(bmod, binit, hyper = hyper,
+                      fixed.params = fixed.params,
+                      nsamples = nsamples, burn = burn)
+  },
+  "Particle MCMC" = {
+    ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, nsamples, npart, dT,
+                       resample = "multi", threshold = 0.5, mwg.sd)
+  },
+  times = 100 # number of times to evaluate the expression
+)
+mbm
+```
+We can visualize the benchmark results as follows:
+
+## References
