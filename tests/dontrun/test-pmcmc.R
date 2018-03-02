@@ -3,6 +3,9 @@
 # require(msde)
 source("pmcmc-functions.R")
 
+# set a seed
+set.seed(123)
+
 # bivariate OU model
 bmod <- sde.examples("biou")
 
@@ -68,8 +71,8 @@ legend("topright", legend = c("Analytic", "MCMC"),
        pch = c(NA, 22), lty = c(1, NA), col = c("red", "black"))
 
 ## Inference via particle MCMC
-npart <- 200
-mwg.sd <- 0.5
+npart <- 100
+mwg.sd <- 0.3
 ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, nsamples, npart, dT,
                    resample = "multi", threshold = 0.5, mwg.sd)
 # check the acceptance rate
