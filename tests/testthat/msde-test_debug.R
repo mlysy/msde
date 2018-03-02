@@ -199,7 +199,8 @@ test_that("pf.R == pf.cpp", {
     pf.R <- pf.fun(minit, dr = drift.fun, df = diff.fun, Z = Z,
                    history = history)
     # pf in C++ (for debugging, disable the resampling)
-    # sde.pf will internally transpose the given Z
+    # Z input for sde.pf should be a 3-d array of dimensions (ncomp - 1) x ndims x npart
+    Z <- array(c(Z), c(nObs-1, nDims, nPart))
     pf <- sde.pf(model = model, init = minit, npart = nPart,
                 resample = "multi", threshold = -1,
                 Z = Z, history = history)
