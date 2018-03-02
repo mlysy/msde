@@ -82,8 +82,8 @@ sde.pf <- function(model, init, npart,
   if(hasZ) {
     # check the dimensions of Z input
     if(!all(dim(Z) == c(ncomp-1, ndims, npart))) {
- +    stop("Z must be an array of dimensions (ncomp-1) x ndims x npart.")
- +  }
+      stop("Z must be an array of dimensions (ncomp-1) x ndims x npart.")
+    }
     # transform the input 3-d array Z into a matrix
     dim(Z) <- c((ncomp-1), ndims*npart)
     Z <- t(Z)

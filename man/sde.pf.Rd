@@ -42,7 +42,7 @@ emod <- sde.examples("eou")
 # initial parameters
 theta0 <- c(alpha = .1, gamma = 1, eta = .3, sigma = .2, rho = -.63)
 # number of observations
-nObs <- 10
+nObs <- 100
 # number of dimensions
 nDims <- emod$ndims
 # time between observations (1 year has about 252 trading days)
@@ -60,7 +60,7 @@ minit <- sde.init(emod, x = esim$data, dt = dt, theta = theta0,
                  nvar.obs = sample(nDims, nObs, replace = TRUE), m = 1)
 
 # number of particles
-nPart <- 7
+nPart <- 37
 Z <- array(rnorm(nPart*nDims*(nObs-1)), c(nObs-1, nDims, nPart))
 # particle filter (without pre-specified Z)
 pf <- sde.pf(emod, init = minit, npart = nPart,
