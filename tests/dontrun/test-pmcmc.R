@@ -95,12 +95,12 @@ mbm <- microbenchmark(
   "MCMC" = {
     bpost <- sde.post(bmod, binit, hyper = hyper,
                       fixed.params = fixed.params,
-                      nsamples = nsamples, burn = burn)
+                      nsamples = nsamples, burn = burn, verbose = FALSE)
   },
   "Particle MCMC" = {
     ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, nsamples, npart, dT,
                        resample = "multi", threshold = 0.5, mwg.sd)
   },
-  times = 5 # number of times to evaluate the expression
+  times = 3 # number of times to evaluate the expression
 )
-mbm
+print(mbm)

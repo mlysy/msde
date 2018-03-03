@@ -1,2 +1,5 @@
 base
 msde
+microbenchmark
+microbenchmarkCore
+ggplot2

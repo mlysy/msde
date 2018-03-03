@@ -114,7 +114,7 @@ bpost <- sde.post(bmod, binit, hyper = hyper,
 ```
 Within `sde.post`, Metropolis-within-Gibbs (MWG) is used. The MWG jump size can be specified as a scalar, a vector or length `nparams + ndims`, or a named vector containing the elements defined by `sde.init$nvar.obs.m[1]` (the missing variables in the first SDE observation) and `fixed.params` (the SDE parameters which are not held fixed). The default jump sizes are adaptive. For each MWG random variable, the jump sizes are `.25 * |initial_value|` when `|initial_value| > 0`, and `1` otherwise. For further details of the implementation of the MWG algorithm, please check the description of `sde.post`.
 
-It is widely recognized that the optimal coordinate-wise acceptance rate should be around $45\%$. As we can see, our result $43.8\%$ is very good in terms of the acceptance rate.
+It is widely recognized that the optimal coordinate-wise acceptance rate should be 45%. As we can see, our result 43.8% is very good in terms of the acceptance rate.
 
 After the posterior sampling, we can extract the posterior samples corresponding to the unknown parameter $\Lambda_1$.
 ```{r L1-mcmc}
@@ -172,7 +172,7 @@ Then we can check the acceptance rate.
 accept <- ppost$accept
 print(accept)
 ```
-The acceptance rate is $94.6\%$ which is close to the optimal $100\%$.
+The acceptance rate is 94.6% which is close to the optimal 100%.
 
 Finally, we extract the posterior samples of $\Lambda_1$ which will be used for comparison in the following subsection.
 ```{r}
@@ -190,6 +190,7 @@ lines(L1.seq, L1.Kalman, col = "red")
 legend("topright", legend = c("Analytic", "PMCMC"),
        pch = c(NA, 22), lty = c(1, NA), col = c("red", "black"))
 ```
+
 It is clear that the result given by particle MCMC can fit the analytic curve better than the MWG MCMC. However, such gain in performance comes at a price, as we will discuss in the next section.
 
 ## Benchmark Study
@@ -200,16 +201,29 @@ mbm <- microbenchmark(
   "MCMC" = {
     bpost <- sde.post(bmod, binit, hyper = hyper,
                       fixed.params = fixed.params,
-                      nsamples = nsamples, burn = burn)
+                      nsamples = nsamples, burn = burn, verbose = FALSE)
   },
   "Particle MCMC" = {
     ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, nsamples, npart, dT,
                        resample = "multi", threshold = 0.5, mwg.sd)
   },
-  times = 100 # number of times to evaluate the expression
+  times = 50 # number of times to evaluate the expression
 )
-mbm
 ```
-We can visualize the benchmark results as follows:
+The benchmark results are printed as follows:
+```{r, cache = TRUE}
+print(mbm)
+```
+The time unit is "millisecond". The total number of evaluation `neval` is set to be `50`. The column `min`, `max`, `mean`, `median` represent the minimum time, maximum time, mean time, median time, resprectively. Besides, `lq` and `uq` are, respectively, lower quantile and upper quantile of the sample. 
+
+The mean amount of time spent to run the adaptive MWG MCMC is just about 0.31 seconds. Whereas, the mean time needed to run the particle MCMC is around 55 seconds. Even though the particle MCMC shows better performance in our example above, the computational cost is much larger than the usual MCMC.
+
+We can also visualize the benchmark results.
+```{r bench-plot, cache = TRUE, fig.width = 10, fig.height = 5, out.width = "90%"}
+invisible(require(ggplot2))
+autoplot(mbm)
+```
+
+The plot is called violin plot which is a method of plotting numeric data. It is similar to box plot with a rotated kernel density plot on each side. The visualization also confirms that particle MCMC is computationally more intensive than MCMC.
 
 ## References
