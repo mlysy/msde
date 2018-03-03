@@ -1,4 +1,4 @@
-#' Particle MCMC Sampling for SDE
+#' Particle MCMC sampling for SDE
 #' 
 #' @param model An \code{sde.model} object constructed with \code{\link{sde.make.model}}.
 #' @param init An \code{sde.init} object constructed with \code{\link{sde.init}}.
