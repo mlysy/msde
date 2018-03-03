@@ -2,7 +2,7 @@
 % Please edit documentation in R/sde.pmcmc.R
 \name{sde.pmcmc}
 \alias{sde.pmcmc}
-\title{Particle MCMC Sampling for SDE}
+\title{Particle MCMC sampling for SDE}
 \usage{
 sde.pmcmc(model, init, theta0, fixed.params, nsamples, npart, dT,
   resample = "multi", threshold = 0.5, mwg.sd = 1)
@@ -38,5 +38,5 @@ A list of the following elements:
 }
 }
 \description{
-Particle MCMC Sampling for SDE
+Particle MCMC sampling for SDE
 }
