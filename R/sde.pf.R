@@ -7,12 +7,19 @@
 #' @param threshold A scalar less than 1 to indicate the threshold for resampling. A negative number disables resampling.
 #' @param Z Optional array of dimensions \code{(ncomp - 1) x ndims x npart} providing the standard normal draws for the filter to use.  This is most useful for debugging, in conjunction with setting \code{threshold} to a negative value.
 #' @param history Logical; whether or not the entire history of the particle filter should be output, or only draws for the last observation.
-#' @details ...
-#'
+#' @details \code{sde.pf} is just a wrapper of the \code{C++} level member function \code{particleEval} of \code{sdeRobj<sMod, sPi>} class type. Sequential Monte Carlo (currently only particle filtering not smoothing) methods are implemented (at C++ level) to output the values of particles and unnormalized log weights.  
+#' Consider a general State-Space Model with static parameters \eqn{\theta} (which may be multidimensional) consists of a hidden state process \eqn{{X_n}_{n \geq 1}}$ and a observation process \eqn{{Y_n}_{n \geq 1}}. Once the unnormalized log weights are obtained, users can build up their own particle MCMC by using the following approximation
+#' \deqn{
+#' \hat{p}_\theta(y_{1:T}) = \frac{1}{N} \sum_{i=1}^N w(X_{1:T}^i)
+#' }{
+#' \hat{p}_\theta(y_{1:T}) = 1/N*( w(X_{1:T}^1) + ... + w(X_{1:T}^N) )
+#' }
+#' that is, to do MCMC on \eqn{p(\theta | y_{1:T})} directly. \eqn{T} is the total observation time. \eqn{N} is total number of particles.
+#' 
 #' @return A list with elements:
 #' \describe{
 #'   \item{\code{data}}{If \code{history = FALSE}, a \code{npart x ndims} matrix of particles for the last observation.  If \code{history = TRUE}, an array of dimension \code{npart x ndims x nComp}.}
-#'   \item{\code{lgwt}}{If \code{history = FALSE}, a \code{npart}-length vector of normalized log weights for the last observation.  Otherwise a matrix of dimension \code{npart x nComp}.}
+#'   \item{\code{lgwt}}{If \code{history = FALSE}, a \code{npart}-length vector of unnormalized log weights for the last observation.  Otherwise a matrix of dimension \code{npart x nComp}.}
 #' }
 #'
 #' @examples
