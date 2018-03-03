@@ -17,7 +17,7 @@ vignette: >
 \newcommand{\Var}{\mathrm{Var}}
 \newcommand{\Cov}{\mathrm{Cov}}
 \newcommand{\idm}{\mathrm{I}}
-\newcommand{\secref}[1]{Section~\ref{#1}}
+\newcommand{\bm}[1]{\boldsymbol{#1}}
 
 This vignette shows how to realize particle MCMC for multivariate SDEs with **`msde`**.
 
@@ -26,8 +26,6 @@ This vignette shows how to realize particle MCMC for multivariate SDEs with **`m
 Parameter estimation of multivariate stochastic differential equations is a very meaningful but usually difficult task. If we translate a given stochastic differential equation into a non-linear state-space model (SSM), then Particle Markov chain Monte Carlo methods are the state-of-the-art technique that can be applied to make Bayesian inference feasible in such a situation.
 
 For tutorial purposes, we will not delve into the theoretical details behind. Instead, we will explain the methods by directly showing the code, output and plots. A bivariate Ornstein-Uhlenbeck process will be used as an example. We will then compare the posterior given by Metropolis-within-Gibbs MCMC and that produced by particle MCMC with the analytic result given by Kalman Filter. A benchmark test will also be carried out and we will discuss the pros and cons of particle MCMC at the end.
-
-[@tutorial] is a good tutorial for SSM. For details about particle MCMC, please see the seminal paper by [@pmcmc].
 
 ## Multivariate Ornstein-Uhlenbeck Process
 The $p$-dimensional multivariate Ornstein-Uhlenbeck (mOU) process $Y_t = (Y_{1t}, \ldots, Y_{dt})$ satisfies the SDE
@@ -80,13 +78,12 @@ YObs <- bsim$data
 ```
 For description of the options in `sde.sim`, please check the help manual of `sde.sim`.
 
-Finally, we can initializa the bOU model.
+Finally, we can initializa the bivariate OU model.
 ```{r initialization}
 # initialization before MCMC
 binit <- sde.init(bmod, x = YObs, dt = dT, theta = theta0,
                   nvar.obs = 1) # second component is unobserved
 ```
-
 
 ### Posterior sampling via MCMC
 We assume only $\Lambda_1$ is unknown (i.e., needs to be estimated). Thus, we introduce a vector `fixed.params` of logical `TRUE` and `FALSE` to indicate if a parameter is fixed or not. Since $\Lambda_1$ is unknown, it is, therefore, not fixed. 
@@ -112,9 +109,13 @@ bpost <- sde.post(bmod, binit, hyper = hyper,
                   fixed.params = fixed.params,
                   nsamples = nsamples, burn = burn)
 ```
-Within `sde.post`, Metropolis-within-Gibbs (MWG) is used. The MWG jump size can be specified as a scalar, a vector or length `nparams + ndims`, or a named vector containing the elements defined by `sde.init$nvar.obs.m[1]` (the missing variables in the first SDE observation) and `fixed.params` (the SDE parameters which are not held fixed). The default jump sizes are adaptive. For each MWG random variable, the jump sizes are `.25 * |initial_value|` when `|initial_value| > 0`, and `1` otherwise. For further details of the implementation of the MWG algorithm, please check the description of `sde.post`.
+Within `sde.post`, Metropolis-within-Gibbs (MWG) is used. The MWG jump size can be specified as a scalar, a vector or length `nparams + ndims`, or a named vector containing the elements defined by `sde.init$nvar.obs.m[1]` (the missing variables in the first SDE observation) and `fixed.params` (the SDE parameters which are not held fixed). For each MWG random variable, the default jump sizes are `.25 * |initial_value|` when `|initial_value| > 0`, and `1` otherwise. By default, `sde.post` carries out an adaptive MCMC proposal based on @adaptMCMC. At step *n* of the MCMC, the jump size of each MWG random variable is increased or decreased by $\delta(n)$, depending on whether the cumulative acceptance rate is above or below the optimal value of `0.44`.  If $\sigma_n$ is the size of the jump at step `n`, then the next jump size is determined by
+$$
+\log(\sigma_{n+1}) = \log(\sigma_n) \pm \delta(n), \qquad \delta(n) = \min(.01, 1/n^{1/2}).
+$$
+For further details of the implementation, please check the description of `sde.post`.
 
-It is widely recognized that the optimal coordinate-wise acceptance rate should be 45%. As we can see, our result 43.8% is very good in terms of the acceptance rate.
+It is widely recognized that the optimal coordinate-wise acceptance rate should be around 44%. As we can see, our result 43.8% is very good in terms of the acceptance rate.
 
 After the posterior sampling, we can extract the posterior samples corresponding to the unknown parameter $\Lambda_1$.
 ```{r L1-mcmc}
@@ -155,8 +156,59 @@ legend("topright", legend = c("Analytic", "MCMC"),
 Later we will show that even the basic particle MCMC can produce better result than the carefully tuned MWG MCMC.
 
 ## Particle MCMC for Bivariate OU Process
-### Algorithm
-general algorithm, sde.pf, sdePF.h, sdeSMC.h, SMCTC
+### Sequential Monte Carlo implementation
+Particle MCMC (PMCMC) are a new class of MCMC techniques proposed in @pmcmc which rely on Sequential Monte Carlo (SMC) methods to build efficient high dimensional proposal distributions for MCMC samplers. Since SMC sampling plays a central role in the particle MCMC methodology, we abstract a group of template classes of SMC methods for SDEs in the header file `sdeSMC.h`. The header `sdeSMC.h` contains two main template classes: `sdeParticle` and `sdeFilter`. Class `sdeParticle` defines the state of particles of `sdeModel` class, comprising of the complete data at a given time point and providing storage for calculations. Class `sdeFilter` provides the filtering method based on `sdeParticle`, i.e. everything we need to calculate particle weights. In order to use these template classes in **`R`** to implement the SMC methods, we further build a header file `sdePF.h` in which the particle filtering method is a member function of `sdeRobj` class specified by `sMode` (SDE model type) and `sPi` (SDE prior type). The function header (with preprocessor directives) is given below
+```{Rcpp sdePF, eval = FALSE}
+#include <RcppArmadillo.h>
+#include <smctc.h>
+#include "sdeInterface.h"
+#include "sdeSMC.h"
+typedef Rcpp::LogicalVector Logical;
+typedef Rcpp::NumericVector Numeric;
+typedef Rcpp::IntegerVector Integer;
+typedef Rcpp::NumericMatrix NumericMatrix;
+typedef Rcpp::List List;
+
+template <class sMod, class sPi>
+  inline List sdeRobj<sMod, sPi>::particleEval(Numeric initParams,
+                 NumericMatrix initData,
+                 Numeric dT, Integer nDimsPerObs,
+                 int nPart, int resample,
+                 double dThreshold,
+                 NumericMatrix NormalDraws,
+                 bool hasNormalDraws,
+                 bool historyOut)
+```
+For the details of the full function body, users are referred to the header file `sdePF.h`. All the SMC methods implementation in **`msde`** are specifically desinged for SDEs in mind and are based on the more general Sequential Monte Carlo Template Class (SMCTC) by @SMCTC and `RcppSMC` in **`R`** in which many low-level SMC mechanisms have been realized. Currently, `sdeSMC.h` is still under active development in aim to incorporate smoothing methods, parallel processing and the ability to deal with invalid data.
+
+For a basic but general SMC algorithm exposition, the tutorial given by @tutorial is a good starting point. Note that particle filters for state-space models can be regarded as a special SMC algorithm. In the following subsection, we will discuss the idea and algorithm of particle MCMC for inference in state-space models.
+
+### Particle MCMC algorithm
+A general SSM with static parameters $\theta \in \Theta \subset \mathbb{R}^{n_\theta}$ (which may be multidimensional) consists of a hidden state process $\{X_n\}_{n \geq 1}$ and a observation process $\{Y_n\}_{n \geq 1}$. For inference for non-linear non-Gaussian SSMs, usual MCMC algorithms would implement some sort of Metropolis-within-Gibbs approach to sampling from the joint posterior $p(\theta, \bm{x} | \bm{y})$. However, due to the high correlation between $\theta$ and $\bm{X}$ (given $\bm{Y}$), such algorithms are very inefficient. In contrast, MCMC directly on $p(\theta | \bm{y})$ would be much more efficient, but it's impossible because the marginal isn't available in closed form for general SDEs. Particle MCMC overcomes this challenge by using an unbiased estimate, on an extended space including all the variables $(\theta, \bm{X}, \bm{Y})$, obtained by SMC. The point of particle MCMC is to be able to do MCMC on $p(\theta | \bm{y})$ directly (in terms of MCMC efficiency).
+
+Currently, `sde.pmcmc` in **`msde`** only implements the *particle marginal Metropolis-Hastings* (PMMH) sampler in the particle MCMC toolbox which will be used for our later simulation study. PMMH is an approximation of an ideal *pseudo marginal Metropolis-Hastings* sampler (see @pseudoMCMC) for sampling from $p(\theta, x_{1:T} | y_{1:T})$. It utilizes the following proposal density 
+$$
+q((\theta^*, x^*_{1:T}) | (\theta, x_{1:T})) := q(\theta^* | \theta) p_{\theta^*}(x^*_{1:T} | y_{1:T})
+$$
+where the proposed $x^*_{1:T}$ is perfectly *adapted* to the proposed $\theta^*$. The proposal density $q(\theta^* | \theta)$ should be specified by users. In `sde.pmcmc`, a very basic IID-Metropolis proposal is implemented. Samples from $p_{\theta^*}(x^*_{1:T} | y_{1:T})$ can be obtained from an SMC algorithm targeting $p_{\theta^*}(x^*_{1:T} | y_{1:T})$. In fact we do not need the analytic expression of $p_{\theta^*}(x^*_{1:T} | y_{1:T})$ to calculate the acceptance ratio since the ratio can be transformed as
+$$
+\frac{p(\theta^*, x^*_{1:T} | y_{1:T})}{p(\theta, x_{1:T} | y_{1:T})} \frac{q((\theta, x_{1:T}) | (\theta^*, x^*_{1:T}))}{q((\theta^*, x^*_{1:T}) | (\theta, x_{1:T}))} = \frac{p_{\theta^*}(y_{1:T}) p(\theta^*)}{p_\theta(y_{1:T})p(\theta)} \frac{q(\theta | \theta^*)}{q(\theta^* | \theta)}
+$$
+In the above formula, $p_\theta(y_{1:T})$ can be replaced by its estimated expression $\hat{p}_\theta(y_{1:T})$
+$$
+\hat{p}_\theta(y_{1:T}) := \hat{p}_\theta(y_1) \prod_{n=2}^T \hat{p}_\theta(y_n | y_{1:n-1})
+$$
+which are approximated by the unnormalized particle weights (not the incremental weights) at time $T$, i.e.
+$$
+\hat{p}_\theta(y_{1:T}) = \frac{1}{N} \sum_{i=1}^N w(X_{1:T}^i)
+$$
+where $N$ is the pre-specified total number of particles.
+
+In practice, we store the unnormalized weights at time point $n$ as $\log$-weights, i.e. $\log w_n(X_{1:n}^i)$. To avoid possible overflow problem, we had better calculate $\log \hat{p}_\theta(y_{1:n})$ by using the following formula
+$$
+\log \hat{p}_\theta(y_{1:n}) = \log\left( \frac{1}{N} \sum_{i=1}^N \exp\left[\log w_n(X_{1:n}^i) - C_n\right] \right) + C_n
+$$
+where $C_n = \max_{1\leq i \leq N}\{\log w_n(X_{1:n}^i)\}$.
 
 ### Posterior sampling via particle MCMC
 Let's set the number of particles as `100` and use just IID-Metropolis proposal for updating the unknown parameter $\Lambda_1$. Here our aim is to show that even "off-the-shelf" choice can give satisfactory result.
@@ -194,6 +246,7 @@ legend("topright", legend = c("Analytic", "PMCMC"),
 It is clear that the result given by particle MCMC can fit the analytic curve better than the MWG MCMC. However, such gain in performance comes at a price, as we will discuss in the next section.
 
 ## Benchmark Study
+### Numerical test results
 The better performance of particle MCMC sacrifices the computational speed. We can do a benchmark test to show the computational complexity of particle MCMC relative to the usual MCMC.
 ```{r benchmark, cache = TRUE}
 require(microbenchmark)
@@ -203,7 +256,7 @@ mbm <- microbenchmark(
                       fixed.params = fixed.params,
                       nsamples = nsamples, burn = burn, verbose = FALSE)
   },
-  "Particle MCMC" = {
+  "PMCMC" = {
     ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, nsamples, npart, dT,
                        resample = "multi", threshold = 0.5, mwg.sd)
   },
@@ -214,16 +267,17 @@ The benchmark results are printed as follows:
 ```{r, cache = TRUE}
 print(mbm)
 ```
-The time unit is "millisecond". The total number of evaluation `neval` is set to be `50`. The column `min`, `max`, `mean`, `median` represent the minimum time, maximum time, mean time, median time, resprectively. Besides, `lq` and `uq` are, respectively, lower quantile and upper quantile of the sample. 
+The time unit is "millisecond". The total number of evaluation `neval` is set to be `50`. The column `min`, `max`, `mean`, `median` represent the minimum, maximum, mean and median time spent, resprectively. Besides, `lq` and `uq` are, respectively, lower quantile and upper quantile of the sample. If the `multcomp` package is available, then a statistical ranking is calculated and displayed in compact letter display from in the `cld` column 
 
 The mean amount of time spent to run the adaptive MWG MCMC is just about 0.31 seconds. Whereas, the mean time needed to run the particle MCMC is around 55 seconds. Even though the particle MCMC shows better performance in our example above, the computational cost is much larger than the usual MCMC.
 
+### Test results visualization
 We can also visualize the benchmark results.
 ```{r bench-plot, cache = TRUE, fig.width = 10, fig.height = 5, out.width = "90%"}
-invisible(require(ggplot2))
+require(ggplot2)
 autoplot(mbm)
 ```
 
-The plot is called violin plot which is a method of plotting numeric data. It is similar to box plot with a rotated kernel density plot on each side. The visualization also confirms that particle MCMC is computationally more intensive than MCMC.
+The plot is called violin plot which is a method of plotting numeric data. It is similar to box plot but with a rotated kernel density plot on each side. The visualization also confirms that particle MCMC is computationally more intensive than MCMC.
 
 ## References
