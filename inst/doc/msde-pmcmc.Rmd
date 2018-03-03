@@ -269,7 +269,7 @@ print(mbm)
 ```
 The time unit is "millisecond". The total number of evaluation `neval` is set to be `50`. The column `min`, `max`, `mean`, `median` represent the minimum, maximum, mean and median time spent, resprectively. Besides, `lq` and `uq` are, respectively, lower quantile and upper quantile of the sample. If the `multcomp` package is available, then a statistical ranking is calculated and displayed in compact letter display from in the `cld` column 
 
-The mean amount of time spent to run the adaptive MWG MCMC is just about 0.31 seconds. Whereas, the mean time needed to run the particle MCMC is around 55 seconds. Even though the particle MCMC shows better performance in our example above, the computational cost is much larger than the usual MCMC.
+The mean amount of time spent to run the adaptive MWG MCMC is just about 0.3 seconds. Whereas, the mean time needed to run the particle MCMC is around 50 seconds. Even though the particle MCMC shows better performance in our example above, the computational cost is much larger than the usual MCMC.
 
 ### Test results visualization
 We can also visualize the benchmark results.
