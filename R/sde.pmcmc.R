@@ -1,25 +1,24 @@
-#' Particle MCMC sampling for SDE
-#' 
-#' @param model An \code{sde.model} object constructed with \code{\link{sde.make.model}}.
-#' @param init An \code{sde.init} object constructed with \code{\link{sde.init}}.
-#' @param theta0 Initial parameter values.
-#' @param fixed.params Logical vector of length \code{nparams} indicating which parameters are to be held fixed in the MCMC sampler.
-#' @param nsamples Number of particle MCMC iterations.
-#' @param npart Number of particles, fixed integer value.
-#' @param dT Scalar interobservation time.
-#' @param resample The type of particle resampling scheme to use. These are: multi(nomial), resid(ual), strat(ified), sys(tematic).
-#' @param threshold A scalar less than 1 to indicate the threshold for resampling. A negative number disables resampling.
-#' @param mwg.sd Standard deviation jump size for Metropolis-within-Gibbs on parameters and missing components of first SDE observation.
-#'
-#' @return A list of the following elements:
-#' \describe{
-#'   \item{\code{params}}{An \code{nsamples x nparams} matrix of posterior parameter draws.}
-#'   \item{\code{accept}}{A named list of acceptance rates for the various components of the MCMC sampler.}
-#'   \item{\code{init}}{The \code{sde.init} object which initialized the sampler.}
-#'   \item{\code{mwg.sd}}{A named vector of Metropolis-within-Gibbs standard devations used at the last posterior iteration.}
-#' }
-#'
-#'@export
+# Particle MCMC sampling for SDE (currently not exported)
+# 
+# @param model An \code{sde.model} object constructed with \code{\link{sde.make.model}}.
+# @param init An \code{sde.init} object constructed with \code{\link{sde.init}}.
+# @param theta0 Initial parameter values.
+# @param fixed.params Logical vector of length \code{nparams} indicating which parameters are to be held fixed in the MCMC sampler.
+# @param nsamples Number of particle MCMC iterations.
+# @param npart Number of particles, fixed integer value.
+# @param dT Scalar interobservation time.
+# @param resample The type of particle resampling scheme to use. These are: multi(nomial), resid(ual), strat(ified), sys(tematic).
+# @param threshold A scalar less than 1 to indicate the threshold for resampling. A negative number disables resampling.
+# @param mwg.sd Standard deviation jump size for Metropolis-within-Gibbs on parameters and missing components of first SDE observation.
+#
+# @return A list of the following elements:
+# \describe{
+#   \item{\code{params}}{An \code{nsamples x nparams} matrix of posterior parameter draws.}
+#   \item{\code{accept}}{A named list of acceptance rates for the various components of the MCMC sampler.}
+#   \item{\code{init}}{The \code{sde.init} object which initialized the sampler.}
+#   \item{\code{mwg.sd}}{A named vector of Metropolis-within-Gibbs standard devations used at the last posterior iteration.}
+# }
+#
 sde.pmcmc <- function(model, init, theta0, fixed.params, 
                       nsamples, npart, dT,
                       resample = "multi", threshold = 0.5, mwg.sd = 1) {
