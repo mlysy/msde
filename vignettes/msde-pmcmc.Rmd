@@ -186,7 +186,7 @@ For a basic but general SMC algorithm exposition, the tutorial given by @tutoria
 ### Particle MCMC algorithm
 A general SSM with static parameters $\theta \in \Theta \subset \mathbb{R}^{n_\theta}$ (which may be multidimensional) consists of a hidden state process $\{X_n\}_{n \geq 1}$ and a observation process $\{Y_n\}_{n \geq 1}$. For inference for non-linear non-Gaussian SSMs, usual MCMC algorithms would implement some sort of Metropolis-within-Gibbs approach to sampling from the joint posterior $p(\theta, \bm{x} | \bm{y})$. However, due to the high correlation between $\theta$ and $\bm{X}$ (given $\bm{Y}$), such algorithms are very inefficient. In contrast, MCMC directly on $p(\theta | \bm{y})$ would be much more efficient, but it's impossible because the marginal isn't available in closed form for general SDEs. Particle MCMC overcomes this challenge by using an unbiased estimate, on an extended space including all the variables $(\theta, \bm{X}, \bm{Y})$, obtained by SMC. The point of particle MCMC is to be able to do MCMC on $p(\theta | \bm{y})$ directly (in terms of MCMC efficiency).
 
-Currently, `sde.pmcmc` in **`msde`** only implements the *particle marginal Metropolis-Hastings* (PMMH) sampler in the particle MCMC toolbox which will be used for our later simulation study. PMMH is an approximation of an ideal *pseudo marginal Metropolis-Hastings* sampler (see @pseudoMCMC) for sampling from $p(\theta, x_{1:T} | y_{1:T})$. It utilizes the following proposal density 
+Currently, `sde.pmcmc`^[Since `sde.pmcmc` is still under development, it is currently not available for users of **`msde`**.] in **`msde`** only implements the *particle marginal Metropolis-Hastings* (PMMH) sampler in the particle MCMC toolbox which will be used for our later simulation study. PMMH is an approximation of an ideal *pseudo marginal Metropolis-Hastings* sampler (see @pseudoMCMC) for sampling from $p(\theta, x_{1:T} | y_{1:T})$. It utilizes the following proposal density
 $$
 q((\theta^*, x^*_{1:T}) | (\theta, x_{1:T})) := q(\theta^* | \theta) p_{\theta^*}(x^*_{1:T} | y_{1:T})
 $$
@@ -212,6 +212,9 @@ where $C_n = \max_{1\leq i \leq N}\{\log w_n(X_{1:n}^i)\}$.
 
 ### Posterior sampling via particle MCMC
 Let's set the number of particles as `100` and use just IID-Metropolis proposal for updating the unknown parameter $\Lambda_1$. Here our aim is to show that even "off-the-shelf" choice can give satisfactory result.
+```{r source, echo = FALSE}
+source("sde.pmcmc.R")
+```
 ```{r pmcmc, cache = TRUE}
 npart <- 100
 mwg.sd <- 0.3 # for convenience, just use a fixed jump size instead of an adaptive one
