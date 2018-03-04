@@ -54,6 +54,9 @@ lines(L1.seq, L1.Kalman, col = "red")
 legend("topright", legend = c("Analytic", "MCMC"),
        pch = c(NA, 22), lty = c(1, NA), col = c("red", "black"))
 
+## ----source, echo = FALSE------------------------------------------------
+source("sde.pmcmc.R")
+
 ## ----accept--------------------------------------------------------------
 # check the acceptance rate
 accept <- ppost$accept
