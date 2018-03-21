@@ -219,7 +219,8 @@ source("sde.pmcmc.R")
 npart <- 100
 mwg.sd <- 1
 delta <- .618
-ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, nsamples, npart, dT,
+ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, hyper,
+                   nsamples, npart, dT,
                    resample = "multi", threshold = 0.5, mwg.sd, delta)
 ```
 In general we have the following proposal:

@@ -4,6 +4,7 @@
 # @param init An \code{sde.init} object constructed with \code{\link{sde.init}}.
 # @param theta0 Initial parameter values.
 # @param fixed.params Logical vector of length \code{nparams} indicating which parameters are to be held fixed in the MCMC sampler.
+# @param hyper The hyperparameters of the SDE prior. For details, please see \code{\link{sde.prior}}.
 # @param nsamples Number of particle MCMC iterations.
 # @param npart Number of particles, fixed integer value.
 # @param dT Scalar interobservation time.
@@ -21,9 +22,10 @@
 #   \item{\code{delta}}{A numeric value or a vector of tuning parameter(s) for rw.sd}
 # }
 #
-sde.pmcmc <- function(model, init, theta0, fixed.params, 
+sde.pmcmc <- function(model, init, theta0, fixed.params, hyper, 
                       nsamples, npart, dT,
                       resample = "multi", threshold = 0.5, rw.sd = 1, delta = .618) {
+  YObs <- init$data
   # iteration = 0, initialize the sde model for PMCMC
   # get initial log-weights & log marginal likelihood via particle filtering
   pf <- sde.pf(model, init, npart, resample, threshold, history = FALSE)
@@ -65,10 +67,14 @@ sde.pmcmc <- function(model, init, theta0, fixed.params,
     # calculate log p_theta_prop(y_T) 
     lwgt <- tmp_pf$lwgt
     logYt_prop <- .logY(lwgt, npart)
+    # calculate prior densities
+    logprior_old <- sde.prior(model = model, x = YObs[1,], theta = theta_old, hyper = hyper)
+    logprior_prop <- sde.prior(model = model, x = YObs[1,], theta = theta_prop, hyper = hyper)
     # calculate the log acceptance ratio
     # remember we use log density 
     # we have assumed prior of theta to be 1 for simplicity
     logRatio <- logYt_prop - logYt + 
+      logprior_prop - logprior_old +
       sum(dnorm(theta_old[!fixed.params], mean = theta_prop[!fixed.params], sd = sd[!fixed.params], log = TRUE)) -
       sum(dnorm(theta_prop[!fixed.params], mean = theta_old[!fixed.params], sd = sd[!fixed.params], log = TRUE))
     if (logRatio > log(runif(1))) {
