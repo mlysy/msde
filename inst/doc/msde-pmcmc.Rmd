@@ -18,6 +18,7 @@ vignette: >
 \newcommand{\Cov}{\mathrm{Cov}}
 \newcommand{\idm}{\mathrm{I}}
 \newcommand{\bm}[1]{\boldsymbol{#1}}
+\newcommand{\N}{\mathcal{N}}
 
 This vignette shows how to realize particle MCMC for multivariate SDEs with **`msde`**.
 
@@ -211,23 +212,35 @@ $$
 where $C_n = \max_{1\leq i \leq N}\{\log w_n(X_{1:n}^i)\}$.
 
 ### Posterior sampling via particle MCMC
-Let's set the number of particles as `100` and use just IID-Metropolis proposal for updating the unknown parameter $\Lambda_1$. Here our aim is to show that even "off-the-shelf" choice can give satisfactory result.
+Let's set the number of particles as `100` and just use an adaptive random walk proposal for updating the unknown parameter $\Lambda_1$. Here our aim is to show that even "off-the-shelf" choice can give satisfactory result.
 ```{r source, echo = FALSE}
 source("sde.pmcmc.R")
 ```
 ```{r pmcmc, cache = TRUE}
 npart <- 100
-mwg.sd <- 0.3 # for convenience, just use a fixed jump size instead of an adaptive one
-ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, nsamples, npart, dT,
-                   resample = "multi", threshold = 0.5, mwg.sd)
+mwg.sd <- 1
+delta <- .618
+ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, hyper,
+                   nsamples, npart, dT,
+                   resample = "multi", threshold = 0.5, mwg.sd, delta)
 ```
+In general we have the following proposal:
+$$
+\theta_{j, prop} \sim \N(\theta_{j, curr}, \sigma^2_{n,j})
+$$
+where $\theta_{j,prop}$ is the proposed (new) $j$-th parameter and $\theta_{j,curr}$ is the current (or old) $j$-th parameter. Besides, the adaptive standard deviation $\sigma_{n+1,j}$ at the $n+1$-th iteration for the $j$-th parameter is determined by
+$$
+\sigma_{n+1,j} = \exp\left(\log(\sigma_{n,j}) \pm \frac{\delta}{n} \right).
+$$
+Based on the above adaptive rule, we increase/decrease $\sigma_{n,j}$ at each step if the previous draw was accepted/rejected. The amount of adaptation will goes to $0$ as the number $n$ of iterations goes large. This kind of adaptation can preserve the MCMC stationary distribution.
+
 Then we can check the acceptance rate.
 ```{r accept}
 # check the acceptance rate
 accept <- ppost$accept
 print(accept)
 ```
-The acceptance rate is 94.6% which is close to the optimal 100%.
+The acceptance rate is 50.29% which is close to the optimal 45%.
 
 Finally, we extract the posterior samples of $\Lambda_1$ which will be used for comparison in the following subsection.
 ```{r}

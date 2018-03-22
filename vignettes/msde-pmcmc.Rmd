@@ -18,6 +18,7 @@ vignette: >
 \newcommand{\Cov}{\mathrm{Cov}}
 \newcommand{\idm}{\mathrm{I}}
 \newcommand{\bm}[1]{\boldsymbol{#1}}
+\newcommand{\N}{\mathcal{N}}
 
 This vignette shows how to realize particle MCMC for multivariate SDEs with **`msde`**.
 
