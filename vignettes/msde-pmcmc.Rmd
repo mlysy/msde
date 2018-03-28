@@ -94,15 +94,18 @@ fixed.params <- rep(TRUE, bmod$nparams)
 names(fixed.params) <- bmod$param.names
 fixed.params["Lambda1"] <- FALSE
 ```
-Then we set the prior on the unknown parameter(s) and observations.
+Then we set the prior on the unknown parameter $\Lambda_1$ and the latent observation $Y_2$. The other elements are given a Lebesgue prior.
+$$
+\Lambda_1, Y_2 \overset{iid}{\sim} \N(0,1), \quad \pi(Y_1, \Gamma, \Lambda_2, \Phi | \Lambda_1, Y_2) \propto 1.
+$$ 
 ```{r prior}
-# prior on (Lambda1, Y_0)
+# prior on (Lambda1, Y2)
 hyper <- list(mu = c(0,0), Sigma = diag(2))
-names(hyper$mu) <- bmod$data.names
-dimnames(hyper$Sigma) <- rep(list(bmod$data.names), 2)
+names(hyper$mu) <- c("Lambda1", "Y2")
+dimnames(hyper$Sigma) <- rep(list(c("Lambda1", "Y2")), 2)
 ```
 We set the total number of posterior samples as `100,000` with the burn-in period as `1,000`. The posterior sampling via MCMC is given as follows:
-```{r mcmc, cache = TRUE}
+```{r mcmc}
 # posterior sampling
 nsamples <- 1e5
 burn <- 1e3
@@ -131,9 +134,11 @@ L1.seq <- seq(min(L1.mcmc), max(L1.mcmc), len = 500)
 L1.loglik <- sapply(L1.seq, function(l1) {
   lambda <- Lambda0
   lambda[1] <- l1
-  mou.loglik(X = YObs, dt = dT, nvar.obs = 1,
-             Gamma = Gamma0, Lambda = lambda, Phi = Phi0,
-             mu0 = hyper$mu, Sigma0 = hyper$Sigma)
+  tmp <- mou.loglik(X = YObs, dt = dT, nvar.obs = 1,
+                  Gamma = Gamma0, Lambda = lambda, Phi = Phi0,
+                  mu0 = c(0, 0), Sigma0 = diag(2))
+  tmp <- tmp + dnorm(l1, 0, 1, log = TRUE) # add the prior log density of Lambda1
+  return(tmp)
 })
 
 # normalize density
@@ -218,11 +223,11 @@ source("sde.pmcmc.R")
 ```
 ```{r pmcmc, cache = TRUE}
 npart <- 100
-mwg.sd <- 1
-delta <- .618
+rw.sd <- 1
+delta <- .7
 ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, hyper,
                    nsamples, npart, dT,
-                   resample = "multi", threshold = 0.5, mwg.sd, delta)
+                   resample = "multi", threshold = 0.5, rw.sd, delta)
 ```
 In general we have the following proposal:
 $$
@@ -244,7 +249,7 @@ The acceptance rate is 50.29% which is close to the optimal 45%.
 
 Finally, we extract the posterior samples of $\Lambda_1$ which will be used for comparison in the following subsection.
 ```{r}
-# posterior mean of theta
+# posterior samples
 L1.pmcmc <- ppost$params[ ,!fixed.params]
 ```
 ### Result comparison 

@@ -37,10 +37,18 @@ names(fixed.params) <- bmod$param.names
 fixed.params["Lambda1"] <- FALSE
 
 ## ----prior---------------------------------------------------------------
-# prior on (Lambda1, Y_0)
+# prior on (Lambda1, Y2)
 hyper <- list(mu = c(0,0), Sigma = diag(2))
-names(hyper$mu) <- bmod$data.names
-dimnames(hyper$Sigma) <- rep(list(bmod$data.names), 2)
+names(hyper$mu) <- c("Lambda1", "Y2")
+dimnames(hyper$Sigma) <- rep(list(c("Lambda1", "Y2")), 2)
+
+## ----mcmc----------------------------------------------------------------
+# posterior sampling
+nsamples <- 1e5
+burn <- 1e3
+bpost <- sde.post(bmod, binit, hyper = hyper,
+                  fixed.params = fixed.params,
+                  nsamples = nsamples, burn = burn)
 
 ## ----L1-mcmc-------------------------------------------------------------
 L1.mcmc <- bpost$params[,"Lambda1"]
@@ -63,7 +71,7 @@ accept <- ppost$accept
 print(accept)
 
 ## ------------------------------------------------------------------------
-# posterior mean of theta
+# posterior samples
 L1.pmcmc <- ppost$params[ ,!fixed.params]
 
 ## ----pmcmc-plot, fig.width = 10, fig.height = 5, out.width = "90%"-------
