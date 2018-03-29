@@ -158,32 +158,19 @@ test_that("lpi.R == lpi.cpp", {
 })
 
 #--- test particle filter ------------------------------------------------------
-## Note: after we remove the normal draw input Z from sde.pf,
-## we cannot compare pf.R == pf.cpp since two results based on two different Z
-## I am not sure if there is a way to reference/point to the Z in sdeFilter constructor
-## from R version pf.fun
-## I have already kept the successfully tested version (after we fix the discrepancy and before we remove Z)
-## as a new branch called "pf-test"
-
-## nreps <- 1
-## cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE),
-##                     single.history = c(TRUE, FALSE), single.rr = c(5,10))
-## ncases <- nrow(cases)
 
 ntest <- 10
+
 test_that("pf.R == pf.cpp", {
   mxd <- matrix(NA, ntest, 4)
   for(ii in 1:ntest) {
-    ## sx <- cases$single.x[ii]
-    ## st <- cases$single.theta[ii]
-    ## history <- cases$single.history[ii]
-    ## rr <- cases$single.rr[ii]
     # setup
     nObs <- sample(50:100,1) # number of observations
     nPart <- sample(10:50,1) # number of particles
     nDims <- ndims # number of dimensions
-    dT <- runif(1, min = 0, max = 0.2) # time between observations (too large dT will cause testing failure in lotvol model)
-    mm <- 1 #sample(1:2, 1)
+    # too large dT will cause testing failure in lotvol model, so we let dT ~ U(0, .2)
+    dT <- runif(1, min = 0, max = 0.2)
+    mm <- 1 # sample(1:2, 1)
     history <- as.logical(rbinom(1,1,.5))
     init <- input.init(nreps = 1, sx = TRUE, st = TRUE, randx ,randt)
     msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
@@ -199,11 +186,23 @@ test_that("pf.R == pf.cpp", {
     pf.R <- pf.fun(minit, dr = drift.fun, df = diff.fun, Z = Z,
                    history = history)
     # pf in C++ (for debugging, disable the resampling)
-    # sde.pf will internally transpose the given Z
+    # Z input for sde.pf should be a 3-d array of dimensions (nObs - 1) x nDims x nPart
+    Z <- array(c(Z), c(nObs-1, nDims, nPart))
     pf <- sde.pf(model = model, init = minit, npart = nPart,
                 resample = "multi", threshold = -1,
                 Z = Z, history = history)
     # comparison
+    # if history == TRUE, we need to convert pf$data to a comparable matrix
+    if(history == TRUE) {
+      # convert the dims of pf$data from nPart x nDims x nObs to nDims x nPart x nObs
+      pf$data <- aperm(pf$data, perm = c(2,1,3))
+      # then convert it to a matrix comparable with the result given by pf.R
+      pf$data <- matrix(pf$data, nrow = nDims*nPart, ncol = nObs)
+      pf$data <- t(pf$data)
+    } else {
+      # if history == FALSE, we need to convert pf$data to 1 x nDims*nPart matrix 
+      pf$data <- matrix(t(pf$data), nrow = 1)
+    }
     mxd[ii,] <- c(max.diff(pf$data, pf.R$data), max.diff(pf$lwgt, pf.R$lwgt))
     expect_equal(mxd[ii,], rep(0, 4), tolerance = 1e-6, scale = 1)
   }

@@ -67,13 +67,13 @@ sde.pmcmc <- function(model, init, theta0, fixed.params, hyper,
     # calculate log p_theta_prop(y_T) 
     lwgt <- tmp_pf$lwgt
     logYt_prop <- .logY(lwgt, npart)
-    # calculate prior densities for
+    # calculate prior densities
     logprior_old <- sde.prior(model = model, x = YObs[1,], theta = theta_old, hyper = hyper)
     logprior_prop <- sde.prior(model = model, x = YObs[1,], theta = theta_prop, hyper = hyper)
     # calculate the log acceptance ratio
     # remember we use log density 
     # we have assumed prior of theta to be 1 for simplicity
-    logRatio <- logYt_prop - logYt +
+    logRatio <- logYt_prop - logYt + 
       logprior_prop - logprior_old +
       sum(dnorm(theta_old[!fixed.params], mean = theta_prop[!fixed.params], sd = sd[!fixed.params], log = TRUE)) -
       sum(dnorm(theta_prop[!fixed.params], mean = theta_old[!fixed.params], sd = sd[!fixed.params], log = TRUE))
