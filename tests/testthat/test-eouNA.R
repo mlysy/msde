@@ -43,14 +43,16 @@ diff.fun <- function(x, theta) {
 
 # generate eou model data/parameters
 randx <- function(nreps) {
-  X0 <- c(X = rnorm(1), V = rnorm(1))
+  X0 <- c(X = 3, V = -2)
   if(nreps > 1) X0 <- apply(t(replicate(nreps, X0)), 2, jitter)
-  X0
+  #if(nreps > 1) X0 <- t(replicate(nreps, X0)) # used for no jitter
+  return(X0)
 }
 randt <- function(nreps) {
   Theta <- c(alpha = .1, gamma = 5, mu = -2, sigma = 1.2, rho = -.6)
   if(nreps > 1) Theta <- apply(t(replicate(nreps, Theta)), 2, jitter)
-  Theta
+  #if(nreps > 1) Theta <- t(replicate(nreps, Theta)) # used for no jitter
+  return(Theta)
 }
 
 validx <- function(x, theta) return(TRUE)

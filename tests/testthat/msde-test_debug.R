@@ -50,7 +50,8 @@ test_that("diff.R == diff.cpp", {
 #--- test simulation -----------------------------------------------------------
 
 SEED <- sample(1000, 1)
-dT <- runif(1)
+#dT <- runif(1) # if dT is too large, EOU model would fail,  set dT <- 1/252
+dT <- 1/252
 nreps <- 10
 nobs <- 8
 burn <- 3
