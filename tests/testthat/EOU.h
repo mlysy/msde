@@ -40,7 +40,7 @@ inline bool sdeModel::isValidParams(double *theta) {
 }
 
 inline bool sdeModel::isValidData(double *x, double *theta) {
-  return(1);
+  return(true);
 }
 
 #endif

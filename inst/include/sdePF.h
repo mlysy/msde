@@ -48,13 +48,18 @@ void fInitialise(sdeParticle<sMod>& value, double& logweight,
 }
 
 // definition of fMove template
+// \param lTime        The sampler current iteration number
+// \param value        Reference to the current particle value
+// \param logweight    Reference to the current particle log weight
+// \param pf_calcs     Reference to additional algorithm parameters
 template <class sMod>
 void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
      sdeFilter<sMod> & pf_calcs) {
   int iCore = 0;
   //Rprintf("counter = %i\n", pf_calcs.get_counter());
+  // notice the += operator, logweight is the cumulative rather than the incremental log weight
   logweight += pf_calcs.update(value.yObs, value.yObs, lTime,
-             pf_calcs.get_counter(), iCore);
+             pf_calcs.get_counter(), iCore, pf_calcs.degenFlag);
   pf_calcs.increase_counter();
   return;
 }
@@ -174,7 +179,7 @@ template <class sMod, class sPi>
       //Rprintf("lTime = %i\n", ii);
       Sampler.Iterate();
       if(historyOut) {
-        save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
+        save_state<sMod>(&yOut[ii*(nPart*nDims)], &lwgt[ii*nPart], Sampler, pTmp);
       }
     }
     if(!historyOut) {

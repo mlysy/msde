@@ -26,17 +26,16 @@ drift.fun <- function(x, theta) {
 diff.fun <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)
   if(!is.matrix(theta)) theta <- t(theta) 
-  # If we use Ethan's parameter values, it will give error like "negative leading minor" in chol()
   # df <- matrix(NA, nrow(x), 4)
-  # df[,1] <- exp(x[,2]) # exp(2V)
+  # df[,1] <- exp(2*x[,2]) # exp(2V)
   # df[,2] <- theta[,5] * theta[,4] * exp(x[,2]) # rho * sigma * exp(V)
   # df[,3] <- df[,2]
   # df[,4] <- theta[,4]^2 # sigma^2
   # t(apply(df, 1, function(tmp) chol(matrix(tmp,2,2)))) # use sd scale in R
   df <- matrix(0, nrow(x), 4)
   df[,1] <- exp(x[,2])
-  df[,3] <- theta[,4]  
-  df[,4] <- sqrt(1.0 - theta[,5]*theta[,5])*df[,3] 
+  df[,3] <- theta[,4]
+  df[,4] <- sqrt(1.0 - theta[,5]*theta[,5])*df[,3]
   df[,3] <- df[,3] * theta[,5]
   return(df)
 }
@@ -44,14 +43,14 @@ diff.fun <- function(x, theta) {
 # generate eou model data/parameters
 randx <- function(nreps) {
   X0 <- c(X = 3, V = -2)
-  if(nreps > 1) X0 <- apply(t(replicate(nreps, X0)), 2, jitter)
-  #if(nreps > 1) X0 <- t(replicate(nreps, X0)) # used for no jitter
+  #if(nreps > 1) X0 <- apply(t(replicate(nreps, X0)), 2, jitter)
+  if(nreps > 1) X0 <- t(replicate(nreps, X0)) # used for no jitter
   return(X0)
 }
 randt <- function(nreps) {
-  Theta <- c(alpha = .1, gamma = 5, mu = -2, sigma = 1.2, rho = -.6)
-  if(nreps > 1) Theta <- apply(t(replicate(nreps, Theta)), 2, jitter)
-  #if(nreps > 1) Theta <- t(replicate(nreps, Theta)) # used for no jitter
+  Theta <- c(alpha = 0.1, gamma = 5, mu = -2.6, sigma = 1.2, rho = -0.6)
+  #if(nreps > 1) Theta <- apply(t(replicate(nreps, Theta)), 2, jitter)
+  if(nreps > 1) Theta <- t(replicate(nreps, Theta)) # used for no jitter
   return(Theta)
 }
 

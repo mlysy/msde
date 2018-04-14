@@ -31,6 +31,7 @@ cmvn <- function(x2, x1, mean, cholsd) {
 #'@param X The SDE data which is an nObs x nDims matrix
 #'@param Z The normal draws, an nObs-1 by nPart*nDims matrix
 smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
+  flag <- FALSE
   nobs <- nrow(X)
   ndims <- ncol(X)
   x <- X[1,]
@@ -47,14 +48,23 @@ smc.update <- function(X, Z, dt, nvar.obs, theta, dr, df) {
     }
     x <- xmvn(z, mu, csd)
     X[ii,] <- x
+    if(flag == TRUE) next
     ## cSd <- matrix(csd, ndims, ndims)
     ## lw[ii] <- lmvn(x[1:qn], mu[1:qn], cSd[1:qn,1:qn,drop=FALSE])
     lw[ii] <- lmvn(x, mu, csd)
     if(qn < ndims) {
       lw[ii] <- lw[ii] - cmvn(x[(qn+1):ndims], x[1:qn], mu, csd)
     }
+    # check if lw is too small (thus degenerate)
+    if(lw[ii] < -1.0e-2) {
+      #print(paste("from obs ", ii, " degenerates!"))
+      #flush.console()
+      # set all the remaining part of lw to be 0.0 after significant degeneracy happens 
+      lw[ii:nobs] <- 0.0
+      flag <- TRUE
+    }
   }
-  list(X = X, lwgt = lw)
+  return(list(X = X, lwgt = lw))
 }
 
 pf.fun <- function(init, dr, df, Z, history = FALSE) {
@@ -65,6 +75,9 @@ pf.fun <- function(init, dr, df, Z, history = FALSE) {
   data <- matrix(NA, nObs, nDims*nPart)
   lwgt <- matrix(NA, nObs, nPart)
   for(ipart in 1:nPart) {
+    # for debugging purpose
+    # print(paste("----- particle: ", ipart, " -----"))
+    # flush.console()
     ind <- (ipart-1)*nDims+(1:nDims) # column index for Xt, Vt corresponding to particle ipart
     tmp <- smc.update(X = Yt, Z = Z[,ind], # update each particle
                       dt = init$dt.m, nvar.obs = init$nvar.obs.m,
@@ -73,7 +86,7 @@ pf.fun <- function(init, dr, df, Z, history = FALSE) {
     data[,ind] <- tmp$X
     lwgt[,ipart] <- tmp$lwgt
   }
-
+  # calculate the cumulative lgwt
   lwgtn <- apply(lwgt, 2, cumsum)
   # return the whole history if history == TRUE
   # or the last observation if history == FALSE

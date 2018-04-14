@@ -19,7 +19,7 @@
 #' @return A list with elements:
 #' \describe{
 #'   \item{\code{data}}{If \code{history = FALSE}, a \code{npart x ndims} matrix of particles for the last observation.  If \code{history = TRUE}, an array of dimension \code{npart x ndims x nComp}.}
-#'   \item{\code{lgwt}}{If \code{history = FALSE}, a \code{npart}-length vector of unnormalized log weights for the last observation.  Otherwise a matrix of dimension \code{npart x nComp}.}
+#'   \item{\code{lwgt}}{If \code{history = FALSE}, a \code{npart}-length vector of unnormalized log weights for the last observation.  Otherwise a matrix of dimension \code{npart x nComp}.}
 #' }
 #'
 #' @examples

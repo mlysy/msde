@@ -160,27 +160,32 @@ test_that("lpi.R == lpi.cpp", {
 
 #--- test particle filter ------------------------------------------------------
 
-ntest <- 10
+ntest <- 5
 
 test_that("pf.R == pf.cpp", {
   mxd <- matrix(NA, ntest, 4)
   for(ii in 1:ntest) {
     # setup
-    nObs <- sample(50:100,1) # number of observations
-    nPart <- sample(10:50,1) # number of particles
+    # nObs <- sample(50:100,1) # number of observations
+    # nPart <- sample(10:50,1) # number of particles
+    nObs <- 1000 # same as Ethan
+    nPart <- 300 # same as Ethan
     nDims <- ndims # number of dimensions
     # too large dT will cause testing failure in lotvol model, so we let dT ~ U(0, .2)
-    dT <- runif(1, min = 0, max = 0.2)
+    # dT <- runif(1, min = 0, max = 0.2)
+    dT <- 1/252
     mm <- 1 # sample(1:2, 1)
     history <- as.logical(rbinom(1,1,.5))
     init <- input.init(nreps = 1, sx = TRUE, st = TRUE, randx ,randt)
     msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
-                    nobs = nObs, dt = dT, dt.sim = dT)
+                    nobs = nObs, dt = dT, dt.sim = dT, burn = nObs)
     # initialization
     # m = 1 implies no missing data time points between two observations
     minit <- sde.init(model, x = msim$data, dt = dT,
                       theta = init$Theta,
-                      nvar.obs = sample(nDims, nObs, replace = TRUE), m = mm)
+                      nvar.obs = 1,
+                      #nvar.obs = sample(nDims, nObs, replace = TRUE), 
+                      m = mm)
     # normal draws
     Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
     # pf in R

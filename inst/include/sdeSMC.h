@@ -64,6 +64,7 @@ class sdeFilter {
   double *dT, *sqrtDT;
   double *propMean, *propSd, *propZ; // for storing normal calculations
   sMod *sde;
+  bool *degenFlag; // indicates if the nPart-th particle is degenerate or not
   sdeFilter(int np, int nc, double *dt, int *yIndex,
 	    double *yInit, double *thetaInit);
   sdeFilter(int np, int nc, double *dt, int *yIndex,
@@ -71,19 +72,22 @@ class sdeFilter {
   sdeFilter(); // default constructor
   sdeFilter & operator=(const sdeFilter & other); // deep copy
   double init(double *yNew);
-  double update(double *yNew, double *yOld, long lTime, int iPart, int iCore);
+  double update(double *yNew, double *yOld, long lTime, int iPart, int iCore, bool *degenFlag);
   int get_counter() const {return iPart;}
   void increase_counter() {iPart++; return;}
   void reset_counter() {iPart = 0;}
+  // bool get_flag() {return degenFlag;} // for users to get degeneracy status
+  // void set_flag() {degenFlag = true; return;} // set the status of degeneracy to be true
   ~sdeFilter();
 };
 
 // assumed that yOld contains the right observed data where it ought to.
 template <class sMod>
 inline double sdeFilter<sMod>::update(double *yNew, double *yOld,
-				      long lTime, int iPart, int iCore) {
+				      long lTime, int iPart, int iCore, bool *degenFlag) {
+  double lw;
   int ii;
-  double *mean, *sd, *Z, *yTmp, lw;
+  double *mean, *sd, *Z, *yTmp;
   int nObs = nObsComp[lTime];
   mean = &propMean[iCore*nDims];
   sd = &propSd[iCore*nDims2];
@@ -115,11 +119,21 @@ inline double sdeFilter<sMod>::update(double *yNew, double *yOld,
   for(ii=0; ii<nDims; ii++) {
     yNew[ii] = yTmp[ii];
   }
+  // if the particle is already degenerate, directly return lw = 0.0
+  if(degenFlag[iPart] == true) {
+    lw = 0.0;
+    return lw;
+  }
   // log-weight
   if(sde[iCore].isValidData(yTmp, theta)) {
     lw = lmvn<sMod>(yTmp, Z, mean, sd, nObs);
   } else {
     lw = -1.0/0.0;
+  }
+  // check if log-weight is degenerate
+  if(lw < -1.0e-2) {
+    lw = 0.0;
+    degenFlag[iPart] = true;
   }
   return lw;
 }
@@ -145,6 +159,7 @@ inline void sdeFilter<sMod>::initialize(int np, int nc, double *dt,
   nDims2 = sMod::diagDiff ? nDims : nDims*nDims;
   nParams = sMod::nParams;
   // create storage space
+  degenFlag = new bool[nPart];
   yObs = new double[nComp*nDims]; // all data stored here
   dT = new double[nComp-1];
   sqrtDT = new double[nComp-1];
@@ -169,6 +184,9 @@ inline void sdeFilter<sMod>::initialize(int np, int nc, double *dt,
   }
   for(ii=0; ii<nParams; ii++) {
     theta[ii] = thetaInit[ii];
+  }
+  for(ii=0; ii<nPart; ii++) {
+    degenFlag[ii] = false;
   }
   return;
 }
@@ -210,6 +228,7 @@ inline void sdeFilter<sMod>::clear() {
   delete [] propSd;
   delete [] propZ;
   delete [] sde;
+  delete [] degenFlag;
   return;
 }
 
@@ -226,6 +245,7 @@ inline sdeFilter<sMod>::sdeFilter() {
   propSd = new double[1];
   propZ = new double[1];
   sde = new sMod[1];
+  degenFlag = new bool[1];
 }
 
 // deep copy assignment
