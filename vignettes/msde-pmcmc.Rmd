@@ -219,7 +219,7 @@ where $C_n = \max_{1\leq i \leq N}\{\log w_n(X_{1:n}^i)\}$.
 ### Posterior sampling via particle MCMC
 Let's set the number of particles as `100` and just use an adaptive random walk proposal for updating the unknown parameter $\Lambda_1$. Here our aim is to show that even "off-the-shelf" choice can give satisfactory result.
 ```{r source, echo = FALSE}
-source("sde.pmcmc.R")
+source(system.file("proj", "sde.pmcmc.R", package = "msde"))
 ```
 ```{r pmcmc, cache = TRUE}
 npart <- 100

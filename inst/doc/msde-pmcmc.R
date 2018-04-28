@@ -63,7 +63,7 @@ legend("topright", legend = c("Analytic", "MCMC"),
        pch = c(NA, 22), lty = c(1, NA), col = c("red", "black"))
 
 ## ----source, echo = FALSE------------------------------------------------
-source("sde.pmcmc.R")
+source(system.file("proj", "sde.pmcmc.R", package = "msde"))
 
 ## ----accept--------------------------------------------------------------
 # check the acceptance rate
