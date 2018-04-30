@@ -1,6 +1,7 @@
 # multivariate OU model based on PMCMC
 require(msde)
-source("pmcmc-functions.R")
+# source("pmcmc-functions.R")
+source("../../inst/proj/sde.pmcmc.R")
 # set a seed
 set.seed(123)
 # bivariate OU model
@@ -66,15 +67,15 @@ legend("topright", legend = c("Analytic", "MCMC"),
 ## Inference via particle MCMC
 npart <- 100
 rw.sd <- 1
-delta <- .777
-ppost <- sde.pmcmc(model = bmod, binit, theta0, fixed.params, hyper,
-                   nsamples, npart, dT,
-                   resample = "multi", threshold = 0.5, rw.sd, delta)
+ppost <- sde.pmcmc(bmod, binit, hyper,
+                  nsamples, burn, rw.sd, fixed.params,
+                  last.miss.out = FALSE, adapt = FALSE, # also test adapt = TRUE
+                  npart, resample = "multi", threshold = 0.5)
 # check the acceptance rate
-accept <- ppost$accept
+accept <- ppost$acc
 print(accept)
 # posterior theta
-L1.pmcmc <- ppost$params[ ,!fixed.params]
+L1.pmcmc <- ppost$Theta[ ,!fixed.params]
 # compare particle MCMC with Kalman filter
 hist(L1.pmcmc, breaks = 100, freq = FALSE,
      main = expression(p(Lambda[1]*" | "*bold(Y)[1])),
@@ -82,6 +83,7 @@ hist(L1.pmcmc, breaks = 100, freq = FALSE,
 lines(L1.seq, L1.Kalman, col = "red")
 legend("topright", legend = c("Analytic", "PMCMC"),
        pch = c(NA, 22), lty = c(1, NA), col = c("red", "black"))
+# ----- Do not run the following benchmark, it may take 1.5 ~ 2 hours ------
 # benchmark
 require(microbenchmark)
 mbm <- microbenchmark(
