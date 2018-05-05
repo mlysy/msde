@@ -16,8 +16,8 @@
 #' @return A list of the following elements:
 #' \describe{
 #'   \item{\code{params}}{An \code{nsamples x nparams} matrix of posterior parameter draws.}
-#'   \item{\code{init}}{The \code{sde.init} object which initialized the sampler.}
-#'   \item{\code{rw.sd}}{A named vector of RW standard devations used at the last posterior iteration.}
+#'   \item{\code{X0}}{An \code{nsamples x ndims} matrix of complete data in the first observation.}
+#'   \item{\code{XN}}{If last.miss.out = TRUE, an \code{nsamples x nmissN} matrix of missing components of the last SDE observations.}
 #'   \item{\code{accept}}{A named list of acceptance rates for the various components of the MCMC sampler.}
 #' }
 sde.pmcmc <- function(model, init, hyper,
@@ -118,9 +118,22 @@ sde.pmcmc <- function(model, init, hyper,
     if(ii >= 1) {
       Theta[ii,] <- theta.curr
       X0[ii,] <- x.curr
+      # save the hidden process values in the last observation
+      # draw from the particle values with weights propotional to exp(lgwt)
+      XN[ii,] <- apply(pf$data[,imissN], 2, 
+                  function(x) sample(x, size = 1, replace = TRUE,
+                                    prob = exp(pf$lwgt)))
     }
   }
-  return(list(Theta = Theta, X0 = X0, acc = accept/(burn+nsamples)))
+  # format the acceptance rate to be percentage
+  acc <- accept / (burn + nsamples)
+  acc <- paste(round(100 * acc, 2), "%", sep = "") 
+  if(last.miss.out == TRUE) {
+    return(list(params = Theta, X0 = X0, XN = XN, acc = acc))
+  } else {
+    return(list(params = Theta, X0 = X0, acc = acc))
+  }
+  
   # -----------------------------------------------------
   # # Previous code, kept for reference
   # YObs <- init$data
