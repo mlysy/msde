@@ -35,7 +35,7 @@ npart <- 100
 rw.sd <- 1
 ppost <- sde.pmcmc(eou, init, hyper,
                   nsamples, burn, rw.sd, fixed.params,
-                  last.miss.out = TRUE, adapt = TRUE, 
+                  last.miss.out = TRUE, adapt = TRUE,
                   npart, resample = "multi", threshold = 0.5)
 # ------------------- NA issue ---------------------------------------------------------
 # encounter NA lwgt when ii = -980
