@@ -2,6 +2,4 @@ setup.R
 changelog.txt
 TODO.md
 README.md
-inst/old
 tests/dontrun
-.Rinstignore

@@ -33,10 +33,13 @@ sde.post
 #ifndef sdeInterface_h
 #define sdeInterface_h
 
-#include <Rcpp.h>
+// #include <Rcpp.h>
+//[[Rcpp::depends("RcppArmadillo")]]
+#include <RcppArmadillo.h>
 typedef Rcpp::LogicalVector Logical;
 typedef Rcpp::NumericVector Numeric;
 typedef Rcpp::IntegerVector Integer;
+typedef Rcpp::NumericMatrix NumericMatrix;
 typedef Rcpp::List List;
 //using namespace Rcpp;
 //#include "sdeLogLik.h"
@@ -116,9 +119,11 @@ class sdeCobj {
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut,
 		    int nCores, bool displayProgress) = 0;
-  // virtual List particleEval(NumericVector initParams, NumericMatrix initData,
-  //                           NumericVector dT, IntegerVector nDimsPerObs, 
-  //                           NumericMatrix NormalDraws) = 0;
+  virtual List particleEval(Numeric initParams, NumericMatrix initData,
+                            Numeric dT, Integer nDimsPerObs, 
+                            int nPart, int resample, double dThreshold,
+                            NumericMatrix NormalDraws, bool hasNormalDraws, 
+                            bool historyOut) = 0;
   virtual ~sdeCobj() = 0;
 };
 
@@ -158,9 +163,11 @@ class sdeRobj : public sdeCobj {
 		    List tunePar, int updateLogLik, int nLogLikOut,
 		    int updateLastMiss, int nLastMissOut,
 		    int nCores, bool displayProgress);
-  // virtual List particleEval(NumericVector initParams, NumericMatrix initData,
-  //                           NumericVector dT, IntegerVector nDimsPerObs, 
-  //                           NumericMatrix NormalDraws);
+  virtual List particleEval(Numeric initParams, NumericMatrix initData,
+                            Numeric dT, Integer nDimsPerObs, 
+                            int nPart, int resample, double dThreshold,
+                            NumericMatrix NormalDraws, bool hasNormalDraws, 
+                            bool historyOut);
   virtual ~sdeRobj() {
     //Rprintf("sdeRobj destroyed.\n");
   };
@@ -169,5 +176,6 @@ class sdeRobj : public sdeCobj {
 #include "sdeRUtils.h"
 #include "sdeSim.h"
 #include "sdePost.h"
+#include "sdePF.h"
 
 #endif
