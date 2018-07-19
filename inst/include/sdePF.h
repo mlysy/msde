@@ -22,23 +22,55 @@ typedef Rcpp::List List;
 #include "sdeInterface.h"
 #include "sdeSMC.h"
 
-// template <class sMod> 
-// class sdePF {
-//   public:
-//       // define fInitialise, fMove, save_state as pure virtual functions
-//       virtual void fInitialise(sdeParticle<sMod>& value, double& logweight,
-//                     sdeFilter<sMod> & pf_calcs) = 0;
-//       virtual void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
-//                     sdeFilter<sMod> & pf_calcs) = 0;
-//       virtual void save_state(double *yOut, double *lwgt,
-//                     smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
-//                     sdeParticle<sMod> & pTmp) = 0;
-//       virtual ~sdePF() = 0;
-// };
+template <class sMod> 
+class sdePF {
+  private:
+    // data members
+    Numeric initParams, dT;
+    NumericMatrix initData, NormalDraws;
+    Integer nDimsPerObs;
+    int nPart, resample;
+    double dThreshold;
+    bool hasNormalDraws, historyOut;
+
+    // declare member functions: finitialise, fmove, save_state
+    void fInitialise(sdeParticle<sMod>& value, double& logweight,
+                  sdeFilter<sMod> & pf_calcs);
+    void fMove(long ltime, sdeParticle<sMod>& value, double& logweight,
+                  sdeFilter<sMod> & pf_calcs);
+    void save_state(double *yout, double *lwgt, smc::sampler<sdeParticle<sMod>,
+                sdeFilter<sMod> > & sampler, sdeParticle<sMod> & pTmp);
+  public:
+    // default constructor
+    sdePF();
+    // constructor (using initializer list)
+    // want to keep the interface (i.e. the input arguments of sde.pf() in R) unchanged
+    sdePF(Numeric initParams, 
+      NumericMatrix initData,
+      Numeric dT, Integer nDimsPerObs,
+      int nPart, int resample,
+      double dThreshold,
+      NumericMatrix NormalDraws,
+      bool hasNormalDraws,
+      bool historyOut): 
+      initParams(initParams), initData(initData), dT(dT), nDimsPerObs(nDimsPerObs),
+      nPart(nPart), resample(resample), dThreshold(dThreshold), NormalDraws(NormalDraws),
+      hasNormalDraws(hasNormalDraws), historyOut(historyOut) { };
+
+    // particle_eval member function
+    // List particle_eval(Numeric initParams, NumericMatrix initData,
+    //                Numeric dT, Integer nDimsPerObs, int nPart, int resample,
+    //                double dThreshold, NumericMatrix NormalDraws, 
+    //                bool hasNormalDraws, bool historyOut)
+    List particle_eval(); // it can directly use any private data member, no additional inputs are needed
+
+    // destructor
+    ~sdePF() {};
+};
 
 // definition of fInitialise template
 template <class sMod>
-void fInitialise(sdeParticle<sMod>& value, double& logweight,
+void sdePF<sMod>::fInitialise(sdeParticle<sMod>& value, double& logweight,
      sdeFilter<sMod> & pf_calcs) {
   //Rprintf("made it to fInitialise.\n");
   // set particle
@@ -49,7 +81,7 @@ void fInitialise(sdeParticle<sMod>& value, double& logweight,
 
 // definition of fMove template
 template <class sMod>
-void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
+void sdePF<sMod>::fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
      sdeFilter<sMod> & pf_calcs) {
   int iCore = 0;
   //Rprintf("counter = %i\n", pf_calcs.get_counter());
@@ -61,7 +93,7 @@ void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
 
 // definition of save_state template
 template <class sMod>
-void save_state(double *yOut, double *lwgt,
+void sdePF<sMod>::save_state(double *yOut, double *lwgt,
     smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
     sdeParticle<sMod> & pTmp) {
   // logweights are in fact normalized and divided by nPart
@@ -75,18 +107,10 @@ void save_state(double *yOut, double *lwgt,
   return;
 }
 
-// definition of sdeRobj<sMode, sPi>::particleEval
-// particleEval is a member function of sdeRobj & sdeCobj
+
 // there is no prior specification for now, we keep sPi only for consistency
 template <class sMod, class sPi>
-  inline List sdeRobj<sMod, sPi>::particleEval(Numeric initParams,
-					       NumericMatrix initData,
-					       Numeric dT, Integer nDimsPerObs,
-					       int nPart, int resample,
-					       double dThreshold,
-					       NumericMatrix NormalDraws,
-					       bool hasNormalDraws,
-					       bool historyOut) {
+  inline List sdePF<sMod>::particle_eval() {
   int nDims = sMod::nDims;
   int nComp = initData.ncol();
   int nCompOut = historyOut ? nComp : 1;
@@ -191,6 +215,29 @@ template <class sMod, class sPi>
     Rcpp::Rcout << e;
   }
   return R_NilValue;
+}
+
+// definition of sdeRobj<sMode, sPi>::particleEval
+// particleEval is a member function of sdeRobj & sdeCobj
+template <class sMod, class sPi>
+  inline List sdeRobj<sMod, sPi>::particleEval(Numeric initParams,
+                                   NumericMatrix initData,
+                                   Numeric dT, Integer nDimsPerObs,
+                                   int nPart, int resample,
+                                   double dThreshold,
+                                   NumericMatrix NormalDraws,
+                                   bool hasNormalDraws,
+                                   bool historyOut) {
+  // create an object of type sdePF, then call the member function particle_eval
+  sdePF<sMod> sdepf(Numeric initParams,
+                 NumericMatrix initData,
+                 Numeric dT, Integer nDimsPerObs,
+                 int nPart, int resample,
+                 double dThreshold,
+                 NumericMatrix NormalDraws,
+                 bool hasNormalDraws,
+                 bool historyOut);
+  return sdepf.particle_eval();
 }
 
 #endif
