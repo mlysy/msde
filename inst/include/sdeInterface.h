@@ -176,6 +176,6 @@ class sdeRobj : public sdeCobj {
 #include "sdeRUtils.h"
 #include "sdeSim.h"
 #include "sdePost.h"
-#include "sdePF.h"
+#include "sdeSMC.h"
 
 #endif
