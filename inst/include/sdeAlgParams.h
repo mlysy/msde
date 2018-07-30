@@ -2,32 +2,35 @@
 // --- SMC for multivariate SDEs -----------------------------------------------
 
 Limitations:
-- undefined behavior for invalid data (isValidData = FALSE).  This is because
-- no filtering, only smoothing.
+- no smoothing, only filtering.
 - no parallel processing.
 
 Implementation:
-* sdeParticle: 
-  - comprises of the complete data at that point.
-    storage for calculations, etc. are elsewhere.
+* sdePF: 
+  - class with public methods:
+     - set_theta (and eventually set_x for initial data),
+     - eval, which should return latest weight and particle.
+  - storage for data, calculations, etc. are in nested class setAlgParams.
 
-* sdeFilter: 
+* sdeAlgParams: 
   - everything we need to calculate particle weights, i.e.,
   - data matrix, dT/sqrtDT, and incomplete observation index.
   - propMean/Sd, sde objects, etc.
+  - option to precompute random draws (much more storage, but useful for debugging)
+  - proposal distribution Euler-Maruyama {t = curr-1} -> {t = curr}, conditioned
+    on observed components at {t = curr}.
+  - invalid proposals automatically given a weight of zero.  undefined behavior when all particles yield invalid proposals.
 
-* random draws:
-  - normal draws should be sitting around somewhere as well, with the option to 
-    redraw these.  
-  - this should be done with the adaptor, but perhaps a small modification to 
-    code base would have particle index in moveset construction...
+* sdeAdapt:
+  - currently used to manage particle-specific memory.
 
-* updates:
-  - get current complete data point.
-  - draw from conditional distribution of previous data point and this one for
-    unobserved components.
-  - compute loglikelihood.
-  - update particle.
+* sdeParticle:
+  - lightweight class to represent a single particle at a given time, 
+    as required by smctc.
+
+* fMove, fInitialise:
+  - need to be non-member functions.
+  - referred to from sdePF constructor.
 
 */
 
@@ -45,7 +48,7 @@ Implementation:
 
 // observed data, i.e., data matrix, dT/sqrtDT, nvarObs
 template <class sMod>
-class sdeFilter {
+class sdeAlgParams {
  private:
   bool drawZ; // whether or not normal draws are pre-computed
   static const int nCores = 1; // for parallel processing.  change this later.
@@ -55,7 +58,8 @@ class sdeFilter {
   // internal constructor (shared by overloaded constructors)
   void initialize(int np, int nc, double *dt, int *yIndex,
 		  double *yInit, double *thetaInit);
-  void clear(); // internal destructor (for delete and deep-copy overwrite)
+  // internal destructor (for delete and deep-copy overwrite)
+  void clear();
  public:
   int nDims, nParams, nComp;
   int *nObsComp;
@@ -64,23 +68,48 @@ class sdeFilter {
   double *dT, *sqrtDT;
   double *propMean, *propSd, *propZ; // for storing normal calculations
   sMod *sde;
-  sdeFilter(int np, int nc, double *dt, int *yIndex,
+  // constructors: with and without precomputed random draws
+  sdeAlgParams(int np, int nc, double *dt, int *yIndex,
 	    double *yInit, double *thetaInit);
-  sdeFilter(int np, int nc, double *dt, int *yIndex,
+  sdeAlgParams(int np, int nc, double *dt, int *yIndex,
 	    double *yInit, double *thetaInit, double *zInit);
-  sdeFilter(); // default constructor
-  sdeFilter & operator=(const sdeFilter & other); // deep copy
+  sdeAlgParams(); // default constructor: needed to pass algParams to smc::sampler
+  ~sdeAlgParams(); // destructor
+  // deep copy: required to pass in to smc::sampler
+  sdeAlgParams & operator=(const sdeAlgParams & other);
+  // internal version of fInitialise.
+  // that is, initializes particle.yNew with first "row" of yObs
+  // also sets logweight = 0.
   double init(double *yNew);
+  // internal version of fMove.
+  // that is, updates particleOld.yOld -> particleNew.yNew
+  // also updates logweight.
   double update(double *yNew, double *yOld, long lTime, int iPart, int iCore);
+  // counter required for particles to use different blocks of memory.
   int get_counter() const {return iPart;}
   void increase_counter() {iPart++; return;}
   void reset_counter() {iPart = 0;}
-  ~sdeFilter();
 };
 
+
+// internal version of fInitialise.
+// that is, initializes particle.yNew with first "row" of yObs
+// also sets logweight = 0.
+template <class sMod>
+inline double sdeAlgParams<sMod>::init(double *yNew) {
+  for(int ii=0; ii<nDims; ii++) {
+    yNew[ii] = yObs[ii];
+  }
+  return 0;
+}
+
+
+// internal version of fMove.
+// that is, updates particleOld.yOld -> particleNew.yNew
+// also updates logweight.
 // assumed that yOld contains the right observed data where it ought to.
 template <class sMod>
-inline double sdeFilter<sMod>::update(double *yNew, double *yOld,
+inline double sdeAlgParams<sMod>::update(double *yNew, double *yOld,
 				      long lTime, int iPart, int iCore) {
   int ii;
   double *mean, *sd, *Z, *yTmp, lw;
@@ -124,18 +153,12 @@ inline double sdeFilter<sMod>::update(double *yNew, double *yOld,
   return lw;
 }
 
+// internal constructor (shared by overloaded constructors)
+// basically just allocates memory and copies data referenced by pointer inputs
 template <class sMod>
-inline double sdeFilter<sMod>::init(double *yNew) {
-  for(int ii=0; ii<nDims; ii++) {
-    yNew[ii] = yObs[ii];
-  }
-  return 0;
-}
-
-template <class sMod>
-inline void sdeFilter<sMod>::initialize(int np, int nc, double *dt,
-					int *yIndex, double *yInit,
-					double *thetaInit) {
+inline void sdeAlgParams<sMod>::initialize(int np, int nc, double *dt,
+					   int *yIndex, double *yInit,
+					   double *thetaInit) {
   int ii,jj;
   iPart = 0;
   nComp = nc;
@@ -173,23 +196,25 @@ inline void sdeFilter<sMod>::initialize(int np, int nc, double *dt,
   return;
 }
 
+// constructor
 // this version draws its own normals at every step.
 template <class sMod>
-inline sdeFilter<sMod>::sdeFilter(int np, int nc, double *dt, int *yIndex,
+inline sdeAlgParams<sMod>::sdeAlgParams(int np, int nc, double *dt, int *yIndex,
 				  double *yInit, double *thetaInit) {
   initialize(np, nc, dt, yIndex, yInit, thetaInit);
   drawZ = true;
   propZ = new double[nCores*nDims];
 }
 
+// constructor
 // this version takes a pointer to normal draws and does not draw them ever.
 // since some parts of the normal matrix does get updated at every step, normal
 // draws are copied in at construction.
 // this is mainly for debugging but could be useful elsewhere.
 template <class sMod>
-inline sdeFilter<sMod>::sdeFilter(int np, int nc, double *dt, int *yIndex,
-				  double *yInit, double *thetaInit,
-				  double *zInit) {
+inline sdeAlgParams<sMod>::sdeAlgParams(int np, int nc, double *dt, int *yIndex,
+					double *yInit, double *thetaInit,
+					double *zInit) {
   initialize(np, nc, dt, yIndex, yInit, thetaInit);
   drawZ = false;
   propZ = new double[nPart*(nComp-1)*nDims];
@@ -198,8 +223,9 @@ inline sdeFilter<sMod>::sdeFilter(int np, int nc, double *dt, int *yIndex,
   }
 }
 
+// internal destructor (for delete and deep-copy overwrite)
 template <class sMod>
-inline void sdeFilter<sMod>::clear() {
+inline void sdeAlgParams<sMod>::clear() {
   delete [] nObsComp;
   delete [] yObs;
   delete [] yProp;
@@ -214,8 +240,9 @@ inline void sdeFilter<sMod>::clear() {
 }
 
 // default constructor
+// needed to pass algParams to smc::sampler
 template <class sMod>
-inline sdeFilter<sMod>::sdeFilter() {
+inline sdeAlgParams<sMod>::sdeAlgParams() {
   nObsComp = new int[1];
   yObs = new double[1];
   yProp = new double[1];
@@ -229,12 +256,11 @@ inline sdeFilter<sMod>::sdeFilter() {
 }
 
 // deep copy assignment
-// required to pass in AlgParams to Sampler.
-// (which first creates AlgParams with "default ctor", then deep-copies
+// required to pass in algParams to smc::sampler.
+// (which first creates algParams with "default ctor", then deep-copies
 // to replace it when setAlgParams is called)
 template <class sMod>
-inline sdeFilter<sMod> &
-sdeFilter<sMod>::operator=(const sdeFilter<sMod> & other) {
+inline sdeAlgParams<sMod> & sdeAlgParams<sMod>::operator=(const sdeAlgParams<sMod> & other) {
   if(this != &other) {
     // deallocate memory
     clear();
@@ -259,84 +285,11 @@ sdeFilter<sMod>::operator=(const sdeFilter<sMod> & other) {
   return *this;
 }
 
+// destructor
 template <class sMod>
-inline sdeFilter<sMod>::~sdeFilter() {
-  //Rprintf("sdeFilter destructor called.\n");
+inline sdeAlgParams<sMod>::~sdeAlgParams() {
+  //Rprintf("sdeAlgParams destructor called.\n");
   clear();
 }
-
-// the particle itself
-template <class sMod>
-class sdeParticle {
- private:
-  static const int nDims = sMod::nDims;
- public:
-  double *yObs;
-  sdeParticle() {
-    yObs = new double[nDims];
-  }
-  int get_nDims() {
-    return nDims;
-  }
-  void get_yObs(double *yOut) {
-    for(int ii=0; ii<nDims; ii++) {
-      yOut[ii] = yObs[ii];
-    }
-    return;
-  }
-  void set_yObs(double *yIn) {
-    for(int ii=0; ii<nDims; ii++) {
-      yObs[ii] = yIn[ii];
-    }
-    return;
-  }
-  ~sdeParticle() {
-    //Rprintf("sdeParticle destructor called.\n");
-    delete [] yObs;
-  }
-  sdeParticle & operator=(const sdeParticle & other) {
-    if(this != &other) {
-      set_yObs(other.yObs);
-    }
-    return *this;
-  }
-  // deep copy required to extract particle from Sampler.
-  sdeParticle(const sdeParticle & from) {
-    //Rprintf("sdeParticle copy constructor called.\n");
-    yObs = new double[nDims];
-    set_yObs(from.yObs);
-  }
-};
-
-// adaptor class
-// want to keep track of particle in fMove/fInitialise
-// also want to input new theta at the beginning of every pf calculation.
-template <class sMod>
-class sdeAdapt: public smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> >
-{
- private:
-  bool updateTheta;
-  double *theta;
-  static const int nParams = sMod::nParams;
- public:
-  sdeAdapt() {}
-  sdeAdapt(double *theta_in) {
-    theta = new double[nParams];
-    set_theta(theta_in);
-    updateTheta = false;
-  }
-  void set_theta(double *theta_in) {
-    for(int ii=0; ii<nParams; ii++) {
-      theta[ii] = theta_in[ii];
-    }
-  }
-  void updateForMove(sdeFilter<sMod> & pf_calcs, const smc::population<sdeParticle<sMod> > & pop) {
-    // set particle count to zero; each fMove increases it
-    // cheap way of keeping track of particle in fMove/fInitialize
-    pf_calcs.reset_counter();
-    return;
-  }
-  ~sdeAdapt() {};
-};
 
 #endif

@@ -20,18 +20,20 @@ typedef Rcpp::IntegerVector Integer;
 typedef Rcpp::NumericMatrix NumericMatrix;
 typedef Rcpp::List List;
 #include "sdeInterface.h"
+#include "sdeParticle.h"
 #include "sdeAlgParams.h"
+#include "sdeAdapt.h"
 
 // template <class sMod> 
 // class sdePF {
 //   public:
 //       // define fInitialise, fMove, save_state as pure virtual functions
 //       virtual void fInitialise(sdeParticle<sMod>& value, double& logweight,
-//                     sdeFilter<sMod> & pf_calcs) = 0;
+//                     sdeAlgParams<sMod> & algParams) = 0;
 //       virtual void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
-//                     sdeFilter<sMod> & pf_calcs) = 0;
+//                     sdeAlgParams<sMod> & algParams) = 0;
 //       virtual void save_state(double *yOut, double *lwgt,
-//                     smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
+//                     smc::sampler<sdeParticle<sMod>, sdeAlgParams<sMod> > & Sampler,
 //                     sdeParticle<sMod> & pTmp) = 0;
 //       virtual ~sdePF() = 0;
 // };
@@ -39,30 +41,30 @@ typedef Rcpp::List List;
 // definition of fInitialise template
 template <class sMod>
 void fInitialise(sdeParticle<sMod>& value, double& logweight,
-     sdeFilter<sMod> & pf_calcs) {
+     sdeAlgParams<sMod> & algParams) {
   //Rprintf("made it to fInitialise.\n");
   // set particle
-  logweight = pf_calcs.init(value.yObs);
-  pf_calcs.increase_counter();
+  logweight = algParams.init(value.yObs);
+  algParams.increase_counter();
   return;
 }
 
 // definition of fMove template
 template <class sMod>
 void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
-     sdeFilter<sMod> & pf_calcs) {
+     sdeAlgParams<sMod> & algParams) {
   int iCore = 0;
-  //Rprintf("counter = %i\n", pf_calcs.get_counter());
-  logweight += pf_calcs.update(value.yObs, value.yObs, lTime,
-             pf_calcs.get_counter(), iCore);
-  pf_calcs.increase_counter();
+  //Rprintf("counter = %i\n", algParams.get_counter());
+  logweight += algParams.update(value.yObs, value.yObs, lTime,
+             algParams.get_counter(), iCore);
+  algParams.increase_counter();
   return;
 }
 
 // definition of save_state template
 template <class sMod>
 void save_state(double *yOut, double *lwgt,
-    smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> > & Sampler,
+    smc::sampler<sdeParticle<sMod>, sdeAlgParams<sMod> > & Sampler,
     sdeParticle<sMod> & pTmp) {
   // logweights are in fact normalized and divided by nPart
   // undo this to just get the raw unnormalized weights.
@@ -103,7 +105,7 @@ template <class sMod, class sPi>
   sdeParticle<sMod> pTmp;
   // this is for eventual parallel implementation.
   // also required when NormalDraws are provided
-  smc::adaptMethods<sdeParticle<sMod>, sdeFilter<sMod> > *Adapt;
+  smc::adaptMethods<sdeParticle<sMod>, sdeAlgParams<sMod> > *Adapt;
   Adapt = new sdeAdapt<sMod>;
 
   // determine resample mode
@@ -131,31 +133,31 @@ template <class sMod, class sPi>
   // SMC
   try {
     // TODO: change HistoryType when historyOut = true
-    smc::sampler<sdeParticle<sMod>, sdeFilter<sMod> >
+    smc::sampler<sdeParticle<sMod>, sdeAlgParams<sMod> >
       Sampler((long)nPart, HistoryType::NONE);
-    smc::moveset<sdeParticle<sMod>, sdeFilter<sMod> >
+    smc::moveset<sdeParticle<sMod>, sdeAlgParams<sMod> >
       Moveset(fInitialise<sMod>, fMove<sMod>, NULL);
     //Rprintf("Sampler and Moveset created.\n");
 
     // AlgParam needs to be deep-copied into Sampler
     // Rprintf("right before SetAlgParams.\n");
     //
-    // The sdeFilter constructor can overload without zInit
-    // sdeFilter(int np, int nc, 
+    // The sdeAlgParams constructor can overload without zInit
+    // sdeAlgParams(int np, int nc, 
     //  double *dt, int *yIndex,
     //  double *yInit, double *thetaInit)
     //
     // Also note nPart & nComp are just C++ int objects
     // Don't use INTEGER() to wrap them up
     if(hasNormalDraws) {
-      Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp,
-					  REAL(dT), INTEGER(nDimsPerObs),
-					  REAL(initData), REAL(initParams),
-					  REAL(NormalDraws)));
+      Sampler.SetAlgParam(sdeAlgParams<sMod>(nPart, nComp,
+					     REAL(dT), INTEGER(nDimsPerObs),
+					     REAL(initData), REAL(initParams),
+					     REAL(NormalDraws)));
     } else {
-      Sampler.SetAlgParam(sdeFilter<sMod>(nPart, nComp,
-					  REAL(dT), INTEGER(nDimsPerObs),
-					  REAL(initData), REAL(initParams)));
+      Sampler.SetAlgParam(sdeAlgParams<sMod>(nPart, nComp,
+					     REAL(dT), INTEGER(nDimsPerObs),
+					     REAL(initData), REAL(initParams)));
     }
     //Rprintf("algParams passed in.\n");
     Sampler.SetResampleParams(resampleMode, dThreshold);
