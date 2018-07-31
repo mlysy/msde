@@ -138,7 +138,9 @@ template <class sMod, class sPi>
     smc::moveset<sdeParticle<sMod>, sdeAlgParams<sMod> >
       Moveset(fInitialise<sMod>, fMove<sMod>, NULL);
     //Rprintf("Sampler and Moveset created.\n");
-
+    Sampler.SetResampleParams(resampleMode, dThreshold);
+    Sampler.SetMoveSet(Moveset);
+    Sampler.SetAdaptMethods(Adapt);
     // AlgParam needs to be deep-copied into Sampler
     // Rprintf("right before SetAlgParams.\n");
     //
@@ -160,10 +162,7 @@ template <class sMod, class sPi>
 					     REAL(initData), REAL(initParams)));
     }
     //Rprintf("algParams passed in.\n");
-    Sampler.SetResampleParams(resampleMode, dThreshold);
-    Sampler.SetMoveSet(Moveset);
     Sampler.Initialise();
-    Sampler.SetAdaptMethods(Adapt);
     if(historyOut) {
       // extract particle from Sampler
       save_state<sMod>(yOut, lwgt, Sampler, pTmp);
