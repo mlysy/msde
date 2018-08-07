@@ -21,8 +21,8 @@ class sdeData {
   int nComp; ///< number of (complete data) observations
   double *dT; ///< array of interobservation times (length nComp-1)
   double *sqrtDT; ///< array of sqrt(dT)
-  double *XComp; ///< complete data
-  int *nObsComp; ///< number of observed dimensions per observation
+  // double *XComp; ///< complete data
+  // int *nObsComp; ///< number of observed dimensions per observation
   double *propMean; ///< storage for sde means
   double *propSd; ///< storage for sde standard deviations
   sMod *sde; ///< storage for drift/diffusion calculations
@@ -47,7 +47,7 @@ inline sdeData<sMod>::sdeData(int nc, ///< number of (complete data observations
   // create storage space
   dT = new double[nComp];
   sqrtDT = new double[nComp];
-  XComp = new double[nComp*nDims];
+  // XComp = new double[nComp*nDims];
   propMean = new double[nmv*nDims];
   propSd = new double[nmv*nDims2];
   propZ = new double[nz*nDims];
@@ -61,7 +61,7 @@ inline sdeData<sMod>::sdeData(int nc, ///< number of (complete data observations
 
 template <class sMod>
 inline sdeData<sMod>::~sdeData() {
-  delete [] XComp;
+  // delete [] XComp;
   delete [] sde;
   delete [] propMean;
   delete [] propSd;

@@ -16,7 +16,7 @@
 
 template <class sMod, class sPi>
 class sdeMCMC : public sdeLogLik<sMod> {
-  //int nDims2, nCores; // inherited from sdeLogLik
+  // inherited from sdeLogLik
   using sdeLogLik<sMod>::nDims2;
   using sdeLogLik<sMod>::nCores;
   int *missInd;
@@ -27,32 +27,36 @@ class sdeMCMC : public sdeLogLik<sMod> {
 		double b, double b2, double *theta,
 		sMod *sde);
  public:
-  //int nComp, nDims, nParams; // inherited from sdeLogLik
+  // inherited from sdeLogLik
   using sdeLogLik<sMod>::nComp;
   using sdeLogLik<sMod>::nDims;
   using sdeLogLik<sMod>::nParams;
-  double *currFull, *propFull, *propAccept;
-  double *currX, *propX, *currTheta, *propTheta;
-  double *propU; // for acceptance rates (predrawn in parallel version)
-  //double *dT, *sqrtDT; // inherited from sdeLogLik
   using sdeLogLik<sMod>::dT;
   using sdeLogLik<sMod>::sqrtDT;
-  double *B, *sqrtB;
-  int *nObsComp;
-  bool *fixedTheta;
-  //sMod *sde; // inherited sdeLogLik
   using sdeLogLik<sMod>::sde;
-  // double *propMean, *propSd, *propZ; // inherited from sdeLogLik
   using sdeLogLik<sMod>::propMean;
   using sdeLogLik<sMod>::propSd;
   using sdeLogLik<sMod>::propZ;
-  // double loglik(double *theta, double *x); // inherited from sdeLogLik
   using sdeLogLik<sMod>::loglik;
+  /// space for full (complete data + params) current MCMC state and proposal states
+  double *currFull, *propFull;
+  /// separate pointers for data and params
+  double *currX, *propX, *currTheta, *propTheta;
+  /// space for simultaneous acceptance rates (predrawn in parallel version)
+  double *propAccept, *propU;
+  /// shrinkage factors for Eraker proposals
+  double *B, *sqrtB;
+  int *nObsComp; ///< number of observed dimensions per observation
+  bool *fixedTheta; ///< whether or not each parameter gets updated
+  /// missing data updates
   void missGibbsUpdate(double *jumpSd, int *gibbsAccept, int *paramAccept);
+  /// parameter updates
   void paramVanillaUpdate(double *jumpSd, int *paramAccept);
+  /// constructor
   sdeMCMC(int n, double *dt, double *xInit, double *thetaInit,
 	  int *xIndex, bool *thetaIndex,
 	  double **phi, int nArgs, int *nEachArg, int ncores);
+  /// destructor
   ~sdeMCMC();
 };
 
@@ -65,17 +69,17 @@ template <class sMod, class sPi>
 				     int ncores) :
   sdeLogLik<sMod>(n, dt, ncores) {
   int ii, jj;
-  int nDims2, nCores; // inherited from sdeLogLik
-  int nComp, nDims, nParams; // inherited from sdeLogLik
-  double *dT, *sqrtDT; // inherited from sdeLogLik
-  // inherited template parameters
-  nDims2 = this->nDims2;
-  nCores = this->nCores;
-  nComp = this->nComp;
-  nDims = this->nDims;
-  nParams = this->nParams;
-  dT = this->dT;
-  sqrtDT = this->sqrtDT;
+  // int nDims2, nCores; // inherited from sdeLogLik
+  // int nComp, nDims, nParams; // inherited from sdeLogLik
+  // double *dT, *sqrtDT; // inherited from sdeLogLik
+  // // inherited template parameters
+  // nDims2 = this->nDims2;
+  // nCores = this->nCores;
+  // nComp = this->nComp;
+  // nDims = this->nDims;
+  // nParams = this->nParams;
+  // dT = this->dT;
+  // sqrtDT = this->sqrtDT;
   // memory allocation
   B = new double[nComp];
   sqrtB = new double[nComp];
