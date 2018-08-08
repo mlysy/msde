@@ -7,14 +7,16 @@
 #include <RcppArmadillo.h>
 #include <smctc.h>
 #include <rngUtils.h>
-#include <sdeUtils.h>
+// #include <sdeUtils.h>
+#include <sdeParticle.h>
+#include <sdeAlgPtr.h>
 
 // adaptor class
 // the point of this call is to keep track of the
 // particle number in fMove/fInitialise
 // want to keep track of particle in fMove/fInitialise
 template <class sMod>
-class sdeAdapt: public smc::adaptMethods<sdeParticle<sMod>, sdeAlgParams<sMod> >
+class sdeAdapt: public smc::adaptMethods<sdeParticle<sMod>, sdeAlgPtr<sMod> >
 {
  public:
   // default constructor/destructor
@@ -22,7 +24,7 @@ class sdeAdapt: public smc::adaptMethods<sdeParticle<sMod>, sdeAlgParams<sMod> >
   ~sdeAdapt() {};
   // set particle count to zero; each fMove increases it
   // cheap way of keeping track of particle in fMove/fInitialize
-  void updateForMove(sdeAlgParams<sMod> & algParams, const smc::population<sdeParticle<sMod> > & pop) {
+  void updateForMove(sdeAlgPtr<sMod> & algParams, const smc::population<sdeParticle<sMod> > & pop) {
     algParams.reset_counter();
     return;
   }
