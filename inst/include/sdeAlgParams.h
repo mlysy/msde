@@ -57,7 +57,7 @@ class sdeAlgParams : public sdeData<sMod> {
   int nPart; ///< number of particles
   int iPart; ///< which particle are we on
   // internal constructor (shared by overloaded constructors)
-  void ctor_init(int np, double *yInit, double *thetaInit);
+  void ctor_init(int npart, double *yInit, double *thetaInit);
   // // internal destructor (for delete and deep-copy overwrite)
   // void clear();
  public:
@@ -166,12 +166,12 @@ inline double sdeAlgParams<sMod>::update(double *yNew, double *yOld,
 // basically just allocates memory and copies data referenced by pointer inputs
 // only does this for new memory, i.e., not already managed 
 template <class sMod>
-inline void sdeAlgParams<sMod>::ctor_init(int np, double *yInit,
+inline void sdeAlgParams<sMod>::ctor_init(int npart, double *yInit,
 					  double *thetaInit) {
   int ii,jj;
   iPart = 0;
   // nComp = nc;
-  nPart = np;
+  nPart = npart;
   //nCores = ncores;
   // nDims = sMod::nDims;
   // nDims2 = sMod::diagDiff ? nDims : nDims*nDims;

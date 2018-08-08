@@ -20,9 +20,10 @@ typedef Rcpp::IntegerVector Integer;
 typedef Rcpp::NumericMatrix NumericMatrix;
 typedef Rcpp::List List;
 #include "sdeInterface.h"
-#include "sdeParticle.h"
-#include "sdeAlgPtr.h"
-#include "sdeAdapt.h"
+#include "sdePF.h"
+// #include "sdeParticle.h"
+// #include "sdeAlgPtr.h"
+// #include "sdeAdapt.h"
 
 // template <class sMod> 
 // class sdePF {
@@ -38,44 +39,44 @@ typedef Rcpp::List List;
 //       virtual ~sdePF() = 0;
 // };
 
-// definition of fInitialise template
-template <class sMod>
-void fInitialise(sdeParticle<sMod>& value, double& logweight,
-     sdeAlgPtr<sMod> & algParams) {
-  //Rprintf("made it to fInitialise.\n");
-  // set particle
-  logweight = algParams.init(value.yObs);
-  algParams.increase_counter();
-  return;
-}
+// // definition of fInitialise template
+// template <class sMod>
+// void fInitialise(sdeParticle<sMod>& value, double& logweight,
+//      sdeAlgPtr<sMod> & algParams) {
+//   //Rprintf("made it to fInitialise.\n");
+//   // set particle
+//   logweight = algParams.init(value.yObs);
+//   algParams.increase_counter();
+//   return;
+// }
 
-// definition of fMove template
-template <class sMod>
-void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
-     sdeAlgPtr<sMod> & algParams) {
-  int iCore = 0;
-  //Rprintf("counter = %i\n", algParams.get_counter());
-  logweight += algParams.update(value.yObs, value.yObs, lTime,
-             algParams.get_counter(), iCore);
-  algParams.increase_counter();
-  return;
-}
+// // definition of fMove template
+// template <class sMod>
+// void fMove(long lTime, sdeParticle<sMod>& value, double& logweight,
+//      sdeAlgPtr<sMod> & algParams) {
+//   int iCore = 0;
+//   //Rprintf("counter = %i\n", algParams.get_counter());
+//   logweight += algParams.update(value.yObs, value.yObs, lTime,
+//              algParams.get_counter(), iCore);
+//   algParams.increase_counter();
+//   return;
+// }
 
-// definition of save_state template
-template <class sMod>
-void save_state(double *yOut, double *lwgt,
-    smc::sampler<sdeParticle<sMod>, sdeAlgPtr<sMod> > & Sampler,
-    sdeParticle<sMod> & pTmp) {
-  // logweights are in fact normalized and divided by nPart
-  // undo this to just get the raw unnormalized weights.
-  double logNC = Sampler.GetLogNCPath() + log(Sampler.GetNumber());
-  for(long iPart=0; iPart<Sampler.GetNumber(); iPart++) {
-    pTmp = Sampler.GetParticleValueN(iPart);
-    pTmp.get_yObs(&yOut[iPart*sMod::nDims]);
-    lwgt[iPart] = Sampler.GetParticleLogWeightN(iPart) + logNC;
-  }
-  return;
-}
+// // definition of save_state template
+// template <class sMod>
+// void save_state(double *yOut, double *lwgt,
+//     smc::sampler<sdeParticle<sMod>, sdeAlgPtr<sMod> > & Sampler,
+//     sdeParticle<sMod> & pTmp) {
+//   // logweights are in fact normalized and divided by nPart
+//   // undo this to just get the raw unnormalized weights.
+//   double logNC = Sampler.GetLogNCPath() + log(Sampler.GetNumber());
+//   for(long iPart=0; iPart<Sampler.GetNumber(); iPart++) {
+//     pTmp = Sampler.GetParticleValueN(iPart);
+//     pTmp.get_yObs(&yOut[iPart*sMod::nDims]);
+//     lwgt[iPart] = Sampler.GetParticleLogWeightN(iPart) + logNC;
+//   }
+//   return;
+// }
 
 // definition of sdeRobj<sMode, sPi>::particleEval
 // particleEval is a member function of sdeRobj & sdeCobj
@@ -101,14 +102,15 @@ template <class sMod, class sPi>
   // pointers to Rcpp memory, i.e., double* representation
   double *yOut = REAL(dataOut); 
   double *lwgt = REAL(LogWeightOut);
-  // Sampler can only deep-copy particles out from its storage
-  sdeParticle<sMod> pTmp;
-  // this is for eventual parallel implementation.
-  // also required when NormalDraws are provided
-  smc::adaptMethods<sdeParticle<sMod>, sdeAlgPtr<sMod> > *Adapt;
-  Adapt = new sdeAdapt<sMod>;
-  // pointer to algParams
-  sdeAlgParams<sMod> *Params;
+  sdePF<sMod> *PFilter;
+  // // Sampler can only deep-copy particles out from its storage
+  // sdeParticle<sMod> pTmp;
+  // // this is for eventual parallel implementation.
+  // // also required when NormalDraws are provided
+  // smc::adaptMethods<sdeParticle<sMod>, sdeAlgPtr<sMod> > *Adapt;
+  // Adapt = new sdeAdapt<sMod>;
+  // // pointer to algParams
+  // sdeAlgParams<sMod> *Params;
 
   // determine resample mode
   ResampleType::Enum resampleMode = static_cast<ResampleType::Enum>(resample);
@@ -134,15 +136,14 @@ template <class sMod, class sPi>
   //Rprintf("before SMC.\n");
   // SMC
   try {
-    // TODO: change HistoryType when historyOut = true
-    smc::sampler<sdeParticle<sMod>, sdeAlgPtr<sMod> >
-      Sampler((long)nPart, HistoryType::NONE);
-    smc::moveset<sdeParticle<sMod>, sdeAlgPtr<sMod> >
-      Moveset(fInitialise<sMod>, fMove<sMod>, NULL);
-    //Rprintf("Sampler and Moveset created.\n");
-    Sampler.SetResampleParams(resampleMode, dThreshold);
-    Sampler.SetMoveSet(Moveset);
-    Sampler.SetAdaptMethods(Adapt);
+    // smc::sampler<sdeParticle<sMod>, sdeAlgPtr<sMod> >
+    //   Sampler((long)nPart, HistoryType::NONE);
+    // smc::moveset<sdeParticle<sMod>, sdeAlgPtr<sMod> >
+    //   Moveset(fInitialise<sMod>, fMove<sMod>, NULL);
+    // //Rprintf("Sampler and Moveset created.\n");
+    // Sampler.SetResampleParams(resampleMode, dThreshold);
+    // Sampler.SetMoveSet(Moveset);
+    // Sampler.SetAdaptMethods(Adapt);
     // AlgParam needs to be deep-copied into Sampler
     // Rprintf("right before SetAlgParams.\n");
     //
@@ -154,38 +155,54 @@ template <class sMod, class sPi>
     // Also note nPart & nComp are just C++ int objects
     // Don't use INTEGER() to wrap them up
     if(hasNormalDraws) {
-      Params = new sdeAlgParams<sMod>(nPart, nComp,
-				      REAL(dT), INTEGER(nDimsPerObs),
-				      REAL(initData), REAL(initParams),
-				      REAL(NormalDraws));
+      PFilter = new sdePF<sMod>(nPart, nComp,
+				REAL(dT), INTEGER(nDimsPerObs),
+				REAL(initData), REAL(initParams),
+				REAL(NormalDraws),
+				resampleMode, dThreshold);
+      // Params = new sdeAlgParams<sMod>(nPart, nComp,
+      // 				      REAL(dT), INTEGER(nDimsPerObs),
+      // 				      REAL(initData), REAL(initParams),
+      // 				      REAL(NormalDraws));
     } else {
-      Params = new sdeAlgParams<sMod>(nPart, nComp,
-				      REAL(dT), INTEGER(nDimsPerObs),
-				      REAL(initData), REAL(initParams));
+      PFilter = new sdePF<sMod>(nPart, nComp,
+				REAL(dT), INTEGER(nDimsPerObs),
+				REAL(initData), REAL(initParams),
+				resampleMode, dThreshold);
+      // Params = new sdeAlgParams<sMod>(nPart, nComp,
+      // 				      REAL(dT), INTEGER(nDimsPerObs),
+      // 				      REAL(initData), REAL(initParams));
     }
-    Sampler.SetAlgParam(sdeAlgPtr<sMod>(Params));
+    // Sampler.SetAlgParam(sdeAlgPtr<sMod>(Params));
     //Rprintf("algParams passed in.\n");
-    Sampler.Initialise();
+    // Sampler.Initialise();
+    PFilter->Initialise();
     if(historyOut) {
       // extract particle from Sampler
-      save_state<sMod>(yOut, lwgt, Sampler, pTmp);
+      // save_state<sMod>(yOut, lwgt, Sampler, pTmp);
+      PFilter->eval(yOut, lwgt);
     }
     //Rprintf("Sampler initialized.\n");
     // long lTime;
     for(int ii=1; ii<nComp; ii++) {
       //Rprintf("lTime = %i\n", ii);
-      Sampler.Iterate();
+      // Sampler.Iterate();
+      PFilter->Iterate();
       if(historyOut) {
-        save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
+        // save_state<sMod>(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart], Sampler, pTmp);
+	PFilter->eval(&yOut[ii*(nPart*nDims)],&lwgt[ii*nPart]);
       }
     }
     if(!historyOut) {
       // only save the last observation (yOut & lgwt)
-      save_state<sMod>(yOut,lwgt, Sampler, pTmp);
+      // save_state<sMod>(yOut,lwgt, Sampler, pTmp);
+      PFilter->eval(yOut, lwgt);
     }
-    //delete Sampler;
-    delete Adapt;
-    delete Params;
+    /// deallocate memory
+    delete PFilter;
+    // delete Sampler;
+    // delete Adapt;
+    // delete Params;
     // output
     return List::create(Rcpp::Named("data") = dataOut,
 			Rcpp::Named("lwgt") = LogWeightOut);

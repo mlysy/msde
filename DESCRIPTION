@@ -1,7 +1,7 @@
 Package: msde
 Title: Bayesian Inference for Multivariate Stochastic Differential Equations
-Version: 1.0.3.9000
-Date: 2017-12-16
+Version: 1.0.3.9001
+Date: 2018-08-08
 Authors@R: c(person("Martin", "Lysy", role = c("aut", "cre"),
                     email = "mlysy@uwaterloo.ca"),
              person("Feiyu", "Zhu", role = "aut"),
