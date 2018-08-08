@@ -61,6 +61,7 @@ class sdeLogLik : public sdeData<sMod> {
   // constructor and destructor
   //sdeLogLik(int n, double *dt);
   sdeLogLik(int ncomp, double *dt, int ncores);
+  sdeLogLik(int ncomp, double *dt, int *nobscomp, int ncores);
   // ~sdeLogLik();
 };
 
@@ -89,6 +90,11 @@ class sdeLogLik : public sdeData<sMod> {
 template <class sMod>
 inline sdeLogLik<sMod>::sdeLogLik(int ncomp, double *dt, int ncores) :
 sdeData<sMod>(ncomp, dt, ncores, ncomp, ncores) {}
+
+template <class sMod>
+inline sdeLogLik<sMod>::sdeLogLik(int ncomp, double *dt,
+				  int *nobscomp, int ncores) :
+sdeData<sMod>(ncomp, dt, nobscomp, ncores, ncomp, ncores) {}
 
 // template <class sMod>
 // inline sdeLogLik<sMod>::sdeLogLik(int n, double *dt, int ncores) {

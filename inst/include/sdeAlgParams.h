@@ -44,38 +44,49 @@ Implementation:
 #include <smctc.h>
 #include <rngUtils.h>
 #include <sdeUtils.h>
+#include <sdeData.h>
 
 // observed data, i.e., data matrix, dT/sqrtDT, nvarObs
 template <class sMod>
-class sdeAlgParams {
+class sdeAlgParams : public sdeData<sMod> {
  private:
-  bool drawZ; // whether or not normal draws are pre-computed
-  static const int nCores = 1; // for parallel processing.  change this later.
-  int nDims2;
-  int nPart; // number of particles
-  int iPart; // which particle are we on
+  // inherited from sdeData
+  using sdeData<sMod>::nDims2;
+  bool drawZ; ///< whether or not normal draws are pre-computed
+  static const int nCores = 1; ///< for parallel processing.
+  int nPart; ///< number of particles
+  int iPart; ///< which particle are we on
   // internal constructor (shared by overloaded constructors)
-  void initialize(int np, int nc, double *dt, int *yIndex,
-		  double *yInit, double *thetaInit);
-  // internal destructor (for delete and deep-copy overwrite)
-  void clear();
+  void ctor_init(int np, double *yInit, double *thetaInit);
+  // // internal destructor (for delete and deep-copy overwrite)
+  // void clear();
  public:
-  int nDims, nParams, nComp;
-  int *nObsComp;
+  // int nDims, nParams, nComp;
+  // double *dT, *sqrtDT;
+  // double *propMean, *propSd, *propZ; // for storing normal calculations
+  // sMod *sde;
+  // inherited from sdeData
+  using sdeData<sMod>::nComp;
+  using sdeData<sMod>::nDims;
+  using sdeData<sMod>::nParams;
+  using sdeData<sMod>::dT;
+  using sdeData<sMod>::sqrtDT;
+  using sdeData<sMod>::sde;
+  using sdeData<sMod>::propMean;
+  using sdeData<sMod>::propSd;
+  using sdeData<sMod>::propZ;
+  using sdeData<sMod>::nObsComp;
   double *yObs, *yProp; // observed and proposal data arrays
   double *theta; // parameter value
-  double *dT, *sqrtDT;
-  double *propMean, *propSd, *propZ; // for storing normal calculations
-  sMod *sde;
   // constructors: with and without precomputed random draws
-  sdeAlgParams(int np, int nc, double *dt, int *yIndex,
-	    double *yInit, double *thetaInit);
-  sdeAlgParams(int np, int nc, double *dt, int *yIndex,
-	    double *yInit, double *thetaInit, double *zInit);
-  sdeAlgParams(); // default constructor: needed to pass algParams to smc::sampler
+  sdeAlgParams(int npart, int ncomp, double *dt, int *yIndex,
+	       double *yInit, double *thetaInit);
+  sdeAlgParams(int npart, int ncomp, double *dt, int *yIndex,
+	       double *yInit, double *thetaInit, double *zInit);
+  // sdeAlgParams(); // default constructor: needed to pass algParams to smc::sampler
   ~sdeAlgParams(); // destructor
-  // deep copy: required to pass in to smc::sampler
-  sdeAlgParams & operator=(const sdeAlgParams & other);
+  // // deep copy: required to pass in to smc::sampler
+  // sdeAlgParams & operator=(const sdeAlgParams & other);
   // internal version of fInitialise.
   // that is, initializes particle.yNew with first "row" of yObs
   // also sets logweight = 0.
@@ -89,7 +100,6 @@ class sdeAlgParams {
   void increase_counter() {iPart++; return;}
   void reset_counter() {iPart = 0;}
 };
-
 
 // internal version of fInitialise.
 // that is, initializes particle.yNew with first "row" of yObs
@@ -109,7 +119,7 @@ inline double sdeAlgParams<sMod>::init(double *yNew) {
 // assumed that yOld contains the right observed data where it ought to.
 template <class sMod>
 inline double sdeAlgParams<sMod>::update(double *yNew, double *yOld,
-				      long lTime, int iPart, int iCore) {
+					 long lTime, int iPart, int iCore) {
   int ii;
   double *mean, *sd, *Z, *yTmp, lw;
   int nObs = nObsComp[lTime];
@@ -123,7 +133,7 @@ inline double sdeAlgParams<sMod>::update(double *yNew, double *yOld,
   if(drawZ) {
     Z = &propZ[iCore*nDims];
     for(ii=nObs; ii<nDims; ii++) {
-      Z[iCore*nDims + ii] = sdeRNG::rnorm();
+      Z[ii] = sdeRNG::rnorm();
     }
   } else {
     Z = &propZ[(lTime-1)*nDims*nPart + iPart*nDims];
@@ -154,40 +164,40 @@ inline double sdeAlgParams<sMod>::update(double *yNew, double *yOld,
 
 // internal constructor (shared by overloaded constructors)
 // basically just allocates memory and copies data referenced by pointer inputs
+// only does this for new memory, i.e., not already managed 
 template <class sMod>
-inline void sdeAlgParams<sMod>::initialize(int np, int nc, double *dt,
-					   int *yIndex, double *yInit,
-					   double *thetaInit) {
+inline void sdeAlgParams<sMod>::ctor_init(int np, double *yInit,
+					  double *thetaInit) {
   int ii,jj;
   iPart = 0;
-  nComp = nc;
+  // nComp = nc;
   nPart = np;
   //nCores = ncores;
-  nDims = sMod::nDims;
-  nDims2 = sMod::diagDiff ? nDims : nDims*nDims;
-  nParams = sMod::nParams;
+  // nDims = sMod::nDims;
+  // nDims2 = sMod::diagDiff ? nDims : nDims*nDims;
+  // nParams = sMod::nParams;
   // create storage space
   yObs = new double[nComp*nDims]; // all data stored here
-  dT = new double[nComp-1];
-  sqrtDT = new double[nComp-1];
-  nObsComp = new int[nComp];
+  // dT = new double[nComp-1];
+  // sqrtDT = new double[nComp-1];
+  // nObsComp = new int[nComp];
   // everything else just for calcs, so only need nCores of each
   yProp = new double[nCores*nDims];
   // propZ gets allocated elsewhere, depending on whether draws are precomputed.
-  sde = new sMod[nCores];
-  propMean = new double[nCores*nDims];
-  propSd = new double[nCores*nDims2];
+  // sde = new sMod[nCores];
+  // propMean = new double[nCores*nDims];
+  // propSd = new double[nCores*nDims2];
   theta = new double[nParams];
   // initialize 
   for(ii=0; ii<nComp; ii++) {
-    nObsComp[ii] = yIndex[ii];
+  //   nObsComp[ii] = yIndex[ii];
     for(jj=0; jj<nDims; jj++) {
       yObs[ii*nDims + jj] = yInit[ii*nDims + jj];
     }
-    if(ii < nComp-1) {
-      dT[ii] = dt[ii];
-      sqrtDT[ii] = sqrt(dT[ii]);
-    }
+  //   if(ii < nComp-1) {
+  //     dT[ii] = dt[ii];
+  //     sqrtDT[ii] = sqrt(dT[ii]);
+  //   }
   }
   for(ii=0; ii<nParams; ii++) {
     theta[ii] = thetaInit[ii];
@@ -198,11 +208,13 @@ inline void sdeAlgParams<sMod>::initialize(int np, int nc, double *dt,
 // constructor
 // this version draws its own normals at every step.
 template <class sMod>
-inline sdeAlgParams<sMod>::sdeAlgParams(int np, int nc, double *dt, int *yIndex,
-				  double *yInit, double *thetaInit) {
-  initialize(np, nc, dt, yIndex, yInit, thetaInit);
+inline sdeAlgParams<sMod>::sdeAlgParams(int npart, int ncomp, double *dt,
+					int *yIndex,
+					double *yInit, double *thetaInit) :
+sdeData<sMod>(ncomp, dt, yIndex, nCores, nCores, nCores) {
+  ctor_init(npart, yInit, thetaInit);
   drawZ = true;
-  propZ = new double[nCores*nDims];
+  // propZ = new double[nCores*nDims];
 }
 
 // constructor
@@ -211,84 +223,88 @@ inline sdeAlgParams<sMod>::sdeAlgParams(int np, int nc, double *dt, int *yIndex,
 // draws are copied in at construction.
 // this is mainly for debugging but could be useful elsewhere.
 template <class sMod>
-inline sdeAlgParams<sMod>::sdeAlgParams(int np, int nc, double *dt, int *yIndex,
-					double *yInit, double *thetaInit,
-					double *zInit) {
-  initialize(np, nc, dt, yIndex, yInit, thetaInit);
+inline sdeAlgParams<sMod>::sdeAlgParams(int npart, int ncomp, double *dt,
+					int *yIndex, double *yInit,
+					double *thetaInit, double *zInit) :
+sdeData<sMod>(ncomp, dt, yIndex, nCores, npart*(ncomp-1), nCores) {
+  ctor_init(npart, yInit, thetaInit);
   drawZ = false;
-  propZ = new double[nPart*(nComp-1)*nDims];
+  // propZ = new double[nPart*(nComp-1)*nDims];
   for(int ii=0; ii<nPart*(nComp-1)*nDims; ii++) {
     propZ[ii] = zInit[ii];
   }
 }
 
-// internal destructor (for delete and deep-copy overwrite)
-template <class sMod>
-inline void sdeAlgParams<sMod>::clear() {
-  delete [] nObsComp;
-  delete [] yObs;
-  delete [] yProp;
-  delete [] theta;
-  delete [] dT;
-  delete [] sqrtDT;
-  delete [] propMean;
-  delete [] propSd;
-  delete [] propZ;
-  delete [] sde;
-  return;
-}
+// // internal destructor (for delete and deep-copy overwrite)
+// template <class sMod>
+// inline void sdeAlgParams<sMod>::clear() {
+//   delete [] nObsComp;
+//   delete [] yObs;
+//   delete [] yProp;
+//   delete [] theta;
+//   delete [] dT;
+//   delete [] sqrtDT;
+//   delete [] propMean;
+//   delete [] propSd;
+//   delete [] propZ;
+//   delete [] sde;
+//   return;
+// }
 
-// default constructor
-// needed to pass algParams to smc::sampler
-template <class sMod>
-inline sdeAlgParams<sMod>::sdeAlgParams() {
-  nObsComp = new int[1];
-  yObs = new double[1];
-  yProp = new double[1];
-  theta = new double[1];
-  dT = new double[1];
-  sqrtDT = new double[1];
-  propMean = new double[1];
-  propSd = new double[1];
-  propZ = new double[1];
-  sde = new sMod[1];
-}
+// // default constructor
+// // needed to pass algParams to smc::sampler
+// template <class sMod>
+// inline sdeAlgParams<sMod>::sdeAlgParams() : sdeData<sMod>() {
+//   // nObsComp = new int[1];
+//   // yObs = new double[1];
+//   // yProp = new double[1];
+//   // theta = new double[1];
+//   // dT = new double[1];
+//   // sqrtDT = new double[1];
+//   // propMean = new double[1];
+//   // propSd = new double[1];
+//   // propZ = new double[1];
+//   // sde = new sMod[1];
+// }
 
-// deep copy assignment
-// required to pass in algParams to smc::sampler.
-// (which first creates algParams with "default ctor", then deep-copies
-// to replace it when setAlgParams is called)
-template <class sMod>
-inline sdeAlgParams<sMod> & sdeAlgParams<sMod>::operator=(const sdeAlgParams<sMod> & other) {
-  if(this != &other) {
-    // deallocate memory
-    clear();
-    // allocate new memory
-    initialize(other.nPart, other.nComp, other.dT, other.nObsComp,
-	       other.yObs, other.theta);
-    // finalize allocation
-    if(other.drawZ) {
-      drawZ = true;
-      propZ = new double[nCores*nDims];
-      for(int ii=0; ii<nCores*nDims; ii++) {
-	propZ[ii] = other.propZ[ii];
-      }
-    } else {
-      drawZ = false;
-      propZ = new double[nPart*(nComp-1)*nDims];
-      for(int ii=0; ii<nPart*(nComp-1)*nDims; ii++) {
-	propZ[ii] = other.propZ[ii];
-      }
-    }
-  }
-  return *this;
-}
+// // deep copy assignment
+// // required to pass in algParams to smc::sampler.
+// // (which first creates algParams with "default ctor", then deep-copies
+// // to replace it when setAlgParams is called)
+// template <class sMod>
+// inline sdeAlgParams<sMod> & sdeAlgParams<sMod>::operator=(const sdeAlgParams<sMod> & other) {
+//   if(this != &other) {
+//     // deallocate memory
+//     clear();
+//     // allocate new memory
+//     initialize(other.nPart, other.nComp, other.dT, other.nObsComp,
+// 	       other.yObs, other.theta);
+//     // finalize allocation
+//     if(other.drawZ) {
+//       drawZ = true;
+//       propZ = new double[nCores*nDims];
+//       for(int ii=0; ii<nCores*nDims; ii++) {
+// 	propZ[ii] = other.propZ[ii];
+//       }
+//     } else {
+//       drawZ = false;
+//       propZ = new double[nPart*(nComp-1)*nDims];
+//       for(int ii=0; ii<nPart*(nComp-1)*nDims; ii++) {
+// 	propZ[ii] = other.propZ[ii];
+//       }
+//     }
+//   }
+//   return *this;
+// }
 
 // destructor
 template <class sMod>
 inline sdeAlgParams<sMod>::~sdeAlgParams() {
-  //Rprintf("sdeAlgParams destructor called.\n");
-  clear();
+  delete [] yObs;
+  delete [] yProp;
+  delete [] theta;
+  // //Rprintf("sdeAlgParams destructor called.\n");
+  // clear();
 }
 
 #endif
