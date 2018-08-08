@@ -16,6 +16,7 @@
 
 template <class sMod, class sPi>
 class sdeMCMC : public sdeLogLik<sMod> {
+ private:
   // inherited from sdeLogLik
   using sdeLogLik<sMod>::nDims2;
   using sdeLogLik<sMod>::nCores;
@@ -33,10 +34,11 @@ class sdeMCMC : public sdeLogLik<sMod> {
   using sdeLogLik<sMod>::nParams;
   using sdeLogLik<sMod>::dT;
   using sdeLogLik<sMod>::sqrtDT;
-  using sdeLogLik<sMod>::sde;
   using sdeLogLik<sMod>::propMean;
   using sdeLogLik<sMod>::propSd;
   using sdeLogLik<sMod>::propZ;
+  using sdeLogLik<sMod>::nObsComp;
+  using sdeLogLik<sMod>::sde;
   using sdeLogLik<sMod>::loglik;
   /// space for full (complete data + params) current MCMC state and proposal states
   double *currFull, *propFull;
@@ -46,7 +48,7 @@ class sdeMCMC : public sdeLogLik<sMod> {
   double *propAccept, *propU;
   /// shrinkage factors for Eraker proposals
   double *B, *sqrtB;
-  int *nObsComp; ///< number of observed dimensions per observation
+  // int *nObsComp; ///< number of observed dimensions per observation
   bool *fixedTheta; ///< whether or not each parameter gets updated
   /// missing data updates
   void missGibbsUpdate(double *jumpSd, int *gibbsAccept, int *paramAccept);
@@ -67,8 +69,21 @@ template <class sMod, class sPi>
 				     double **phi,
 				     int nArgs, int *nEachArg,
 				     int ncores) :
-  sdeLogLik<sMod>(n, dt, ncores) {
+  sdeLogLik<sMod>(n, dt, xIndex, ncores) {
   int ii, jj;
+  /// inherited from sdeLogLik
+  // int nDims2 = this->nDims2;
+  // int nCores = this->nCores;
+  // int nComp = this->nComp;
+  // int nDims = this->nDims;
+  // int nParams = this->nParams;
+  // double *dT = this->dT;
+  // double *sqrtDT = this->sqrtDT;
+  // double *propMean = this->propMean;
+  // double *propSd = this->propSd;
+  // double *propZ = this->propZ;
+  // int *nObsComp = this->nObsComp;
+  // sMod *sde = this->sde;
   // int nDims2, nCores; // inherited from sdeLogLik
   // int nComp, nDims, nParams; // inherited from sdeLogLik
   // double *dT, *sqrtDT; // inherited from sdeLogLik
@@ -97,10 +112,10 @@ template <class sMod, class sPi>
   propU = new double[nComp];
   currX = currFull + nParams;
   propX = propFull + nParams;
-  nObsComp = new int[nComp];
+  // nObsComp = new int[nComp];
   // initialize
   for(ii=0; ii<nComp; ii++) {
-    nObsComp[ii] = xIndex[ii];
+    // nObsComp[ii] = xIndex[ii];
     propU[ii] = 0.0;
     for(jj=0; jj<nDims; jj++) {
       currX[ii*nDims + jj] = xInit[ii*nDims + jj];
@@ -152,7 +167,7 @@ inline sdeMCMC<sMod, sPi>::~sdeMCMC() {
   delete [] propAccept;
   delete [] propU;
   delete [] missInd;
-  delete [] nObsComp;
+  // delete [] nObsComp;
   delete [] fixedTheta;
   delete prior;
 }

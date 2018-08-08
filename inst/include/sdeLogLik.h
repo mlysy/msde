@@ -41,6 +41,7 @@ class sdeLogLik : public sdeData<sMod> {
   //void init(int n); // initialize temporary storage
  public:
   // inherited members from sdeData
+  using sdeData<sMod>::nObsComp;
   using sdeData<sMod>::propMean;
   using sdeData<sMod>::propSd;
   using sdeData<sMod>::propZ;
@@ -89,12 +90,12 @@ class sdeLogLik : public sdeData<sMod> {
 
 template <class sMod>
 inline sdeLogLik<sMod>::sdeLogLik(int ncomp, double *dt, int ncores) :
-sdeData<sMod>(ncomp, dt, ncores, ncomp, ncores) {}
+sdeData<sMod>(ncomp, dt, ncores, ncomp, ncores) {nCores = ncores;}
 
 template <class sMod>
 inline sdeLogLik<sMod>::sdeLogLik(int ncomp, double *dt,
 				  int *nobscomp, int ncores) :
-sdeData<sMod>(ncomp, dt, nobscomp, ncores, ncomp, ncores) {}
+sdeData<sMod>(ncomp, dt, nobscomp, ncores, ncomp, ncores) {nCores = ncores;}
 
 // template <class sMod>
 // inline sdeLogLik<sMod>::sdeLogLik(int n, double *dt, int ncores) {
