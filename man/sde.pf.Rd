@@ -4,8 +4,8 @@
 \alias{sde.pf}
 \title{Particle filter for SDE model.}
 \usage{
-sde.pf(model, init, npart, resample = c("multi", "resid", "strat", "sys"),
-  threshold = 0.5, Z, history = FALSE)
+sde.pf(model, init, npart, resample = c("multi", "resid", "strat",
+  "sys"), threshold = 0.5, Z, history = FALSE)
 }
 \arguments{
 \item{model}{An \code{sde.model} object.}
