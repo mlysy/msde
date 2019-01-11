@@ -12,6 +12,10 @@ model <- sde.make.model(ModelFile = ModelFile,
                         param.names = param.names,
                         data.names = data.names)
 
+# test parameters
+test.params <- list(dT.max = 1, dT.pf = .1,
+                    test.pf = TRUE)
+
 # eou model drift and diffusion
 drift.fun <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)
@@ -21,7 +25,7 @@ drift.fun <- function(x, theta) {
 
 diff.fun <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)
-  if(!is.matrix(theta)) theta <- t(theta) 
+  if(!is.matrix(theta)) theta <- t(theta)
   df <- matrix(NA, nrow(x), 4)
   df[,1] <- exp(x[,2]) # exp(V)
   df[,2] <- theta[,5] * theta[,4] * exp(.5 * x[,2]) # rho * sigma * exp(.5*V)

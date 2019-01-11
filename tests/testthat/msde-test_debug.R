@@ -7,6 +7,10 @@
 
 ndims <- model$ndims
 nparams <- model$nparams
+abs.tol <- 1e-6 # absolute tolerance
+dT.max <- test.params$dT.max # maximum step size
+dT.pf <- test.params$dT.pf # maximum step size fr particle filter
+test.pf <- test.params$test.pf # whether to test particle filter
 
 source("msde-testfunctions.R")
 source("smc-testfunctions.R")
@@ -28,7 +32,7 @@ test_that("drift.R == drift.cpp", {
     dr.R <- drift.fun(x = init$X.R, theta = init$Theta.R)
     if(sx && st) dr.R <- dr.R[1,]
     mxd[ii,] <- max.diff(dr, dr.R)
-    expect_equal(mxd[ii,], c(0,0))
+    expect_equal(mxd[ii,], c(0,0), tolerance = abs.tol)
   }
 })
 
@@ -43,19 +47,19 @@ test_that("diff.R == diff.cpp", {
     df.R <- diff.fun(x = init$X.R, theta = init$Theta.R)
     if(sx && st) df.R <- df.R[1,]
     mxd[ii,] <- max.diff(df, df.R)
-    expect_equal(mxd[ii,], c(0, 0))
+    expect_equal(mxd[ii,], c(0, 0), tolerance = abs.tol)
   }
 })
 
 #--- test simulation -----------------------------------------------------------
 
 SEED <- sample(1000, 1)
-dT <- runif(1)
-nreps <- 10
-nobs <- 8
-burn <- 3
+## nreps <- 10
+## nobs <- 8
+## burn <- 3
 cases <- expand.grid(single.x = c(TRUE, FALSE), single.theta = c(TRUE, FALSE),
-                     burn = c(0, burn), nreps = c(1, nreps), rr = c(1, 2))
+                     burn = c(TRUE, FALSE), nreps = c(TRUE, FALSE),
+                     rr = c(TRUE, FALSE))
 ncases <- nrow(cases)
 
 test_that("sim.R == sim.cpp", {
@@ -63,9 +67,11 @@ test_that("sim.R == sim.cpp", {
   for(ii in 1:ncases) {
     sx <- cases$single.x[ii]
     st <- cases$single.theta[ii]
-    burn <- cases$burn[ii]
-    nreps <- cases$nreps[ii]
-    rr <- cases$rr[ii]
+    dT <- runif(1, max = dT.max)
+    burn <- ifelse(cases$burn[ii], sample(1:3, 1), 0)
+    nreps <- ifelse(cases$nreps[ii], sample(5:10, 1), 1)
+    nobs <- sample(5:10, 1)
+    rr <- ifelse(cases$rr[ii], sample(2:3,1), 1)
     init <- input.init(nreps, sx, st, randx, randt)
     set.seed(seed = SEED)
     sim <- sde.sim(model = model, x0 = init$X, theta = init$Theta,
@@ -81,7 +87,7 @@ test_that("sim.R == sim.cpp", {
                              validx = validx)[burn+1:nobs,]
     }
     mxd[ii,] <- max.diff(sim, drop(sim.R))
-    expect_equal(mxd[ii,], c(0, 0))
+    expect_equal(mxd[ii,], c(0, 0), tolerance = abs.tol)
   }
 })
 
@@ -93,7 +99,7 @@ ncases <- nrow(cases)
 test_that("ll.R == ll.cpp", {
   mxd <- matrix(NA, ncases, 2)
   for(ii in 1:ncases) {
-    dT <- runif(1)
+    dT <- runif(1, max = dT.max)
     nobs <- sample(5:20, 1)
     nreps <- sample(10:20, 1)
     sx <- cases$single.x[ii]
@@ -109,7 +115,7 @@ test_that("ll.R == ll.cpp", {
       ll.R <- ll.R[1]
     }
     mxd[ii,] <- max.diff(ll, ll.R)
-    expect_equal(mxd[ii,], c(0, 0), tolerance = 1e-6, scale = 1)
+    expect_equal(mxd[ii,], c(0, 0), tolerance = abs.tol)
   }
 })
 
@@ -153,7 +159,7 @@ test_that("lpi.R == lpi.cpp", {
     }
     if(sx && st) lpi.R <- lpi.R[1]
     mxd[ii,] <- max.diff(lpi, lpi.R)
-    expect_equal(mxd[ii,2], 0)
+    expect_equal(mxd[ii,2], 0, tolerance = abs.tol)
   }
 })
 
@@ -162,14 +168,15 @@ test_that("lpi.R == lpi.cpp", {
 ntest <- 10
 
 test_that("pf.R == pf.cpp", {
+  skip_if_not(test.pf, message = "PF test too long")
   mxd <- matrix(NA, ntest, 4)
   for(ii in 1:ntest) {
     # setup
     nObs <- sample(50:100,1) # number of observations
     nPart <- sample(10:50,1) # number of particles
     nDims <- ndims # number of dimensions
-    # too large dT will cause testing failure in lotvol model, so we let dT ~ U(0, .2)
-    dT <- runif(1, min = 0, max = 0.2)
+    # too large dT will cause testing failure
+    dT <- runif(1, max = dT.pf)
     mm <- 1 # sample(1:2, 1)
     history <- as.logical(rbinom(1,1,.5))
     init <- input.init(nreps = 1, sx = TRUE, st = TRUE, randx ,randt)
@@ -200,10 +207,10 @@ test_that("pf.R == pf.cpp", {
       pf$data <- matrix(pf$data, nrow = nDims*nPart, ncol = nObs)
       pf$data <- t(pf$data)
     } else {
-      # if history == FALSE, we need to convert pf$data to 1 x nDims*nPart matrix 
+      # if history == FALSE, we need to convert pf$data to 1 x nDims*nPart matrix
       pf$data <- matrix(t(pf$data), nrow = 1)
     }
     mxd[ii,] <- c(max.diff(pf$data, pf.R$data), max.diff(pf$lwgt, pf.R$lwgt))
-    expect_equal(mxd[ii,], rep(0, 4), tolerance = 1e-6, scale = 1)
+    expect_equal(mxd[ii,], rep(0, 4), tolerance = abs.tol)
   }
 })

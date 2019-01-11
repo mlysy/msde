@@ -4,4 +4,5 @@ setup.R
 changelog.txt
 TODO.md
 README.md
+tests/smc
 tests/dontrun

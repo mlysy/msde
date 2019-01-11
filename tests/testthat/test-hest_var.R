@@ -11,6 +11,10 @@ model <- sde.make.model(ModelFile = ModelFile,
                         param.names = param.names,
                         data.names = data.names)
 
+# test parameters
+test.params <- list(dT.max = 1, dT.pf = .1,
+                    test.pf = TRUE)
+
 # heston model drift and diffusion
 drift.fun <- function(x, theta) {
   if(!is.matrix(x)) x <- t(x)
