@@ -5,7 +5,6 @@
 //[[Rcpp::depends("msde")]]
 //[[Rcpp::depends("RcppArmadillo")]]
 //[[Rcpp::depends("RcppProgress")]]
-//[[Rcpp::depends("RcppSMC")]]
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 #include <sdeInterface.h>

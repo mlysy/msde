@@ -10,10 +10,8 @@ nparams <- model$nparams
 abs.tol <- 1e-6 # absolute tolerance
 dT.max <- test.params$dT.max # maximum step size
 dT.pf <- test.params$dT.pf # maximum step size fr particle filter
-test.pf <- test.params$test.pf # whether to test particle filter
 
 source("msde-testfunctions.R")
-source("smc-testfunctions.R")
 
 #--- test drift and diffusion --------------------------------------------------
 
@@ -163,54 +161,4 @@ test_that("lpi.R == lpi.cpp", {
   }
 })
 
-#--- test particle filter ------------------------------------------------------
 
-ntest <- 10
-
-test_that("pf.R == pf.cpp", {
-  skip_if_not(test.pf, message = "PF test too long")
-  mxd <- matrix(NA, ntest, 4)
-  for(ii in 1:ntest) {
-    # setup
-    nObs <- sample(50:100,1) # number of observations
-    nPart <- sample(10:50,1) # number of particles
-    nDims <- ndims # number of dimensions
-    # too large dT will cause testing failure
-    dT <- runif(1, max = dT.pf)
-    mm <- 1 # sample(1:2, 1)
-    history <- as.logical(rbinom(1,1,.5))
-    init <- input.init(nreps = 1, sx = TRUE, st = TRUE, randx ,randt)
-    msim <- sde.sim(model, x0 = init$X, theta = init$Theta,
-                    nobs = nObs, dt = dT, dt.sim = dT)
-    # initialization
-    # m = 1 implies no missing data time points between two observations
-    minit <- sde.init(model, x = msim$data, dt = dT,
-                      theta = init$Theta,
-                      nvar.obs = sample(nDims, nObs, replace = TRUE), m = mm)
-    # normal draws
-    Z <- matrix(rnorm(nPart*nDims*(nObs-1)), nObs-1, nPart*nDims)
-    # pf in R
-    pf.R <- pf.fun(minit, dr = drift.fun, df = diff.fun, Z = Z,
-                   history = history)
-    # pf in C++ (for debugging, disable the resampling)
-    # Z input for sde.pf should be a 3-d array of dimensions (nObs - 1) x nDims x nPart
-    Z <- array(c(Z), c(nObs-1, nDims, nPart))
-    pf <- sde.pf(model = model, init = minit, npart = nPart,
-                resample = "multi", threshold = -1,
-                Z = Z, history = history)
-    # comparison
-    # if history == TRUE, we need to convert pf$data to a comparable matrix
-    if(history == TRUE) {
-      # convert the dims of pf$data from nPart x nDims x nObs to nDims x nPart x nObs
-      pf$data <- aperm(pf$data, perm = c(2,1,3))
-      # then convert it to a matrix comparable with the result given by pf.R
-      pf$data <- matrix(pf$data, nrow = nDims*nPart, ncol = nObs)
-      pf$data <- t(pf$data)
-    } else {
-      # if history == FALSE, we need to convert pf$data to 1 x nDims*nPart matrix
-      pf$data <- matrix(t(pf$data), nrow = 1)
-    }
-    mxd[ii,] <- c(max.diff(pf$data, pf.R$data), max.diff(pf$lwgt, pf.R$lwgt))
-    expect_equal(mxd[ii,], rep(0, 4), tolerance = abs.tol)
-  }
-})

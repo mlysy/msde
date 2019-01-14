@@ -89,14 +89,3 @@ List Post(SEXP sdeptr, NumericVector initParams, NumericVector initData,
 		   priorArgs, tunePar, updateLogLik, nLogLikOut,
 		   updateLastMiss, nLastMissOut, nCores, displayProgress);
 }
-
-//[[Rcpp::export(".pf_eval")]]
-List particleEval(SEXP sdeptr, NumericVector initParams, NumericMatrix initData,
-		  NumericVector dT, IntegerVector nDimsPerObs,
-      int nPart, int resample, double dThreshold, 
-      NumericMatrix NormalDraws, bool hasNormalDraws, bool historyOut) {
-  XPtr<sdeCobj> sde(sdeptr);
-  return sde->particleEval(initParams, initData, dT, nDimsPerObs,
-                  nPart, resample, dThreshold, 
-                  NormalDraws, hasNormalDraws, historyOut);
-}
