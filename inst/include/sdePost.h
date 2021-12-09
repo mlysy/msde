@@ -1,10 +1,8 @@
 #ifndef sdePost_h
 #define sdePost_h
 
-//#include <Rcpp.h>
-//[[Rcpp::depends("RcppArmadillo")]]
-#include <RcppArmadillo.h>
-//using namespace Rcpp;
+#include <Rcpp.h>
+using namespace Rcpp;
 typedef Rcpp::LogicalVector Logical;
 typedef Rcpp::NumericVector Numeric;
 typedef Rcpp::IntegerVector Integer;
@@ -14,7 +12,7 @@ typedef Rcpp::List List;
 #include <progress_bar.hpp>
 #include "sdeMCMC.h"
 #include "mcmcUtils.h"
-#include "sdeInterface.h"
+#include "sdeRobj.h"
 
 template <class sMod, class sPi>
   inline List sdeRobj<sMod, sPi>::Post(Numeric initParams,

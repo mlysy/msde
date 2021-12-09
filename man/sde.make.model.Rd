@@ -4,8 +4,15 @@
 \alias{sde.make.model}
 \title{Create an SDE model object.}
 \usage{
-sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
-  hyper.check, OpenMP = FALSE, ...)
+sde.make.model(
+  ModelFile,
+  PriorFile = "default",
+  data.names,
+  param.names,
+  hyper.check,
+  OpenMP = FALSE,
+  ...
+)
 }
 \arguments{
 \item{ModelFile}{Path to the header file where the SDE model is defined.}
@@ -25,7 +32,7 @@ sde.make.model(ModelFile, PriorFile = "default", data.names, param.names,
 \value{
 An \code{sde.model} object, consisting of a list with the following elements:
 \describe{
-\item{\code{model.ptr}}{Pointer to C++ sde object (\code{sdeCobj}) implementing the member functions: drift/diffusion, data/parameter validators, loglikelihood, prior distribution, forward simulation, MCMC algorithm for Bayesian inference.}
+\item{\code{ptr}}{Pointer to C++ sde object (\code{sdeCobj}) implementing the member functions: drift/diffusion, data/parameter validators, loglikelihood, prior distribution, forward simulation, MCMC algorithm for Bayesian inference.}
 \item{\code{ndims, nparams}}{The number of SDE components and parameters.}
 \item{\code{data.names, param.names}}{The names of the SDE components and parameters.}
 \item{\code{omp}}{A logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
@@ -37,7 +44,7 @@ Compiles the C++ code for various SDE-related algorithms and makes the routines 
 \examples{
 # header (C++) file for Heston's model
 hfile <- sde.examples("hest", file.only = TRUE)
-cat(readLines(hfile), sep = "\\n")
+cat(readLines(hfile), sep = "\n")
 
 \donttest{
 # compile the model

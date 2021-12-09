@@ -46,11 +46,11 @@ sde.diff <- function(model, x, theta) {
   if(!all(.is.valid.data(model, x, theta, single.x, single.theta, nreps))) {
     stop("x contains invalid sde data.")
   }
-  df <- .sde_Diff(sdeptr = model$ptr, xIn = as.double(x),
-                  thetaIn = as.double(theta),
-                  singleX = as.logical(single.x),
-                  singleTheta = as.logical(single.theta),
-                  nReps = as.integer(nreps))
+  df <- model$cobj$Diff(xIn = as.double(x),
+                        thetaIn = as.double(theta),
+                        singleX = as.logical(single.x),
+                        singleTheta = as.logical(single.theta),
+                        nReps = as.integer(nreps))
   df <- matrix(df, nrow = nreps, ncol = ndims^2, byrow = TRUE)
   # put zeros into the off-triangular elements
   df[,lower.tri(diag(ndims))] <- 0

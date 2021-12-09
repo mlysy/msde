@@ -71,12 +71,12 @@ sde.loglik <- function(model, x, dt, theta, ncores = 1) {
     stop("x contains invalid sde data.")
   }
   # compute
-  .sde_Loglik(sdeptr = model$ptr,
-              xIn = as.double(x), dTIn = as.double(dt),
-              thetaIn = as.double(theta),
-              nComp = as.integer(ncomp),
-              nReps = as.integer(nreps),
-              singleX = as.logical(single.x),
-              singleTheta = as.logical(single.theta),
-              nCores = as.integer(ncores))
+  model$cobj$Loglik(xIn = as.double(x),
+                    dTIn = as.double(dt),
+                    thetaIn = as.double(theta),
+                    nComp = as.integer(ncomp),
+                    nReps = as.integer(nreps),
+                    singleX = as.logical(single.x),
+                    singleTheta = as.logical(single.theta),
+                    nCores = as.integer(ncores))
 }

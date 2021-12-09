@@ -1,7 +1,3 @@
-#' Simulation and inference for multivariate stochastic differential equations.
-#'
-#' @docType package
-#' @name msde
 #' @useDynLib msde, .registration = TRUE
 #' @details See package vignettes; \code{vignette("msde-quicktut")} for a tutorial and \code{vignette("msde-exmodels")} for several example models.
 #' @examples
@@ -45,4 +41,4 @@
 #'        main = parse(text = hmod$param.names[ii]), xlab = "")
 #' }
 #' }
-NULL
+"_PACKAGE"

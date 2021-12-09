@@ -53,10 +53,11 @@ sde.prior <- function(model, theta, x, hyper) {
     stop("model$hyper.check must convert hyper to a list with NULL or numeric-vector elements.")
   }
   # compute
-  ans <- .sde_Prior(sdeptr = model$ptr,
-                    thetaIn = as.double(theta), xIn = as.double(x),
-                    singleTheta = as.logical(single.theta),
-                    singleX = as.logical(single.x),
-                    nReps = as.integer(nreps), phiIn = phi)
+  ans <- model$cobj$Prior(thetaIn = as.double(theta),
+                          xIn = as.double(x),
+                          singleTheta = as.logical(single.theta),
+                          singleX = as.logical(single.x),
+                          nReps = as.integer(nreps),
+                          phiIn = phi)
   ans
 }

@@ -1,9 +1,7 @@
 #ifndef sdeRUtils_h
 #define sdeRUtils_h
 
-// #include <Rcpp.h>
-//[[Rcpp::depends("RcppArmadillo")]]
-#include <RcppArmadillo.h>
+#include <Rcpp.h>
 typedef Rcpp::LogicalVector Logical;
 typedef Rcpp::NumericVector Numeric;
 typedef Rcpp::IntegerVector Integer;
@@ -11,7 +9,7 @@ typedef Rcpp::List List;
 //using namespace Rcpp;
 #include "sdeUtils.h"
 #include "sdeLogLik.h"
-#include "sdeInterface.h"
+#include "sdeRobj.h"
 
 template <class sMod, class sPi>
   inline int sdeRobj<sMod, sPi>::get_nDims() {

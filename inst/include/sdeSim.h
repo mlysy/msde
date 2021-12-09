@@ -1,9 +1,9 @@
 #ifndef sdeSim_h
 #define sdeSim_h
 
-// #include <Rcpp.h>
-//[[Rcpp::depends("RcppArmadillo")]]
-#include <RcppArmadillo.h>
+#include <Rcpp.h>
+// //[[Rcpp::depends("RcppArmadillo")]]
+// #include <RcppArmadillo.h>
 typedef Rcpp::LogicalVector Logical;
 typedef Rcpp::NumericVector Numeric;
 typedef Rcpp::IntegerVector Integer;
@@ -11,7 +11,7 @@ typedef Rcpp::List List;
 //using namespace Rcpp;
 #include "rngUtils.h"
 #include "sdeUtils.h"
-#include "sdeInterface.h"
+#include "sdeRobj.h"
 
 template <class sMod, class sPi>
   inline List sdeRobj<sMod, sPi>::Sim(int nDataOut,

@@ -43,10 +43,10 @@ sde.drift <- function(model, x, theta) {
   if(!all(.is.valid.data(model, x, theta, single.x, single.theta, nreps))) {
     stop("x contains invalid sde data.")
   }
-  dr <- .sde_Drift(sdeptr = model$ptr, xIn = as.double(x),
-                   thetaIn = as.double(theta),
-                   singleX = as.logical(single.x),
-                   singleTheta = as.logical(single.theta),
-                   nReps = as.integer(nreps))
+  dr <- model$cobj$Drift(xIn = as.double(x),
+                         thetaIn = as.double(theta),
+                         singleX = as.logical(single.x),
+                         singleTheta = as.logical(single.theta),
+                         nReps = as.integer(nreps))
   matrix(dr, nrow = nreps, ncol = model$ndims, byrow = TRUE)
 }

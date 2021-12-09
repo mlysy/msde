@@ -1,0 +1,84 @@
+---
+title: "C++ class templates with Rcpp and R6"
+author: "Martin Lysy"
+output: rmarkdown::html_document
+---
+
+```{r setup, include = FALSE}
+cran_link <- function(pkg) {
+  paste0("[**", pkg, "**](https://CRAN.R-project.org/package=", pkg, ")")
+}
+```
+
+# Motivation
+
+Consider the following paradigm for writing methods for parameter inference that can be applied to any user-defined member of a family of models.  This is achieved using a templated class `Inference<Model>` of which the template parameter `Model` defines model-specific versions of methods which `Inference` might use (e.g., `Model.loglik()`).  Within the proposed paradigm we'll make the following assumption:
+
+> The only public members of the `Inference<Model>` class (that get exported to R) all have the same signature, including the class constructor, and all have arguments and return values than can be wrapped by `r cran_link("Rcpp")`.
+
+So for example:
+```cpp
+/// User-defined model.
+class IIDNormal {
+ public:
+  double loglik(const NumericVector& theta, const NumericVector& x) {
+	double ll = 0.0;
+	for(int ii=0; ii<x.length(); ii++) {
+	  ll += R:dnorm(x(ii), theta(0), theta(1), true);
+	}
+	return ll;
+  }
+};
+
+
+/// Generic methods for inference.
+template <class Model>
+class Inference {
+ private:
+  Model model_;
+ public:
+  // Calculate mle based on x and model.loglik(theta, x)
+  void mle(NumericVector& theta_hat, const NumericVector);
+};
+
+
+// C++ API
+iidnorm_fit = Inference<IIDNormal>; // create inference object
+iidnorm_fit.mle(theta_hat, x); // calculate MLE
+```
+
+The objective is to create an R wrapper to `Inference<IIDNormal>` and its public methods.  It is proposed to do this using **Rcpp** and `r cran_link("R6")` classes as follows.
+
+# **Rcpp** Wrapper
+
+We could use **Rcpp** [modules](https://dirk.eddelbuettel.com/code/rcpp/Rcpp-modules.pdf) for this.  However, there are a few caveats to this approach:
+
+- The R wrapper is an RC class, not R6, but the latter is much more lightweight, flexible, and easy to use.
+
+- The R wrapper provides methods which accept arguments positionally and with zero error checking.  This is in contrast to how **Rcpp** would export the following function:
+
+	```cpp
+	//[[Rcpp::export]]
+	double foo(double x, NumericVector y)
+	```
+
+    That is, the R call `foo(y = 1:5, x = 3)` would work as expected and `foo(1:5, x)` would give an error, whereas `obj$foo()` as a class method exported by **Rcpp** modules would in both cases crash the R session.
+
+Bearing this in mind, the approach advocated here is to create something like `Inference_IIDNormal_Exports.cpp` which wraps the class functionality in a rudimentary but transparent way.  Since we don't want to do this manually for each `Model`, we can use the [Mustache](https://mustache.github.io/) templating logic implemented in the R package `r cran_link("whisker")`.  So for example the template `cpp` file would look like this:
+
+```
+/// @file Inference_{{Model}}_Exports.cpp
+///
+/// Rcpp wrapper for the methods of Inference<{{Model}}>
+
+#include {{Model_file}} // {{Model}} class definition
+#include Inference.h // Inference class definition
+
+//[[Rcpp::export]]
+
+
+```
+
+# R6 Wrapper
+
+On the R side, we have an R6 class called `Inference_IIDNormal`.

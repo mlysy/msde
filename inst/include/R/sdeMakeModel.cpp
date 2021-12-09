@@ -3,9 +3,7 @@
 // (rest of include directory is not, except rngUtils.h)
 
 //[[Rcpp::depends("msde")]]
-//[[Rcpp::depends("RcppArmadillo")]]
 //[[Rcpp::depends("RcppProgress")]]
-#include <RcppArmadillo.h>
 using namespace Rcpp;
 #include <sdeInterface.h>
 #include "sdeModel.h"

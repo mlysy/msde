@@ -87,18 +87,17 @@ sde.sim <- function(model, x0, theta, dt, dt.sim,
   }
 #  if(debug) browser()
   tm <- chrono()
-  ans <- .sde_Sim(sdeptr = model$ptr,
-                  nDataOut = as.integer(nobs*ndims*nreps),
-                  N = as.integer(nobs),
-                  burn = as.integer(burn),
-                  reps = as.integer(nreps),
-                  r = as.integer(rr),
-                  dT = as.double(dT),
-                  MAXBAD = as.integer(max.bad.draws),
-                  initData = as.double(x0),
-                  params = as.double(theta),
-                  singleX = as.logical(single.x),
-                  singleTheta = as.logical(single.theta))
+  ans <- model$cobj$Sim(nDataOut = as.integer(nobs*ndims*nreps),
+                        N = as.integer(nobs),
+                        burn = as.integer(burn),
+                        reps = as.integer(nreps),
+                        r = as.integer(rr),
+                        dT = as.double(dT),
+                        MAXBAD = as.integer(max.bad.draws),
+                        initData = as.double(x0),
+                        params = as.double(theta),
+                        singleX = as.logical(single.x),
+                        singleTheta = as.logical(single.theta))
   tm <- chrono(tm, display = verbose)
   names(ans) <- c("dataOut", "nBadDraws")
   if(verbose) message("Bad Draws = ", ans$nBadDraws)

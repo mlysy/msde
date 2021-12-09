@@ -16,11 +16,9 @@
 #' \item{\code{omp}}{A logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
 #' }
 #' @seealso \code{\link{sde.drift}}, \code{\link{sde.diff}}, \code{\link{sde.valid}}, \code{\link{sde.loglik}}, \code{\link{sde.prior}}, \code{\link{sde.sim}}, \code{\link{sde.post}}.
-#' @import Rcpp
 #' @importFrom Rcpp sourceCpp
-#' @import methods
+#' @importFrom methods formalArgs
 #' @importFrom tools md5sum
-#' @importFrom whisker whisker.render
 #' @examples
 #' # header (C++) file for Heston's model
 #' hfile <- sde.examples("hest", file.only = TRUE)
@@ -56,29 +54,19 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
       stop("hyper.check must have formal arguments: hyper, param.names, data.names.")
     }
   }
-  ## # save all sdeObj pointers in the package environment
-  ## # as sdeObj pointers don't gc properly when R object is overwritten
-  ## globalptr <- gsub("^.", "", tempfile(pattern = "sdeObj_", tmpdir = ""))
-  ## # compile C++ code
-  ## cppFile <- .copy.cpp.files(ModelFile, PriorFile, OpenMP)
-  ## if(OpenMP) old.env <- .omp.set()
-  ## sourceCpp(cppFile, env = .msdeglobalenv, ...)
-  ## if(OpenMP) .omp.unset(env = old.env)
-  ## assign(globalptr, .msdeglobalenv$.sde_MakeModel(), envir = .msdeglobalenv)
-  ## sptr <- .msdeglobalenv[[globalptr]]
+  # save all sdeObj pointers in the package environment
+  # as sdeObj pointers don't gc properly when R object is overwritten
+  globalptr <- gsub("^.", "", tempfile(pattern = "sdeObj_", tmpdir = ""))
   # compile C++ code
   cppFile <- .copy.cpp.files(ModelFile, PriorFile, OpenMP)
   if(OpenMP) old.env <- .omp.set()
-  sourceCpp(cppFile, ...)
+  sourceCpp(cppFile, env = .msdeglobalenv, ...)
   if(OpenMP) .omp.unset(env = old.env)
-  cobj <- eval(parse(
-    text = paste0("new(",
-                  gsub("_Module[.]cpp$", "", basename(cppFile)),
-                  ")")
-  ))
+  assign(globalptr, .msdeglobalenv$.sde_MakeModel(), envir = .msdeglobalenv)
+  sptr <- .msdeglobalenv[[globalptr]]
   # extract ndims and nparams
-  ndims <- cobj$nDims()
-  nparams <- cobj$nParams()
+  ndims <- .sde_nDims(sptr)
+  nparams <- .sde_nParams(sptr)
   # parameter and data names
   if(missing(data.names)) data.names <- paste0("X", 1:ndims)
   if(missing(param.names)) param.names <- paste0("theta", 1:nparams)
@@ -88,7 +76,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   if(length(param.names) != nparams) {
     stop("param.names has wrong length.")
   }
-  sde.model <- list(cobj = cobj, ndims = ndims, nparams = nparams,
+  sde.model <- list(ptr = sptr, ndims = ndims, nparams = nparams,
                     data.names = data.names, param.names = param.names,
                     hyper.check = hyper.check, omp = OpenMP)
   # output
@@ -96,32 +84,14 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   sde.model
 }
 
-#--- helper functions for keeping track of models ------------------------------
+#--- keep track of original models ---------------------------------------------
 
-#' Global environment for tracking model compilation.
-#'
-#' @details This environment contains a global variable called `models` consisting of a `data.frame` where each row is a model and the columns are:
-#' \describe{
-#'   \item{`id`}{A unique model identifier.}
-#'   \item{`sde`}{The md5sum of the given `ModelFile`.}
-#'   \item{`prior`}{The md5sum of the given `PriorFile`.}
-#'   \item{`omp`}{The logical flag given by `OpenMP`.}
-#' }
-#' This is needed because `sde.make.model()` returns an instance of an object rather than a class definition that can be used to instantiate objects at will.  So, if `sde.make.model()` is given identical C++ files `ModelFile` and `PriorFile`, then we don't want to recompile the C++ code but rather use the existing class definition to instantiate the return object.
-#' @noRd
+# global variable: md5sum of model/prior pairs, modelID
 .msdeglobalenv <- new.env(parent = globalenv())
 
-#' Obtain the model ID from C++ code specification.
-#'
-#' @param ModelFile Path to the header file where the SDE model is defined.
-#' @param PriorFile Path to the header file where the SDE prior is defined.
-#' @param OpenMP Logical; whether the model is compiled with \code{OpenMP} for C++ level parallelization.
-#'
-#' @return A unique ID corresponding to the model.  The ID is added to the list stored in `.msdeglobalenv$models` which contains all unique models so far, i.e., for which `md5sum(ModelFile)`, `md5sum(PriorFile)`, and `OpenMP` are unique.
-#'
-#' @noRd
+# outputs the file "id"
 .cpp.model.id <- function(ModelFile, PriorFile, OpenMP) {
-  mod <- data.frame(id = tempfile(pattern = "msde_"),
+  mod <- data.frame(id = tempfile(pattern = "msde-"),
                     sde = md5sum(ModelFile)[1],
                     prior = md5sum(PriorFile)[1],
                     omp = OpenMP,
@@ -141,16 +111,6 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   mod$id
 }
 
-#' Create a tmp directory containing model files.
-#'
-#' @param ModelFile Path to the header file where the SDE model is defined.
-#' @param PriorFile Path to the header file where the SDE prior is defined.
-#' @param OpenMP Logical; whether the model is compiled with \code{OpenMP} for C++ level parallelization.
-#'
-#' @return The full path to the `cpp` file to be compiled, i.e.,  inside `tempdir()`.  As a side effect, copies `ModelFile` and `PriorFile` to `tempdir()`.
-#'
-#' @details Compilation of identical files is avoided through \pkg{Rcpp}'s caching mechanism which doesn't recompile a `cpp` file with the same name and md5sum.  So, if `.cpp.model.id()` determines that the input files and the `OpenMP` flag are identical, it will give the `cpp` file to be compiled the existing name from `.msdeglobalenv$models`, and \pkg{Rcpp} will do the rest.
-#' @noRd
 .copy.cpp.files <- function(ModelFile, PriorFile, OpenMP) {
   # prior file
   fname <- file.path(tempdir(), "sdePrior.h")
@@ -169,36 +129,17 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
     stop("ModelFile \"", ModelFile, "\" not found.")
   }
   # export file
-  fname <- .cpp.model.id(ModelFile, PriorFile, OpenMP)
-  model.name <- basename(fname)
-  fname <- paste0(fname, "_Module.cpp")
-  # create file from template
-  # FIXME: can potentially do this with Rcpp::exposeClass...
-  template <- readLines(file.path(.msde_include_path,
-                                  "templates", "sdeModule.cpp"))
-  template.data <- list(
-    ExportFile = paste0(model.name, "_Module.cpp"),
-    ModelFile = "sdeModel.h",
-    PriorFile = "sdePrior.h",
-    sdeModel = "sdeModel",
-    sdePrior = "sdePrior",
-    ModuleName = model.name,
-    RClassName = model.name
-  )
-  module <- whisker.render(template = template, data = template.data)
-  cat(module, file = fname, sep = "\n")
-  ## fname <- paste0(.cpp.model.id(ModelFile, PriorFile, OpenMP), "_Exports.cpp")
-  ## file.copy(from = file.path(.msde_tools_path, "sdeMakeModel.cpp"),
-  ##           to = fname,
-  ##           overwrite = TRUE, copy.date = TRUE)
+  fname <- paste0(.cpp.model.id(ModelFile, PriorFile, OpenMP), "_Exports.cpp")
+  file.copy(from = file.path(.msde_tools_path, "sdeMakeModel.cpp"),
+            to = fname,
+            overwrite = TRUE, copy.date = TRUE)
   fname
 }
 
 #--- omp set and unset ---------------------------------------------------------
 
-#' Adds `-fopenmp` flags to `PKG_CXXFLAGS` and `PKG_LIBS`.
-#'
-#' @noRd
+# adds -fopenmp flags to PKG_CXXFLAGS and PKG_LIBS
+
 .omp.set <- function() {
   cxx <- Sys.getenv(x = "PKG_CXXFLAGS", unset = NA)
   libs <- Sys.getenv(x = "PKG_LIBS", unset = NA)
@@ -210,9 +151,6 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   env
 }
 
-#' Resets environment variables modified by `.omp.set()` to those supplied in `env`.
-#'
-#' @noRd
 .omp.unset <- function(env) {
   if(is.na(env$cxx)) {
     Sys.unsetenv(x = "PKG_CXXFLAGS")

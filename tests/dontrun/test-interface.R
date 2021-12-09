@@ -1,5 +1,41 @@
 #--- msde interface ------------------------------------------------------------
 
+require(msde)
+require(whisker)
+require(Rcpp)
+
+msde.path <- "/Users/mlysy/Documents/proj/msde/msdeHeaders"
+
+template.data <- list(
+  ExportFile = "msde_hestModel_Exports.cpp",
+  ## ModelFile = system.file("include", "hestModel.h", package = "msde"),
+  ## PriorFile = system.file("include", "mvnPrior.h", package = "msde"),
+  ModelFile = "hestModel.h",
+  PriorFile = "mvnPrior.h",
+  sdeModel = "sdeModel",
+  sdePrior = "sdePrior",
+  ## cppClassName = "msde_hestModel",
+  ModuleName = "msde_hestModel",
+  RClassName = "msde_hestModel" # don't start name with `.`
+)
+
+out <- whisker.render(
+  template = readLines(file.path(msde.path,
+                                 "inst", "include", "templates",
+                                 "sdeModule.cpp")),
+  data = template.data
+)
+
+cat(out, sep = "\n")
+
+sourceCpp(code = out, verbose = TRUE)
+
+obj <- eval(parse(text = paste0("new(", "msde_hestModel", ")")))
+
+sde.make.model(ModelFile = file.path(msde.path, "inst", "include", "hestModel.h"))
+
+#--- older ---------------------------------------------------------------------
+
 devtools::document()
 devtools::install()
 

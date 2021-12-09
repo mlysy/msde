@@ -4,8 +4,10 @@
 \alias{sde.examples}
 \title{Example SDE models.}
 \usage{
-sde.examples(model = c("hest", "pgnet", "lotvol", "biou", "eou"),
-  file.only = FALSE)
+sde.examples(
+  model = c("hest", "pgnet", "lotvol", "biou", "eou"),
+  file.only = FALSE
+)
 }
 \arguments{
 \item{model}{Character string giving the name of a sample model.  Possible values are: \code{hest}, \code{pgnet}, \code{lotvol}, \code{biou}, \code{eou}.  See Details.}
@@ -27,7 +29,7 @@ hmod <- sde.examples("hest") # load pre-compiled model
 
 # inspect model's C++ code
 hfile <- sde.examples("hest", file.only = TRUE)
-cat(readLines(hfile), sep = "\\n")
+cat(readLines(hfile), sep = "\n")
 
 \dontrun{
 # compile it from scratch

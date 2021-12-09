@@ -44,11 +44,11 @@ sde.valid.data <- function(model, x, theta) {
     stop("x and theta have incompatible dimensions.")
   }
   nreps <- max(nreps)
-  .sde_isData(sdeptr = model$ptr, xIn = as.double(x),
-              thetaIn = as.double(theta),
-              singleX = as.logical(single.x),
-              singleTheta = as.logical(single.theta),
-              nReps = as.integer(nreps))
+  model$cobj$isData(xIn = as.double(x),
+                    thetaIn = as.double(theta),
+                    singleX = as.logical(single.x),
+                    singleTheta = as.logical(single.theta),
+                    nReps = as.integer(nreps))
 }
 
 #' @rdname sde.valid
@@ -60,23 +60,23 @@ sde.valid.params <- function(model, theta) {
   theta <- .format.params(theta, model$param.names)
   # check singles and compatible x and theta
   nreps <- ncol(theta)
-  .sde_isParams(sdeptr = model$ptr, thetaIn = as.double(theta),
-                nReps = as.integer(nreps))
+  model$cobj$isParams(thetaIn = as.double(theta),
+                      nReps = as.integer(nreps))
 }
 
 #--- internal versions: no argument checking/formatting -------------------
 
 .is.valid.data <- function(model, x, theta, single.x, single.theta,
                            nreps) {
-  .sde_isData(sdeptr = model$ptr, xIn = as.double(x),
-              thetaIn = as.double(theta),
-              singleX = as.logical(single.x),
-              singleTheta = as.logical(single.theta),
-              nReps = as.integer(nreps))
+  model$cobj$isData(xIn = as.double(x),
+                    thetaIn = as.double(theta),
+                    singleX = as.logical(single.x),
+                    singleTheta = as.logical(single.theta),
+                    nReps = as.integer(nreps))
 }
 
 .is.valid.params <- function(model, theta, single.theta, nreps) {
-  rep(.sde_isParams(sdeptr = model$ptr, thetaIn = as.double(theta),
-                    nReps = as.integer(ifelse(single.theta, 1, nreps))),
+  rep(model$cobj$isParams(thetaIn = as.double(theta),
+                          nReps = as.integer(ifelse(single.theta, 1, nreps))),
       times = ifelse(single.theta, nreps, 1))
 }
