@@ -326,6 +326,7 @@ sde.post <- function(model, init, hyper,
   nparams <- length(param.names)
   accept <- NULL
   if(update.data) {
+    # eraker proposals
     accept <- c(accept, list(data = bb.accept[-1]/nsamples))
     bb.acc <- accept$data[par.index[-1] < ndims]*100
     bb.acc <- signif(c(min(bb.acc), mean(bb.acc)), 3)
@@ -335,6 +336,7 @@ sde.post <- function(model, init, hyper,
     }
   }
   if(update.params) {
+    # parameter proposals
     accept <- c(accept, list(params = vnl.accept[1:nparams]/nsamples))
     if(verbose) {
       for(ii in which(!fixed.params)) {
@@ -345,8 +347,11 @@ sde.post <- function(model, init, hyper,
   }
   nmiss0 <- ndims-par.index[1]
   if(update.data && (nmiss0 > 0)) {
-    accept <- c(accept,
-                list(miss0 = vnl.accept[nparams+(1:nmiss0)]/nsamples))
+    # initial missing data proposals
+    accept <- c(
+      accept,
+      list(miss0 = vnl.accept[nparams+par.index[1] + (1:nmiss0)]/nsamples)
+    )
     if(verbose) {
       for(ii in 1:nmiss0) {
         message(data.names[par.index[1] + ii], "0 accept: ",

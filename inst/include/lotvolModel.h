@@ -1,5 +1,5 @@
-#ifndef sdeModel_h
-#define sdeModel_h 1
+#ifndef lotvolModel_h
+#define lotvolModel_h 1
 
 // Lotka-Volterra Predator-Prey model
 

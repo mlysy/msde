@@ -34,6 +34,24 @@ obj <- eval(parse(text = paste0("new(", "msde_hestModel", ")")))
 
 sde.make.model(ModelFile = file.path(msde.path, "inst", "include", "hestModel.h"))
 
+.sde.expose.model(ModuleFile = "msde_test_module.cpp",
+                  ModuleName = "msde_hestModel",
+                  RClassName = "msde_hestModel",
+                  sdeModel = "hest::sdeModel",
+                  sdePrior = "mvn::sdePrior",
+                  RFile = TRUE)
+
+exposeClass(class = "PopBD_foo",
+            CppClass = "PopBD<foo>",
+            file = stdout(),
+            constructors =
+              list("", c("NumericVector", "NumericVector")),
+            fields = c("lineage", "size"),
+            methods = "evolve",
+            header = '#include "PopBD.h"',
+            readOnly = c("lineage", "size"),
+            Rfile = FALSE)
+
 #--- older ---------------------------------------------------------------------
 
 devtools::document()

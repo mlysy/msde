@@ -42,8 +42,18 @@ class mwgAdapt {
     for(int ii=0; ii<nRV; ii++) {
       adaptMax[ii] = amax[ii];
       adaptRate[ii] = arate[ii];
-      //doAdapt[ii] = (adapt[ii] != 0); // R conversion
       doAdapt[ii] = adapt[ii];
+    }
+  }
+  mwgAdapt(double *amax, double *arate, int *adapt, int n) {
+    nRV = n;
+    adaptMax = new double[nRV];
+    adaptRate = new double[nRV];
+    doAdapt = new bool[nRV];
+    for(int ii=0; ii<nRV; ii++) {
+      adaptMax[ii] = amax[ii];
+      adaptRate[ii] = arate[ii];
+      doAdapt[ii] = (adapt[ii] != 0);
     }
   }
   ~mwgAdapt() {

@@ -31,11 +31,13 @@ sde.examples <- function(model = c("hest", "pgnet", "lotvol", "biou", "eou"),
     param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
     data.names <- c("X", "Z")
     cobj <- new(msde_hestModel)
+    ## cobj <- msde_hestModel()
   } else if(model == "pgnet") {
     ModelFile <- file.path(.msde_include_path, "pgnetModel.h")
     param.names <- paste0("theta", 1:8)
     data.names <- c("R", "P", "Q", "D")
     cobj <- new(msde_pgnetModel)
+    ## cobj <- msde_pgnetModel()
   } else if(model == "biou") {
     ModelFile <- file.path(.msde_include_path, "biouModel.h")
     param.names <- c("Gamma11", "Gamma21", "Gamma12", "Gamma22",
@@ -43,16 +45,19 @@ sde.examples <- function(model = c("hest", "pgnet", "lotvol", "biou", "eou"),
                      "Psi11", "Psi12", "Psi22")
     data.names <- c("Y1","Y2")
     cobj <- new(msde_biouModel)
+    ## cobj <- msde_biouModel()
   } else if(model == "lotvol") {
     ModelFile <- file.path(.msde_include_path, "lotvolModel.h")
     param.names <- c("alpha", "beta", "gamma")
     data.names <- c("H", "L")
     cobj <- new(msde_lotvolModel)
+    ## cobj <- msde_lotvolModel()
   } else if(model == "eou") {
     ModelFile <- file.path(.msde_include_path, "eouModel.h")
     param.names <- c("alpha", "gamma", "eta", "sigma", "rho")
     data.names <- c("X", "V")
     cobj <- new(msde_eouModel)
+    ## cobj <- msde_eouModel()
   }
   if(!file.only) {
     sde.model <- list(cobj = cobj,

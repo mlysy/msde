@@ -1,0 +1,5 @@
+msde_hestModel <- setRcppClass("msde_hestModel", "sdeRobj<hest::sdeModel, mvn::sdePrior> ", module = "class_msde_hestModel")
+lotvol_hestModel <- setRcppClass("msde_lotvolModel", "sdeRobj<lotvol::sdeModel, mvn::sdePrior> ", module = "class_msde_lotvolModel")
+msde_biouModel <- setRcppClass("msde_biouModel", "sdeRobj<biou::sdeModel, mvn::sdePrior> ", module = "class_msde_biouModel")
+msde_pgnetModel <- setRcppClass("msde_pgnetModel", "sdeRobj<pgnet::sdeModel, mvn::sdePrior> ", module = "class_msde_pgnetModel")
+msde_eouModel <- setRcppClass("msde_eouModel", "sdeRobj<eou::sdeModel, mvn::sdePrior> ", module = "class_msde_eouModel")

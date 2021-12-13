@@ -48,7 +48,8 @@ template <class sMod, class sPi>
   // output variables
   Numeric paramsOut(nParamsOut);
   Numeric dataOut(nDataOut);
-  Integer paramAcceptOut(nParams + nMiss0);
+  // Integer paramAcceptOut(nParams + nMiss0);
+  Integer paramAcceptOut(nParams + nDims);
   Integer gibbsAcceptOut(nComp);
   Numeric logLikOut(nLogLikOut);
   Numeric lastMissOut(nLastMissOut);
@@ -60,16 +61,17 @@ template <class sMod, class sPi>
   double *mwgSd = REAL(mwgSdOut);
   // convert LogicalVectors to vector of bools
   bool *fixedParams = new bool[nParams];
-  bool *tunePar_adapt = new bool[nParams + nDims];
+  // bool *tunePar_adapt = new bool[nParams + nDims];
   convert_Logical(fixedParams, fixedParamsIn);
-  convert_Logical(tunePar_adapt, tunePar["adapt"]);
+  // convert_Logical(tunePar_adapt, tunePar["adapt"]);
 
   // MCMC tuning parameters
   for(ii=0; ii<nParams+nDims; ii++) {
     mwgSd[ii] = REAL(tunePar["sd"])[ii];
   }
   mwgAdapt tuneMCMC(REAL(tunePar["max"]), REAL(tunePar["rate"]),
-		    tunePar_adapt, nParams+nDims);
+		    // tunePar_adapt, nParams+nDims);
+		    INTEGER(tunePar["adapt"]), nParams+nDims);
 
   // prior specification
   // hyper parameters: actual prior gets constructed inside MCMC object
@@ -154,7 +156,7 @@ template <class sMod, class sPi>
 
   // delete dynamic variables
   delete [] fixedParams;
-  delete [] tunePar_adapt;
+  // delete [] tunePar_adapt;
 
   return List::create(_["paramsOut"] = paramsOut,
 		      _["dataOut"] = dataOut,

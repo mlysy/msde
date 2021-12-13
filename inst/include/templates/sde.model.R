@@ -1,8 +1,10 @@
 #' R6 class wrapping `sdeRobj<{{sdeModel}}, {{sdePrior}}>`.
 #'
-#' @details This class is intended to be hidden, i.e., wouldn't be exported from a package.  Rather, it is the instantiated object which would potentially be exported, since it would be called with the `sde.{method}` generics provided by **msde**.
+#' @details Should this class be hidden?
 #'
-#' That being said, the package would probably want to export the class constructor, so as to instantiate new models...
+#' If yes, the main advantage is that the class does not need to be documented.  It is then the instantiated object which would potentially be exported, since it would be called with the `sde.{method}` generics provided by **msde**.
+#'
+#' However, if one wrote a package that provided SDE models, the package would probably want to export the class constructor, so as to instantiate multiple model objects.
 #' @noRd
 {{R6ClassName}} <- R6::R6Class(
 
@@ -10,6 +12,10 @@
 
   private = list(
     .ptr = NULL,
+    .nDims = NULL,
+    .nParams = NULL,
+    .isData = NULL,
+    .isParams = NULL,
     .ndims = NULL,
     .nparams = NULL,
     .data.names = NULL,
@@ -92,7 +98,11 @@
     Post = {{RClassName}}_Post,
     hyper.check = NULL,
 
-    initialize = function(data.names, param.names, hyper.check,
+    initialize = function(data.names, param.names,
+                          hyper.check,
+                          nDims,
+                          nParams,
+
                           OpenMP = FALSE) {
       # initialize sdeRobj<{{sdeModel}}, {{sdePrior}}> object in C++
       private$.ptr <- {{RClassName}}_ctor()
@@ -110,3 +120,6 @@
     }
   )
 )
+
+#' Given a function, return a function which slightly modifies it.
+#'

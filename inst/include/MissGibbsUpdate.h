@@ -155,7 +155,8 @@ template <class sMod, class sPi>
 	// evaluate mh ratio
 	if(exp(propAccept[iCore]) >= propU[ii]) {
 	  currX[nObsComp[0]+jj] = propX[nObsComp[0]+jj];
-	  paramAccept[nParams + jj]++;
+	  // paramAccept[nParams + jj]++;
+	  paramAccept[nParams + nObsComp[0]+jj]++;
 	}
 	else {
 	  propX[nObsComp[0]+jj] = currX[nObsComp[0]+jj];

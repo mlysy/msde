@@ -194,6 +194,53 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
   fname
 }
 
+#' Expose the `sdeRobj<sdeModel, sdePrior>` class to R.
+#'
+#' @param ModuleFile The name of the file (or connection) to which to write the \pkg{Rcpp} module.  See `Rcpp::exposeClass()`.
+#' @param ModuleName The name of the module containing the class.
+#' @param RClassName The name of the class on the R side.
+#' @param sdeModel,sdePrior The C++ class names for the SDE model and prior.
+#' @param ModelIncludes A vector of strings, each of which is a line of C++ code, providing what's necessary to include the definitions of `sdeModel` and `sdePrior`.  The default value is `c('#include "sdeModel.h"', '#include "sdePrior.h"')`.
+#' @param RFile Optional R file to wrap the RC class on the R side.  See `Rcpp::exposeClass()`.
+#'
+#' @return Nothing.  Called for the side effect of creating `ModuleFile` and (optionally) `RFile`.
+#'
+#' @noRd
+.sde.expose.model <- function(ModuleFile, ModuleName, RClassName,
+                              sdeModel, sdePrior,
+                              ModelIncludes, RFile = FALSE) {
+  CppClassName <- paste0("sdeRobj<", sdeModel, ", ", sdePrior, "> ")
+  ClassTypedef <- gsub("[^a-zA-Z0-9]+", "_",
+                       paste0('sdeRobj_', sdeModel, '_', sdePrior))
+  # header includes
+  msdeIncludes <- c('//[[Rcpp::depends(msde)]]',
+                    '//[[Rcpp::depends(RcppProgress)]]',
+                    '#include <sdeRobj.h>')
+  if(missing(ModelIncludes)) {
+    ModelIncludes <- c('#include "sdeModel.h"',
+                       '#include "sdePrior.h"')
+
+  }
+  HeaderIncludes <- paste(c(
+    msdeIncludes,
+    ModelIncludes,
+    paste0('typedef ', CppClassName, ' ', ClassTypedef, ';')
+  ), sep = "\n")
+  Rcpp::exposeClass(class = RClassName,
+                    constructors = list(""),
+                    methods = c("get_nDims", "get_nParams",
+                                "isData", "isParams", "Drift", "Diff",
+                                "LogLik", "Prior", "Sim", "Post"),
+                    header = HeaderIncludes,
+                    fields = character(),
+                    ## CppClass = ClassTypedef,
+                    CppClass = CppClassName,
+                    module = ModuleName,
+                    rename = c(nDims = "get_nDims", nParams = "get_nParams",
+                               Loglik = "LogLik"),
+                    file = ModuleFile, Rfile = RFile)
+}
+
 #--- omp set and unset ---------------------------------------------------------
 
 #' Adds `-fopenmp` flags to `PKG_CXXFLAGS` and `PKG_LIBS`.
