@@ -1,34 +1,13 @@
 #' SDE data and parameter validators.
 #'
 #' Checks whether input SDE data and parameters are valid.
-#' @param model An \code{sde.model} object.
-#' @param x A length-\code{ndims} vector or \code{ndims}-column matrix of SDE data.
-#' @param theta A length-\code{nparams} vector or \code{nparams}-column of SDE parameter values.
+#' @param model An `sde.model` object.
+#' @param x A length-`ndims` vector or `ndims`-column matrix of SDE data.
+#' @param theta A length-`nparams` vector or `nparams`-column of SDE parameter values.
 #' @return A logical scalar or vector indicating whether the given data/parameter pair is valid.
 #' @name sde.valid
-#' @examples
-#' # Heston's model
-#' # valid data is: Z > 0
-#' # valid parameters are: gamma, sigma > 0, |rho| < 1, beta > .5 * sigma^2
-#' hmod <- sde.examples("hest") # load model
-#'
-#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#'
-#' # valid data
-#' x0 <- c(X = log(1000), Z = 0.1)
-#' sde.valid.data(model = hmod, x = x0, theta = theta)
-#'
-#' # invalid data
-#' x0 <- c(X = log(1000), Z = -0.1)
-#' sde.valid.data(model = hmod, x = x0, theta = theta)
-#'
-#' # valid parameters
-#' theta <- c(alpha = 0.1, gamma = 1, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' sde.valid.params(model = hmod, theta = theta)
-#'
-#' # invalid parameters
-#' theta <- c(alpha = 0.1, gamma = -4, beta = 0.8, sigma = 0.6, rho = -0.8)
-#' sde.valid.params(model = hmod, theta = theta)
+#' @aliases sde.valid.data sde.valid.params
+#' @example examples/sde.valid.R
 #' @export
 sde.valid.data <- function(model, x, theta) {
   if(class(model) != "sde.model")

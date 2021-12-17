@@ -1,41 +1,23 @@
 #' Create an SDE model object.
 #'
 #' Compiles the C++ code for various SDE-related algorithms and makes the routines available within R.
+#'
 #' @param ModelFile Path to the header file where the SDE model is defined.
-#' @param PriorFile Path to the header file where the SDE prior is defined.  See \code{\link{sde.prior}} for details.
-#' @param data.names Vector of names for the SDE components.  Defaults to \code{X1,...,Xd}.
-#' @param param.names Vector of names for the SDE parameters.  Defaults to \code{theta1,...,thetap}.
-#' @param hyper.check A function with arguments \code{hyper}, \code{param.names}, and \code{data.names} used for passing the model hyper parameters to the C++ code.  See \code{\link{mvn.hyper.check}} for details.
-#' @param OpenMP Logical; whether the model is compiled with \code{OpenMP} for C++ level parallelization.
-#' @param ... additional arguments to \code{Rcpp::sourceCpp} for compiling the C++ code.
-#'@return An \code{sde.model} object, consisting of a list with the following elements:
+#' @param PriorFile Path to the header file where the SDE prior is defined.  See [sde.prior()] for details.
+#' @param data.names Vector of names for the SDE components.  Defaults to `X1,...,Xd`.
+#' @param param.names Vector of names for the SDE parameters.  Defaults to `theta1,...,thetap`.
+#' @param hyper.check A function with arguments `hyper`, `param.names`, and `data.names` used for passing the model hyper parameters to the C++ code.  See [mvn.hyper.check()] for details.
+#' @param OpenMP Logical; whether the model is compiled with `OpenMP` for C++ level parallelization.
+#' @param ... additional arguments to [Rcpp::sourceCpp()] for compiling the C++ code.
+#'@return An `sde.model` object, consisting of a list with the following elements:
 #' \describe{
-#' \item{\code{ptr}}{Pointer to C++ sde object (\code{sdeCobj}) implementing the member functions: drift/diffusion, data/parameter validators, loglikelihood, prior distribution, forward simulation, MCMC algorithm for Bayesian inference.}
-#' \item{\code{ndims, nparams}}{The number of SDE components and parameters.}
-#' \item{\code{data.names, param.names}}{The names of the SDE components and parameters.}
-#' \item{\code{omp}}{A logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.}
+#' \item{`ptr`}{Pointer to C++ sde object (`sdeRobj`) implementing the member functions: drift/diffusion, data/parameter validators, loglikelihood, prior distribution, forward simulation, MCMC algorithm for Bayesian inference.}
+#' \item{`ndims`, `nparams`}{The number of SDE components and parameters.}
+#' \item{`data.names`, `param.names`}{The names of the SDE components and parameters.}
+#' \item{`omp`}{A logical flag for whether or not the model was compiled for multicore functionality with `OpenMP`.}
 #' }
-#' @seealso \code{\link{sde.drift}}, \code{\link{sde.diff}}, \code{\link{sde.valid}}, \code{\link{sde.loglik}}, \code{\link{sde.prior}}, \code{\link{sde.sim}}, \code{\link{sde.post}}.
-#' @import Rcpp
-#' @importFrom Rcpp sourceCpp
-#' @import methods
-#' @importFrom tools md5sum
-#' @importFrom whisker whisker.render
-#' @examples
-#' # header (C++) file for Heston's model
-#' hfile <- sde.examples("hest", file.only = TRUE)
-#' cat(readLines(hfile), sep = "\n")
-#'
-#' \donttest{
-#' # compile the model
-#' param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
-#' data.names <- c("X", "Z")
-#' hmod <- sde.make.model(ModelFile = hfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
-#'
-#' hmod
-#' }
+#' @seealso [sde.drift()], [sde.diff()], [sde.valid()], [sde.loglik()], [sde.prior()], [sde.sim()], [sde.post()].
+#' @example examples/sde.make.model.R
 #' @export
 sde.make.model <- function(ModelFile, PriorFile = "default",
                            data.names, param.names, hyper.check,
@@ -115,7 +97,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
 #'
 #' @param ModelFile Path to the header file where the SDE model is defined.
 #' @param PriorFile Path to the header file where the SDE prior is defined.
-#' @param OpenMP Logical; whether the model is compiled with \code{OpenMP} for C++ level parallelization.
+#' @param OpenMP Logical; whether the model is compiled with `OpenMP` for C++ level parallelization.
 #'
 #' @return A unique ID corresponding to the model.  The ID is added to the list stored in `.msdeglobalenv$models` which contains all unique models so far, i.e., for which `md5sum(ModelFile)`, `md5sum(PriorFile)`, and `OpenMP` are unique.
 #'
@@ -145,7 +127,7 @@ sde.make.model <- function(ModelFile, PriorFile = "default",
 #'
 #' @param ModelFile Path to the header file where the SDE model is defined.
 #' @param PriorFile Path to the header file where the SDE prior is defined.
-#' @param OpenMP Logical; whether the model is compiled with \code{OpenMP} for C++ level parallelization.
+#' @param OpenMP Logical; whether the model is compiled with `OpenMP` for C++ level parallelization.
 #'
 #' @return The full path to the `cpp` file to be compiled, i.e.,  inside `tempdir()`.  As a side effect, copies `ModelFile` and `PriorFile` to `tempdir()`.
 #'

@@ -5,7 +5,7 @@
 #' @useDynLib msde, .registration = TRUE
 #' @useDynLib msde user_unif_rand
 #' @useDynLib msde user_norm_rand
-#' @details See package vignettes; \code{vignette("msde-quicktut")} for a tutorial and \code{vignette("msde-exmodels")} for several example models.
+#' @details See package vignettes; `vignette("msde-quicktut")` for a tutorial and `vignette("msde-exmodels")` for several example models.
 #' @examples
 #' \donttest{
 #' # Posterior inference for Heston's model

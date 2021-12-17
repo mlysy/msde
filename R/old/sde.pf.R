@@ -2,20 +2,20 @@
 #' which is currently restricted for eou model and level-1 Euler approximation, later we will make it to be more generalized.
 #'
 #' Simulate a particle filter based on discretized Euler-Maruyama approximation of a given SDE model
-#' @param model An \code{sde.model} object.
-#' @param theta A vector or matrix of size \code{nreps x nparams} of SDE parameters.
-#' @param Y0 A vector or a matrix of size \code{nreps x ndims} of the SDE values at time 0.
+#' @param model An `sde.model` object.
+#' @param theta A vector or matrix of size `nreps x nparams` of SDE parameters.
+#' @param Y0 A vector or a matrix of size `nreps x ndims` of the SDE values at time 0.
 #' @param nObs The number of SDE observations per trajectory to generate.
 #' @param dt Scalar interobservation time.
-#' @param dt.sim Scalar interobservation time for simulation.  That is, interally the interobservation time is \code{dt.sim} but only one out of every \code{dt/dt.sim} simulation steps is kept in the output.
+#' @param dt.sim Scalar interobservation time for simulation.  That is, interally the interobservation time is `dt.sim` but only one out of every `dt/dt.sim` simulation steps is kept in the output.
 #' @param nPart Number of particles.
 #' @param verbose Whether or not to display information on the simulation.
 #' @details ...
 #'
 #' @return A list with elements:
 #' \describe{
-#'   \item{\code{Yup}}{A matrix of all the historical data}
-#'   \item{\code{lgwt}}{A matrix of all the historical normalized log weights.}
+#'   \item{`Yup`}{A matrix of all the historical data}
+#'   \item{`lgwt`}{A matrix of all the historical normalized log weights.}
 #' }
 #' @examples
 #' # load pre-compiled model

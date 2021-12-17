@@ -1,27 +1,16 @@
 #' Example SDE models.
 #'
-#' Provides sample \code{C++} code for several SDE models.
-#' @param model Character string giving the name of a sample model.  Possible values are: \code{hest}, \code{pgnet}, \code{lotvol}, \code{biou}, \code{eou}.  See Details.
-#' @param file.only If \code{TRUE} returns only the path to the header file containing the \code{sdeModel} object implementation.
-#' @return An \code{sde.model} object, or the path to the C++ model header file.
-#' @details All pre-compiled models are with the default prior and with \code{OpenMP} disabled.  A full description of the example models can be found in the package vignette; to view it run \code{vignette("msde-exmodels")}.
-#' @seealso \code{\link{sde.make.model}} for \code{sde.model} objects, \code{\link{mvn.hyper.check}} for specification of the default prior.
-#' @examples
-#' # Heston's model
-#' hmod <- sde.examples("hest") # load pre-compiled model
+#' Provides sample `C++` code for several SDE models.
 #'
-#' # inspect model's C++ code
-#' hfile <- sde.examples("hest", file.only = TRUE)
-#' cat(readLines(hfile), sep = "\n")
+#' @param model Character string giving the name of a sample model.  Possible values are: `hest`, `pgnet`, `lotvol`, `biou`, `eou`.  See Details.
+#' @param file.only If `TRUE` returns only the path to the header file containing the `sdeModel` object implementation.
 #'
-#' \dontrun{
-#' # compile it from scratch
-#' param.names <- c("alpha", "gamma", "beta", "sigma", "rho")
-#' data.names <- c("X", "Z")
-#' hmod <- sde.make.model(ModelFile = hfile,
-#'                        param.names = param.names,
-#'                        data.names = data.names)
-#' }
+#' @return An `sde.model` object, or the path to the C++ model header file.
+#'
+#' @details All pre-compiled models are with the default prior and with `OpenMP` disabled.  A full description of the example models can be found in the package vignette; to view it run `vignette("msde-exmodels")`.
+#'
+#' @seealso [sde.make.model()] for `sde.model` objects, [mvn.hyper.check()] for specification of the default prior.
+#' @example examples/sde.examples.R
 #' @export
 sde.examples <- function(model = c("hest", "pgnet", "lotvol", "biou", "eou"),
                          file.only = FALSE) {

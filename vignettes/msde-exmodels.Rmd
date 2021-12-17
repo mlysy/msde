@@ -40,7 +40,7 @@ vignette: >
 \newcommand{\LLam}{\bm{\Lambda}}
 \newcommand{\PPsi}{\bm{\Psi}}
 
-This vignette contains a complete description of the sample models found in `msde::sde.examples`.
+This vignette contains a complete description of the sample models found in `msde::sde.examples()`.
 
 ## Heston's stochastic volatility model
 

@@ -72,7 +72,7 @@
       }
     },
 
-    #' @field omp A logical flag for whether or not the model was compiled for multicore functionality with \code{OpenMP}.
+    #' @field omp A logical flag for whether or not the model was compiled for multicore functionality with `OpenMP`.
     omp = function(value) {
       if(missing(value)) {
         private$.omp

@@ -1,31 +1,8 @@
+/// @file sdeRobj.h
 ///
+/// R/C++ class interface.
 ///
-/// Interface considerations for the implementation.
-///
-/// 1. `sde.make.model` should create an `Xptr` instead of returning R/C++ entrypoints for all functions.  Therefore, it should trigger the construction of an `sdeInterface` object of which the members interface between R/C++ for the necessary functions: `drift()`, `diff()`, `sim()`, `post()`, etc.
-/// 2. must be able to hold different models in one R session.  This means that Xptr should be a templated class.  That is, each class/function making use of `sdeModel` and `sdePrior` should accept templates of these.
-/// 3. should have pre-compiled versions of some models.  For this, the src of the package should have pointers to different models in its shared object...
-///
-/// @section C++ API
-/// 
-/// ```
-/// // Abstract base, template derived class
-/// sdeCobj : sdeRobj<sdeModel, sdePrior>
-/// 
-/// // R constructor:
-/// sdeCobj *sde = new sdeRobj<sdeModel, sdePrior>;
-/// XPtr<sdeRobj> sdeptr(sde, true);
-///
-/// return sdeptr;
-///
-/// @section  R Methods
-/// 
-/// - `sde.drift()` and `sde.diff()`.
-/// - `sde.loglik()`.
-/// - `sde.prior()`.
-/// - `sde.valid.params()` and `sde.valid.data()`.
-/// - `sde.sim()`.
-/// - `sde.post()`.
+/// `sdeRobj` is a C++ class of which all methods have Rcpp inputs and outputs.  It can then be wrapped on the R side using Rcpp modules.
 
 #ifndef sdeRobj_h
 #define sdeRobj_h
@@ -43,7 +20,12 @@ typedef Rcpp::List List;
 
 // --- helper functions --------------------------------------------------------
 
-// R -> C++ logical vector conversion.
+/// Convert `Rcpp::LogicalVector` to a `bool*`.
+///
+/// `Rcpp::LogicalVector` is actually an `int*` on the C++ side, in order to handle `true/false/NA`.
+///
+/// @param[out] out Pointer to C++ logical vector.
+/// @param[in] in Rcpp logical vector.
 inline void convert_Logical(bool *out, Logical in) {
   for(int ii=0; ii<in.length(); ii++) {
     if(Logical::is_na(in[ii])) {
@@ -54,19 +36,24 @@ inline void convert_Logical(bool *out, Logical in) {
   return;
 }
 
-// parse prior arguments from R list
+/// Class to parse prior arguments from an `Rcpp::List`.
 class PriorArgs {
  public:
-  int nArgs;
-  double **phi;
-  int *nEachArg;
+  int nArgs; ///< Number of prior arguments.
+  double **phi; ///< Pointer to storage for each argument.
+  int *nEachArg; ///< Pointer to length of each argument.
+  /// Class constructor.
   PriorArgs(List phiIn);
+  /// Class destructor.
   ~PriorArgs() {
     delete [] nEachArg;
     delete [] phi;
   }
 };
 
+/// Each element of the input list is assumed to be an Rcpp::NumericVector`.  The constructor copies these into its `phi` member as a vector of `double*` (i.e., double pointer).  The other (public) members are `nArgs`, the number of arguments and `nEachArg` an integer vector of argument lengths.
+///
+/// @param[in] phiIn A list of prior arguments. 
 inline PriorArgs::PriorArgs(List phiIn) {
   nArgs = phiIn.length(); // at least 1, since hyper at least list(NULL)
   phi = new double*[nArgs];
@@ -81,29 +68,41 @@ inline PriorArgs::PriorArgs(List phiIn) {
   }
 }
 
-/// SDE object on R side.
+// --- sdeRobj -----------------------------------------------------------------
+
+/// C++ class of which methods provide Rcpp entry/exit points for given SDE model methods.
 template <class sMod, class sPi>
 class sdeRobj {
 public:
+  /// Get number of parameters of SDE model.
   int get_nParams(void);
+  /// Get number of dimensions of SDE model.
   int get_nDims(void);
+  /// Determine whether SDE data is valid.
   Logical isData(Numeric xIn, Numeric thetaIn,
 		 bool singleX, bool singleTheta, int nReps);
+  /// Determine whethere SDE parameters are valid.
   Logical isParams(Numeric thetaIn, int nReps);
+  /// SDE drift function.
   Numeric Drift(Numeric xIn, Numeric thetaIn,
 		bool singleX, bool singleTheta, int nReps);
+  /// SDE diffusion function.
   Numeric Diff(Numeric xIn, Numeric thetaIn,
 	       bool singleX, bool singleTheta, int nReps);
+  /// Calculate the SDE model loglikelihood.
   Numeric LogLik(Numeric xIn, Numeric dTIn,
 		 Numeric thetaIn,
 		 int nComp, int nReps,
 		 bool singleX, bool singleTheta, int nCores);
+  /// Calculate the log prior.
   Numeric Prior(Numeric thetaIn, Numeric xIn,
 		bool singleTheta, bool singleX,
 		int nReps, List phiIn);
+  /// Simulate data from the SDE model.
   List Sim(int nDataOut, int N, int burn, int reps, int r, double dT,
 	   int MAXBAD, Numeric initData, Numeric params,
 	   bool singleX, bool singleTheta);
+  /// MCMC sampling from the SDE model posterior distribution.
   List Post(Numeric initParams, Numeric initData,
 	    Numeric dT, Integer nDimsPerObs,
 	    Logical fixedParams, int nSamples, int burn,
@@ -120,46 +119,3 @@ public:
 #include "sdePost.h"
 
 #endif
-
-// --- old ---------------------------------------------------------------------
-
-// // --- C -> R object conversion ------------------------------------------------
-
-// // for some reason sdeCobj needs a virtual destructor with explicit default.
-// class sdeCobj {
-// public:
-//   virtual int get_nParams(void) = 0;
-//   virtual int get_nDims(void) = 0;
-//   virtual Logical isData(Numeric xIn, Numeric thetaIn,
-// 			 bool singleX, bool singleTheta, int nReps) = 0;
-//   virtual Logical isParams(Numeric thetaIn, int nReps) = 0;
-//   virtual Numeric Drift(Numeric xIn, Numeric thetaIn,
-// 			bool singleX, bool singleTheta, int nReps) = 0;
-//   virtual Numeric Diff(Numeric xIn, Numeric thetaIn,
-// 		       bool singleX, bool singleTheta, int nReps) = 0;
-//   virtual Numeric LogLik(Numeric xIn, Numeric dTIn,
-// 			 Numeric thetaIn,
-// 			 int nComp, int nReps,
-// 			 bool singleX, bool singleTheta, int nCores) = 0;
-//   virtual Numeric Prior(Numeric thetaIn, Numeric xIn,
-// 			bool singleTheta, bool singleX,
-// 			int nReps, List phiIn) = 0;
-//   virtual List Sim(int nDataOut, int N, int burn, int reps, int r, double dT,
-// 		   int MAXBAD, Numeric initData, Numeric params,
-// 		   bool singleX, bool singleTheta) = 0;
-//   virtual List Post(Numeric initParams, Numeric initData,
-// 		    Numeric dT, Integer nDimsPerObs,
-// 		    Logical fixedParams, int nSamples, int burn,
-// 		    int nParamsOut, int nDataOut, Integer dataOutSmp,
-// 		    Integer dataOutComp, Integer dataOutDims,
-// 		    double updateParams, double updateData, List priorArgs,
-// 		    List tunePar, int updateLogLik, int nLogLikOut,
-// 		    int updateLastMiss, int nLastMissOut,
-// 		    int nCores, bool displayProgress) = 0;
-//   virtual ~sdeCobj() = 0;
-// };
-
-// // default destructor
-// inline sdeCobj::~sdeCobj() {
-//   //Rprintf("sdeCobj destroyed.\n");
-// }

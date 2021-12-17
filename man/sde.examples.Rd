@@ -18,7 +18,7 @@ sde.examples(
 An \code{sde.model} object, or the path to the C++ model header file.
 }
 \description{
-Provides sample \code{C++} code for several SDE models.
+Provides sample \verb{C++} code for several SDE models.
 }
 \details{
 All pre-compiled models are with the default prior and with \code{OpenMP} disabled.  A full description of the example models can be found in the package vignette; to view it run \code{vignette("msde-exmodels")}.
@@ -41,5 +41,5 @@ hmod <- sde.make.model(ModelFile = hfile,
 }
 }
 \seealso{
-\code{\link{sde.make.model}} for \code{sde.model} objects, \code{\link{mvn.hyper.check}} for specification of the default prior.
+\code{\link[=sde.make.model]{sde.make.model()}} for \code{sde.model} objects, \code{\link[=mvn.hyper.check]{mvn.hyper.check()}} for specification of the default prior.
 }

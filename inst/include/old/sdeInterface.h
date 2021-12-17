@@ -1,34 +1,31 @@
-/*
-
-OK interface considerations for the implementation.
-
-1. sde.make.model should create an Xptr instead of returning R/C++ entrypoints
-   for all functions.  Therefore, it should trigger the construction of an
-   sdeInterface object of which the members interface between R/C++ for the
-   necessary functions: drift, diff, sim, post, etc.
-2. must be able to hold different models in one R session.  This means that Xptr
-   should be a templated class.  That is, each class/function making use of sdeModel and sdePrior should accept templates of these.
-3. should have pre-compiled versions of some models.  For this, the src of the package should have pointers to different models in its shared object...
-
-OK:
-
-Abstract base, template derived class
-sdeCobj : sdeRobj<sdeModel, sdePrior>
-
-R constructor:
-sdeCobj *sde = new sdeRobj<sdeModel, sdePrior>;
-XPtr<sdeRobj> sdeptr(sde, true);
-return sdeptr;
-
-R methods:
-sde.drift/diff
-sde.loglik
-sde.prior
-sde.valid.params/data
-sde.sim
-sde.post
-
-*/
+///
+///
+/// Interface considerations for the implementation.
+///
+/// 1. `sde.make.model` should create an `Xptr` instead of returning R/C++ entrypoints for all functions.  Therefore, it should trigger the construction of an `sdeInterface` object of which the members interface between R/C++ for the necessary functions: `drift()`, `diff()`, `sim()`, `post()`, etc.
+/// 2. must be able to hold different models in one R session.  This means that Xptr should be a templated class.  That is, each class/function making use of `sdeModel` and `sdePrior` should accept templates of these.
+/// 3. should have pre-compiled versions of some models.  For this, the src of the package should have pointers to different models in its shared object...
+///
+/// @section C++ API
+/// 
+/// ```
+/// // Abstract base, template derived class
+/// sdeCobj : sdeRobj<sdeModel, sdePrior>
+/// 
+/// // R constructor:
+/// sdeCobj *sde = new sdeRobj<sdeModel, sdePrior>;
+/// XPtr<sdeRobj> sdeptr(sde, true);
+///
+/// return sdeptr;
+///
+/// @section  R Methods
+/// 
+/// - `sde.drift()` and `sde.diff()`.
+/// - `sde.loglik()`.
+/// - `sde.prior()`.
+/// - `sde.valid.params()` and `sde.valid.data()`.
+/// - `sde.sim()`.
+/// - `sde.post()`.
 
 #ifndef sdeInterface_h
 #define sdeInterface_h
