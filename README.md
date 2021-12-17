@@ -21,4 +21,4 @@ devtools::install_github("mlysy/msde")
 
 ### Usage
 
-Please see tutorial `vignettes("msde-quicktut")` and several provided SDE models `vignettes("msde-exmodels")`.
+Please see tutorial `vignette("msde-quicktut")` and several provided SDE models `vignette("msde-exmodels")`.

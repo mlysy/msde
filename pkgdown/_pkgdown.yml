@@ -1,0 +1,6 @@
+development:
+  mode: auto
+template:
+  path: "pkgdown"
+  params:
+    bootswatch: readable
