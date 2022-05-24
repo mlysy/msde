@@ -53,6 +53,8 @@ sde.init <- function(model, x, dt, m = 1, nvar.obs, theta) {
   dtnew <- rep(dt/mm, each = mm)
   told <- cumsum(c(0, dt))
   tnew <- cumsum(c(0, dtnew))
+  # to prevent roundoff error
+  tnew <- pmin(tnew, max(told))
   for(ii in 1:ndims) {
     init.data[,ii] <- approx(x = told, y = x[,ii],
                              xout = tnew)$y

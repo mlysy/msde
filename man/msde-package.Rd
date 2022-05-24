@@ -53,6 +53,14 @@ for(ii in 1:length(hmod$param.names)) {
 }
 }
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/mlysy/msde}
+  \item Report bugs at \url{https://github.com/mlysy/msde/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Martin Lysy \email{mlysy@uwaterloo.ca}
 

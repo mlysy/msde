@@ -54,6 +54,42 @@ exposeClass(class = "PopBD_foo",
 
 #--- older ---------------------------------------------------------------------
 
+# test sde.init
+
+require(msde)
+
+set.seed(100)
+m<-6
+dt<-1/365
+X_obs<-matrix(abs(rnorm(8000)),nrow=4000,ncol=2)
+colnames(X_obs) <- c("X", "Z")
+theta <- c(alpha = 0.04, gamma = 1.15, beta = 0.3, sigma = 0.19, rho = -0.64)
+hmod <- sde.examples(model = "hest")
+hinit <- sde.init(model = hmod, x=X_obs, dt=dt, m=m, theta = theta)
+
+set.seed(100)
+
+m<-6
+dt<-1/365
+X_obs<-matrix(rnorm(8000),nrow=4000,ncol=2)
+
+ncomp<-((nrow(X_obs)-1)*m+1)
+ndims<-ncol(X_obs)
+
+x <- msde:::.format.data(X_obs, c("x1", "x2"), type = "matrix", strict = TRUE)
+x <- t(x)
+init.data <- matrix(NA, ncomp, ndims)
+dt <- rep(dt, nrow(x)-1)
+dtnew <- rep((dt)/m, each = m)
+told <- cumsum(c(0, dt))
+tnew <- cumsum(c(0, dtnew))
+tnew <- pmin(tnew, max(told))
+for(ii in 1:2) {
+  init.data[,ii] <- approx(x = told, y = x[,ii],
+                           xout = tnew)$y
+}
+
+
 devtools::document()
 devtools::install()
 

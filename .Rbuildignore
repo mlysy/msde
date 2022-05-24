@@ -9,3 +9,4 @@
 ^examples$
 ^inst/include/old$
 ^vignettes/old$
+^pkgdown$
